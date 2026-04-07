@@ -3,8 +3,8 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5200';
-const PORT = process.env.PORT || 3002;
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5200').trim();
+const PORT = (process.env.PORT || '3002').toString().trim();
 const JWT_SECRET = process.env.SESSION_SECRET || 'fundsim-secret-change-me';
 
 const COOKIE_OPTIONS = {

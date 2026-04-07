@@ -10,9 +10,10 @@ const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5200').trim();
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5200',
+  origin: CLIENT_URL,
   credentials: true,
 }));
 app.use(express.json());
