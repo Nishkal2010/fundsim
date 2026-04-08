@@ -14,8 +14,8 @@ const FUND_B_OVERRIDES = {
 };
 
 export function ComparePage() {
-  const modelA = useFundModelState();
-  const modelB = useFundModelState();
+  const modelA = useFundModelState(null);
+  const modelB = useFundModelState(null);
   const [activeTab, setActiveTab] = useState<TabId>("lifecycle");
 
   // Apply Fund B overrides once on mount
