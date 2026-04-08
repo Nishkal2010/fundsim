@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LayoutGroup, motion, AnimatePresence } from "framer-motion";
 import { Settings, ChevronDown, ChevronUp } from "lucide-react";
 import { FundModelContext } from "../hooks/useFundModel";
 import type { FundModel } from "../types/fund";
@@ -19,6 +19,13 @@ interface ComparePanelProps {
   onTabChange: (tab: TabId) => void;
 }
 
+const tabContent: Record<TabId, React.ReactNode> = {
+  lifecycle: <FundLifecycleTab />,
+  jcurve: <JCurveTab />,
+  waterfall: <WaterfallTab />,
+  performance: <PerformanceTab />,
+};
+
 export function ComparePanel({
   model,
   label,
@@ -28,102 +35,99 @@ export function ComparePanel({
 }: ComparePanelProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const tabContent: Record<TabId, React.ReactNode> = {
-    lifecycle: <FundLifecycleTab />,
-    jcurve: <JCurveTab />,
-    waterfall: <WaterfallTab />,
-    performance: <PerformanceTab />,
-  };
-
   return (
     <FundModelContext.Provider value={model}>
-      <div
-        className="flex flex-col min-h-0"
-        style={{
-          background: "#111827",
-          border: "1px solid #1F2937",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}
-      >
-        {/* Panel header */}
+      <LayoutGroup id={label}>
         <div
-          className="flex items-center gap-2 px-4 py-3"
+          className="flex flex-col min-h-0"
           style={{
-            borderBottom: `2px solid ${accentColor}`,
-            background: "#0A0F1C",
+            background: "#111827",
+            border: "1px solid #1F2937",
+            borderRadius: "12px",
+            overflow: "hidden",
           }}
         >
+          {/* Panel header */}
           <div
+            className="flex items-center gap-2 px-4 py-3"
             style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: accentColor,
-              flexShrink: 0,
-            }}
-          />
-          <span style={{ color: "#F9FAFB", fontWeight: 600, fontSize: "15px" }}>
-            {label}
-          </span>
-        </div>
-
-        {/* Collapsible settings */}
-        <div style={{ borderBottom: "1px solid #1F2937" }}>
-          <button
-            onClick={() => setSettingsOpen((o) => !o)}
-            className="flex items-center gap-2 w-full px-4 py-2 text-left"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#9CA3AF",
-              fontSize: "13px",
-              fontWeight: 500,
+              borderBottom: `2px solid ${accentColor}`,
+              background: "#0A0F1C",
             }}
           >
-            <Settings size={13} />
-            Fund Settings
-            {settingsOpen ? (
-              <ChevronUp size={13} style={{ marginLeft: "auto" }} />
-            ) : (
-              <ChevronDown size={13} style={{ marginLeft: "auto" }} />
-            )}
-          </button>
-
-          <AnimatePresence>
-            {settingsOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22, ease: "easeInOut" }}
-                style={{ overflow: "hidden" }}
-              >
-                <GlobalInputs />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Tab bar */}
-        <TabBar active={activeTab} onChange={onTabChange} />
-
-        {/* Tab content */}
-        <div className="flex-1 overflow-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18 }}
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: accentColor,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{ color: "#F9FAFB", fontWeight: 600, fontSize: "15px" }}
             >
-              {tabContent[activeTab]}
-            </motion.div>
-          </AnimatePresence>
+              {label}
+            </span>
+          </div>
+
+          {/* Collapsible settings */}
+          <div style={{ borderBottom: "1px solid #1F2937" }}>
+            <button
+              onClick={() => setSettingsOpen((o) => !o)}
+              className="flex items-center gap-2 w-full px-4 py-2 text-left"
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#9CA3AF",
+                fontSize: "13px",
+                fontWeight: 500,
+              }}
+            >
+              <Settings size={13} />
+              Fund Settings
+              {settingsOpen ? (
+                <ChevronUp size={13} style={{ marginLeft: "auto" }} />
+              ) : (
+                <ChevronDown size={13} style={{ marginLeft: "auto" }} />
+              )}
+            </button>
+
+            <AnimatePresence>
+              {settingsOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: "easeInOut" }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <GlobalInputs />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Tab bar */}
+          <TabBar active={activeTab} onChange={onTabChange} />
+
+          {/* Tab content */}
+          <div className="flex-1 overflow-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
+              >
+                {tabContent[activeTab]}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
+      </LayoutGroup>
     </FundModelContext.Provider>
   );
 }
