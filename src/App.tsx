@@ -14,19 +14,38 @@ import { JCurveTab } from "./components/JCurve/JCurveTab";
 import { WaterfallTab } from "./components/Waterfall/WaterfallTab";
 import { PerformanceTab } from "./components/Performance/PerformanceTab";
 import { DECAFinanceSuite } from "./components/DECA/DECAFinanceSuite";
+import { supabase } from "./lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthUser {
+  id?: string; // undefined for demo/localStorage users
   name: string;
   email: string;
   picture?: string;
 }
 
-function AppContent() {
+function mapSupabaseUser(u: User): AuthUser {
+  return {
+    id: u.id,
+    name:
+      u.user_metadata?.full_name ??
+      u.user_metadata?.name ??
+      u.email?.split("@")[0] ??
+      "User",
+    email: u.email ?? "",
+    picture: u.user_metadata?.avatar_url ?? u.user_metadata?.picture,
+  };
+}
+
+interface AppContentProps {
+  user: AuthUser;
+  onLogout: () => void;
+}
+
+function AppContent({ user, onLogout }: AppContentProps) {
   const [showHero, setShowHero] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("lifecycle");
   const [glossaryOpen, setGlossaryOpen] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
@@ -35,88 +54,6 @@ function AppContent() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // On load: check if already logged in via JWT cookie (Google OAuth) or fallback to localStorage (demo mode)
-  useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.user) {
-          setUser({
-            name: data.user.name,
-            email: data.user.email,
-            picture: data.user.picture,
-          });
-        } else {
-          // Fallback: check localStorage for demo/email users
-          const stored = localStorage.getItem("fundsim_auth");
-          if (stored) {
-            try {
-              setUser(JSON.parse(stored));
-            } catch {
-              localStorage.removeItem("fundsim_auth");
-            }
-          }
-        }
-      })
-      .catch(() => {
-        // Server not running — check localStorage
-        const stored = localStorage.getItem("fundsim_auth");
-        if (stored) {
-          try {
-            setUser(JSON.parse(stored));
-          } catch {
-            localStorage.removeItem("fundsim_auth");
-          }
-        }
-      })
-      .finally(() => setAuthChecked(true));
-  }, []);
-
-  function handleLogin(u: AuthUser) {
-    localStorage.setItem("fundsim_auth", JSON.stringify(u));
-    setUser(u);
-  }
-
-  async function handleLogout() {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {
-      // Server not reachable, that's ok
-    }
-    localStorage.removeItem("fundsim_auth");
-    setUser(null);
-  }
-
-  // Spinner while checking auth
-  if (!authChecked) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0A0F1C" }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-          style={{
-            width: 32,
-            height: 32,
-            border: "2px solid #374151",
-            borderTopColor: "#6366F1",
-            borderRadius: "50%",
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
-  // DECA route
   if (hash === "deca") {
     return <DECAFinanceSuite />;
   }
@@ -137,7 +74,7 @@ function AppContent() {
         onGlossaryOpen={() => setGlossaryOpen(true)}
         userName={user.name}
         userPicture={user.picture}
-        onLogout={handleLogout}
+        onLogout={onLogout}
       />
 
       {/* DECA Finance Suite button */}
@@ -208,10 +145,88 @@ function AppContent() {
 }
 
 function App() {
-  const model = useFundModelState();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    // Check for existing session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+      } else {
+        // Fallback: demo users stored in localStorage
+        const stored = localStorage.getItem("fundsim_auth");
+        if (stored) {
+          try {
+            setUser(JSON.parse(stored));
+          } catch {
+            localStorage.removeItem("fundsim_auth");
+          }
+        }
+      }
+      setAuthChecked(true);
+    });
+
+    // Listen for Supabase auth state changes (OAuth redirect, sign out, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapSupabaseUser(session.user));
+        localStorage.removeItem("fundsim_auth");
+      } else {
+        // Only clear if not a demo user
+        setUser((prev) => (prev?.id ? null : prev));
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    if (user?.id) {
+      await supabase.auth.signOut();
+    }
+    localStorage.removeItem("fundsim_auth");
+    setUser(null);
+  }
+
+  function handleDemoLogin(u: AuthUser) {
+    localStorage.setItem("fundsim_auth", JSON.stringify(u));
+    setUser(u);
+  }
+
+  // Pass the Supabase user id so useFundModelState can load/save — demo users have no id
+  const model = useFundModelState(user?.id ?? null);
+
+  if (!authChecked) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#0A0F1C" }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+          style={{
+            width: 32,
+            height: 32,
+            border: "2px solid #374151",
+            borderTopColor: "#6366F1",
+            borderRadius: "50%",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginPage onDemoLogin={handleDemoLogin} />;
+  }
+
   return (
     <FundModelContext.Provider value={model}>
-      <AppContent />
+      <AppContent user={user} onLogout={handleLogout} />
     </FundModelContext.Provider>
   );
 }
