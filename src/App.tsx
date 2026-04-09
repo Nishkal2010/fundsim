@@ -15,6 +15,7 @@ import { WaterfallTab } from "./components/Waterfall/WaterfallTab";
 import { PerformanceTab } from "./components/Performance/PerformanceTab";
 import { DECAFinanceSuite } from "./components/DECA/DECAFinanceSuite";
 import { YISFinanceSuite } from "./components/YIS/YISFinanceSuite";
+import { IBSimulator } from "./components/IB/IBSimulator";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -63,6 +64,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return <YISFinanceSuite />;
   }
 
+  if (hash === "ib") {
+    return <IBSimulator />;
+  }
+
   const tabContent: Record<TabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
     jcurve: <JCurveTab />,
@@ -84,6 +89,26 @@ function AppContent({ user, onLogout }: AppContentProps) {
 
       {/* Suite buttons */}
       <div className="px-6 pt-3 flex justify-end gap-2">
+        <button
+          onClick={() => {
+            window.location.hash = "ib";
+          }}
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(180,83,9,0.15), rgba(245,158,11,0.1))",
+            border: "1px solid rgba(245,158,11,0.4)",
+            color: "#F59E0B",
+            borderRadius: "8px",
+            padding: "6px 14px",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            letterSpacing: "0.05em",
+            fontFamily: "monospace",
+          }}
+        >
+          ◆ IB Sim
+        </button>
         <button
           onClick={() => {
             window.location.hash = "yis";
