@@ -244,6 +244,12 @@
       "type": "file"
     },
     {
+      "path": "src/components/Glossary.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1775787458756,
+      "type": "file"
+    },
+    {
       "path": "src/utils/performance.ts",
       "accessCount": 5,
       "lastAccessed": 1775714849197,
@@ -505,12 +511,6 @@
       "path": "src/components/Tooltip.tsx",
       "accessCount": 1,
       "lastAccessed": 1775713998500,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Glossary.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713998703,
       "type": "file"
     },
     {
