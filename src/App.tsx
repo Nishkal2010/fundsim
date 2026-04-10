@@ -16,7 +16,6 @@ import { PerformanceTab } from "./components/Performance/PerformanceTab";
 import { DECAFinanceSuite } from "./components/DECA/DECAFinanceSuite";
 import { YISFinanceSuite } from "./components/YIS/YISFinanceSuite";
 import { IBSimulator } from "./components/IB/IBSimulator";
-import { DCFCalculator } from "./components/DCF/DCFCalculator";
 import { ComparePage } from "./components/ComparePage";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -74,10 +73,6 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return <IBSimulator />;
   }
 
-  if (hash === "dcf") {
-    return <DCFCalculator />;
-  }
-
   const tabContent: Record<TabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
     jcurve: <JCurveTab />,
@@ -99,26 +94,6 @@ function AppContent({ user, onLogout }: AppContentProps) {
 
       {/* Suite buttons */}
       <div className="px-6 pt-3 flex justify-end gap-2">
-        <button
-          onClick={() => {
-            window.location.hash = "dcf";
-          }}
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(37,99,235,0.15), rgba(139,92,246,0.1))",
-            border: "1px solid rgba(139,92,246,0.4)",
-            color: "#A78BFA",
-            borderRadius: "8px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            letterSpacing: "0.05em",
-            fontFamily: "monospace",
-          }}
-        >
-          ◆ DCF Calculator
-        </button>
         <button
           onClick={() => {
             window.location.hash = "ib";

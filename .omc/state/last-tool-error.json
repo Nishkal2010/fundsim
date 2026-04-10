@@ -1,7 +1,7 @@
 {
   "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/Users/nishkaldachepelly/fundsim/src/utils/decaUtils.ts\"}",
-  "error": "File does not exist. Note: your current working directory is /Users/nishkaldachepelly/fundsim.",
-  "timestamp": "2026-04-09T06:02:36.876Z",
+  "tool_input_preview": "{\"file_path\":\"/Users/nishkaldachepelly/fundsim/src/components/YIS/YISFinanceSuite.tsx\"}",
+  "error": "File content (16703 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-10T01:20:23.482Z",
   "retry_count": 1
 }

@@ -522,7 +522,9 @@ function TR({
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-export function DCFCalculator() {
+export function DCFCalculator({
+  embedded = false,
+}: { embedded?: boolean } = {}) {
   const [inputs, setInputs] = useState<DCFInputs>(DEFAULTS);
   const [activeTab, setActiveTab] = useState<TabId>("setup");
 
@@ -2980,58 +2982,115 @@ export function DCFCalculator() {
   return (
     <div
       style={{
-        background: D.bg,
-        minHeight: "100vh",
+        background: embedded ? "transparent" : D.bg,
+        minHeight: embedded ? undefined : "100vh",
         color: D.text,
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          background: "#060C18",
-          borderBottom: `1px solid ${D.border}`,
-          padding: "14px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={() => {
-              window.location.hash = "";
-            }}
-            style={{
-              background: "none",
-              border: "none",
-              color: D.muted,
-              cursor: "pointer",
-              fontSize: 20,
-            }}
-          >
-            ←
-          </button>
-          <div>
-            <div
+      {/* Header — hidden when embedded in another suite */}
+      {!embedded && (
+        <div
+          style={{
+            background: "#060C18",
+            borderBottom: `1px solid ${D.border}`,
+            padding: "14px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => {
+                window.location.hash = "";
+              }}
               style={{
-                color: D.light,
-                fontWeight: 800,
-                fontSize: 18,
-                letterSpacing: "0.02em",
+                background: "none",
+                border: "none",
+                color: D.muted,
+                cursor: "pointer",
+                fontSize: 20,
               }}
             >
-              DCF CALCULATOR
-            </div>
-            <div style={{ color: D.muted, fontSize: 11 }}>
-              {inputs.companyName} ({inputs.ticker}) · 7-Method Discounted Cash
-              Flow Analysis
+              ←
+            </button>
+            <div>
+              <div
+                style={{
+                  color: D.light,
+                  fontWeight: 800,
+                  fontSize: 18,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                DCF CALCULATOR
+              </div>
+              <div style={{ color: D.muted, fontSize: 11 }}>
+                {inputs.companyName} ({inputs.ticker}) · 7-Method Discounted
+                Cash Flow Analysis
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {/* Presets */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {/* Presets */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {Object.entries(PRESETS).map(([key, _]) => (
+                <button
+                  key={key}
+                  onClick={() => applyPreset(key)}
+                  style={{
+                    background: "rgba(37,99,235,0.1)",
+                    border: `1px solid ${D.border}`,
+                    borderRadius: 6,
+                    color: D.light,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                    letterSpacing: "0.04em",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={exportCSV}
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(37,99,235,0.2), rgba(96,165,250,0.1))",
+                border: `1px solid ${D.primary}`,
+                borderRadius: 8,
+                color: D.light,
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "6px 16px",
+                cursor: "pointer",
+                letterSpacing: "0.05em",
+              }}
+            >
+              ↓ Export CSV
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Embedded toolbar — presets + export when inside another suite */}
+      {embedded && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 0 12px 0",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
+        >
           <div style={{ display: "flex", gap: 6 }}>
             {Object.entries(PRESETS).map(([key, _]) => (
               <button
@@ -3054,7 +3113,6 @@ export function DCFCalculator() {
               </button>
             ))}
           </div>
-
           <button
             onClick={exportCSV}
             style={{
@@ -3065,15 +3123,14 @@ export function DCFCalculator() {
               color: D.light,
               fontSize: 12,
               fontWeight: 700,
-              padding: "6px 16px",
+              padding: "5px 14px",
               cursor: "pointer",
-              letterSpacing: "0.05em",
             }}
           >
             ↓ Export CSV
           </button>
         </div>
-      </div>
+      )}
 
       {/* Key Stats Bar */}
       <div
