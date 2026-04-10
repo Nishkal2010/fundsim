@@ -206,6 +206,7 @@ export function Step5_CashFlow() {
         "Professional Services",
         ...cashFlowMonths.map((m) => m.professionalServices),
       ],
+      ["Misc OpEx", ...cashFlowMonths.map((m) => m.miscOpEx)],
       ["Startup Costs", ...cashFlowMonths.map((m) => m.startupCostsPayment)],
       ["Loan Principal", ...cashFlowMonths.map((m) => m.loanPrincipal)],
       ["Interest Payment", ...cashFlowMonths.map((m) => m.interestPayment)],
@@ -420,6 +421,7 @@ export function Step5_CashFlow() {
               label="Professional Services"
               values={vals((m) => m.professionalServices)}
             />
+            <DataRow label="Misc OpEx" values={vals((m) => m.miscOpEx)} />
             <DataRow
               label="Startup Costs (Month 1)"
               values={vals((m) => m.startupCostsPayment)}

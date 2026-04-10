@@ -213,7 +213,17 @@ function App() {
         const stored = localStorage.getItem("fundsim_auth");
         if (stored) {
           try {
-            setUser(JSON.parse(stored));
+            const parsed = JSON.parse(stored);
+            if (
+              parsed &&
+              typeof parsed.name === "string" &&
+              typeof parsed.email === "string"
+            ) {
+              setUser(parsed);
+            } else {
+              // Malformed entry — discard it
+              localStorage.removeItem("fundsim_auth");
+            }
           } catch {
             localStorage.removeItem("fundsim_auth");
           }
@@ -233,6 +243,8 @@ function App() {
         // Only clear if not a demo user
         setUser((prev) => (prev?.id ? null : prev));
       }
+      // Ensure auth check is marked done even if this fires before getSession resolves
+      setAuthChecked(true);
     });
 
     return () => subscription.unsubscribe();

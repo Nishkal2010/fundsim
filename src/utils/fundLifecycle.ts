@@ -1,6 +1,9 @@
 import type { FundInputs, LifecycleData, YearlyData } from "../types/fund";
 
 export function calculateLifecycle(inputs: FundInputs): LifecycleData {
+  // NOTE: inputs.clawback is defined in FundInputs but is not implemented in this
+  // function. Clawback logic (GP returning excess carry to LPs) is not yet modelled
+  // here; it would need to be applied in the waterfall calculation instead.
   const { fundSize, fundLife, investmentPeriod, managementFee } = inputs;
 
   // During investment period: fee on committed capital
@@ -68,11 +71,17 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
     });
   }
 
+  // Recompute totalMgmtFees as the exact sum of per-year mgmtFee values so that
+  // totalMgmtFees is always consistent with what the years[] array reports.
+  // The pre-loop harvestFees estimate used netInvestableCapital as the base, while
+  // per-year harvest mgmtFee uses finalNetInvestable — summing here reconciles the two.
+  const totalMgmtFees = years.reduce((sum, y) => sum + y.mgmtFee, 0);
+
   const capitalEfficiency = fundSize > 0 ? finalNetInvestable / fundSize : 0;
 
   return {
     years,
-    totalMgmtFees: totalFees,
+    totalMgmtFees,
     netInvestableCapital: finalNetInvestable,
     capitalEfficiency,
   };

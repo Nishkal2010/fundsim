@@ -1047,7 +1047,12 @@ export function IBSimulator() {
     };
     const compsMultiple = compsMap[sector] ?? 12;
     const precMultiple =
-      compsMultiple * (dealType === "financial" ? 1.2 : 1.35);
+      compsMultiple *
+      (dealType === "financial" ||
+      dealType === "mbo" ||
+      dealType === "distressed"
+        ? 1.2
+        : 1.35);
     const compsEV = tgtEBITDA * compsMultiple;
     const compsEVLow = compsEV * 0.85;
     const compsEVHigh = compsEV * 1.15;
@@ -1075,13 +1080,17 @@ export function IBSimulator() {
     const projections = Array.from({ length: 5 }, (_, i) => {
       const yr = i + 1;
       const rev = tgtRevenue * Math.pow(1 + revenueGrowth / 100, yr);
+      const prevRev =
+        i === 0
+          ? tgtRevenue
+          : tgtRevenue * Math.pow(1 + revenueGrowth / 100, yr - 1);
       const ebitda = rev * (ebitdaMarginPct / 100);
       const da = rev * DA_RATE;
       const ebit = ebitda - da;
       const nopat = ebit * (1 - taxRate / 100);
       const capex = rev * (capexPct / 100);
-      const nwc = rev * NWC_RATE;
-      const fcff = nopat + da - capex - nwc;
+      const deltaNWC = (rev - prevRev) * NWC_RATE;
+      const fcff = nopat + da - capex - deltaNWC;
       const pv = fcff / Math.pow(1 + wacc / 100, yr);
       return { yr, rev, ebitda, ebit, fcff, pv };
     });
@@ -1099,15 +1108,19 @@ export function IBSimulator() {
     const dcfImpliedPrice = tgtShares > 0 ? dcfEquity / tgtShares : 0;
     const tvPct = dcfEV > 0 ? (pvTV / dcfEV) * 100 : 0;
 
-    // LBO — debt is ~65% of Enterprise Value, not just cash consideration
-    const lboDebt = offerEV * 0.65;
-    const lboEquity = offerEV - lboDebt;
+    // LBO — use tranche model debt (senior + mezz) driven by user leverage inputs
+    const _seniorDebtEarly = tgtEBITDA * seniorLeverage;
+    const _mezzDebtEarly = tgtEBITDA * mezzLeverage;
+    const lboDebt = _seniorDebtEarly + _mezzDebtEarly;
+    const lboEquity = Math.max(0, offerEV - lboDebt);
     // Exit EBITDA = exit revenue * target EBITDA margin
-    const exitEBITDA =
+    const exitRevenue =
       tgtRevenue > 0
-        ? tgtRevenue *
-          Math.pow(1 + revenueGrowth / 100, holdPeriod) *
-          (ebitdaMarginPct / 100)
+        ? tgtRevenue * Math.pow(1 + revenueGrowth / 100, holdPeriod)
+        : 0;
+    const exitEBITDA =
+      exitRevenue > 0
+        ? exitRevenue * (ebitdaMarginPct / 100)
         : tgtEBITDA * Math.pow(1 + revenueGrowth / 100, holdPeriod);
     const exitEV = exitEBITDA * compsMultiple;
     const lboDebtRepaid = Math.min(lboDebt, tgtEBITDA * 5 * 0.3);
@@ -1208,18 +1221,16 @@ export function IBSimulator() {
         ? tgtFCF / (totalLBOInterest + annualPrincipal)
         : 99;
 
-    // Debt paydown schedule over hold period
+    // Debt paydown schedule over hold period — carry openDebt forward each year
+    let _openDebt = totalTranchedDebt;
     const debtSchedule = Array.from({ length: hp }, (_, i) => {
       const yr = i + 1;
       const fcfYr = tgtFCF * Math.pow(1 + revenueGrowth / 200, yr);
-      const cumRepay = Array.from({ length: i }, (_, j) => {
-        const f = tgtFCF * Math.pow(1 + revenueGrowth / 200, j + 1);
-        return f * 0.7;
-      }).reduce((a, b) => a + b, 0);
-      const openDebt = Math.max(0, totalTranchedDebt - cumRepay);
-      const repayment = Math.min(fcfYr * 0.7, openDebt);
-      const closeDebt = Math.max(0, openDebt - repayment);
-      return { yr, fcfYr, openDebt, repayment, closeDebt };
+      const repayment = Math.min(fcfYr * 0.7, _openDebt);
+      const closeDebt = Math.max(0, _openDebt - repayment);
+      const result = { yr, fcfYr, openDebt: _openDebt, repayment, closeDebt };
+      _openDebt = closeDebt;
+      return result;
     });
 
     // NOL tax shield (reduces effective acquisition cost)
@@ -1227,11 +1238,12 @@ export function IBSimulator() {
       noBalance > 0 ? Math.min(noBalance, tgtEBITDA * hp) * (taxRate / 100) : 0;
 
     // LBO exit using hold period and tranche model
+    const exitRevenueHold =
+      tgtRevenue > 0 ? tgtRevenue * Math.pow(1 + revenueGrowth / 100, hp) : 0;
     const exitEBITDAHold =
-      tgtEBITDA *
-      Math.pow(1 + revenueGrowth / 100, hp) *
-      (ebitdaMarginPct /
-        (tgtRevenue > 0 ? (tgtEBITDA / tgtRevenue) * 100 : ebitdaMarginPct));
+      exitRevenueHold > 0
+        ? exitRevenueHold * (ebitdaMarginPct / 100)
+        : tgtEBITDA * Math.pow(1 + revenueGrowth / 100, hp);
     const exitMultipleFinal =
       exitMultipleOverride > 0 ? exitMultipleOverride : compsMultiple;
     const exitEVHold = exitEBITDAHold * exitMultipleFinal;
@@ -3434,7 +3446,7 @@ export function IBSimulator() {
                     {
                       label: "DSCR",
                       value: C.dscr >= 99 ? "N/A" : fmtN(C.dscr, 1) + "x",
-                      sub: "FCF ÷ interest — > 1.2x required",
+                      sub: "FCF ÷ (interest + principal) — > 1.2x required",
                       color:
                         C.dscr >= 99
                           ? "#6B7280"
@@ -4072,25 +4084,25 @@ export function IBSimulator() {
                       },
                       {
                         label: "+ Target Net Income (per acq. share)",
-                        value: inputs.tgtNI / Math.max(1, C.proFormaShares),
+                        value: inputs.tgtNI / Math.max(1, inputs.acqShares),
                         color: A.light,
                       },
                       {
                         label: "+ After-Tax Synergies (per share)",
-                        value: C.synAfterTax / Math.max(1, C.proFormaShares),
+                        value: C.synAfterTax / Math.max(1, inputs.acqShares),
                         color: "#22C55E",
                       },
                       {
                         label: "− Interest on Deal Debt (per share)",
                         value:
                           -C.newInterestAfterTax /
-                          Math.max(1, C.proFormaShares),
+                          Math.max(1, inputs.acqShares),
                         color: "#EF4444",
                       },
                       {
                         label: "− D&A Step-Up (per share)",
                         value:
-                          -C.daStepUpAfterTax / Math.max(1, C.proFormaShares),
+                          -C.daStepUpAfterTax / Math.max(1, inputs.acqShares),
                         color: "#EF4444",
                       },
                       {

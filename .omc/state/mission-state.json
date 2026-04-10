@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-10T22:27:30.417Z",
+  "updatedAt": "2026-04-10T22:41:16.728Z",
   "missions": [
     {
       "id": "session:501af95c-2e63-4a40-bdd3-6c8b83155ccc:none",
@@ -7,15 +7,15 @@
       "name": "none",
       "objective": "Session mission",
       "createdAt": "2026-04-09T04:20:16.300Z",
-      "updatedAt": "2026-04-10T22:27:30.417Z",
+      "updatedAt": "2026-04-10T22:41:16.728Z",
       "status": "running",
-      "workerCount": 22,
+      "workerCount": 37,
       "taskCounts": {
-        "total": 22,
+        "total": 37,
         "pending": 0,
         "blocked": 0,
         "inProgress": 1,
-        "completed": 21,
+        "completed": 36,
         "failed": 0
       },
       "agents": [
@@ -238,96 +238,222 @@
           "latestUpdate": null,
           "completedSummary": null,
           "updatedAt": "2026-04-10T22:14:00.462Z"
+        },
+        {
+          "name": "voltagent-data-ai:data-scientist:a2e350d",
+          "role": "voltagent-data-ai:data-scientist",
+          "ownership": "a2e350d973e919d8a",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:32:18.275Z"
+        },
+        {
+          "name": "voltagent-data-ai:data-analyst:a93e3fd",
+          "role": "voltagent-data-ai:data-analyst",
+          "ownership": "a93e3fddbbcb5ca41",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:30:47.479Z"
+        },
+        {
+          "name": "voltagent-data-ai:data-scientist:a1d7cff",
+          "role": "voltagent-data-ai:data-scientist",
+          "ownership": "a1d7cffc381f758fb",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:31:43.298Z"
+        },
+        {
+          "name": "voltagent-data-ai:data-scientist:a1ed949",
+          "role": "voltagent-data-ai:data-scientist",
+          "ownership": "a1ed949a0531896fb",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:32:00.526Z"
+        },
+        {
+          "name": "compound-engineering:review:correctness-reviewer:a5ac964",
+          "role": "compound-engineering:review:correctness-reviewer",
+          "ownership": "a5ac964db08985999",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:33:14.731Z"
+        },
+        {
+          "name": "general-purpose:a9c6c47",
+          "role": "general-purpose",
+          "ownership": "a9c6c471df7c8c8c8",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:38:46.242Z"
+        },
+        {
+          "name": "general-purpose:a3af5a9",
+          "role": "general-purpose",
+          "ownership": "a3af5a937f0db97e1",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:39:22.477Z"
+        },
+        {
+          "name": "general-purpose:abf98bd",
+          "role": "general-purpose",
+          "ownership": "abf98bd9596150c37",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:38:36.386Z"
+        },
+        {
+          "name": "general-purpose:ac09cbb",
+          "role": "general-purpose",
+          "ownership": "ac09cbb7f6980c0cd",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:39:00.584Z"
+        },
+        {
+          "name": "general-purpose:af5073f",
+          "role": "general-purpose",
+          "ownership": "af5073f596555c46f",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:39:21.888Z"
+        },
+        {
+          "name": "general-purpose:ac226f5",
+          "role": "general-purpose",
+          "ownership": "ac226f5a30b9e54b3",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:39:24.898Z"
+        },
+        {
+          "name": "general-purpose:abff4f8",
+          "role": "general-purpose",
+          "ownership": "abff4f886622e36b9",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:41:16.728Z"
+        },
+        {
+          "name": "general-purpose:a63373d",
+          "role": "general-purpose",
+          "ownership": "a63373dd7a32a161a",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:41:15.257Z"
+        },
+        {
+          "name": "general-purpose:a0b03af",
+          "role": "general-purpose",
+          "ownership": "a0b03af5bb6134513",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:41:12.257Z"
+        },
+        {
+          "name": "general-purpose:a5bac3d",
+          "role": "general-purpose",
+          "ownership": "a5bac3d4393996770",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T22:40:06.619Z"
         }
       ],
       "timeline": [
         {
-          "id": "session-start:a6dc95e7596851439:2026-04-10T22:13:46.486Z",
-          "at": "2026-04-10T22:13:46.486Z",
+          "id": "session-stop:af5073f596555c46f:2026-04-10T22:39:21.888Z",
+          "at": "2026-04-10T22:39:21.888Z",
+          "kind": "completion",
+          "agent": "general-purpose:af5073f",
+          "detail": "completed",
+          "sourceKey": "session-stop:af5073f596555c46f"
+        },
+        {
+          "id": "session-stop:a3af5a937f0db97e1:2026-04-10T22:39:22.477Z",
+          "at": "2026-04-10T22:39:22.477Z",
+          "kind": "completion",
+          "agent": "general-purpose:a3af5a9",
+          "detail": "completed",
+          "sourceKey": "session-stop:a3af5a937f0db97e1"
+        },
+        {
+          "id": "session-start:a5bac3d4393996770:2026-04-10T22:39:24.362Z",
+          "at": "2026-04-10T22:39:24.362Z",
           "kind": "update",
-          "agent": "voltagent-data-ai:data-scientist:a6dc95e",
-          "detail": "started voltagent-data-ai:data-scientist:a6dc95e",
-          "sourceKey": "session-start:a6dc95e7596851439"
+          "agent": "general-purpose:a5bac3d",
+          "detail": "started general-purpose:a5bac3d",
+          "sourceKey": "session-start:a5bac3d4393996770"
         },
         {
-          "id": "session-start:a0c2fe161c6145836:2026-04-10T22:13:53.700Z",
-          "at": "2026-04-10T22:13:53.700Z",
-          "kind": "update",
-          "agent": "voltagent-data-ai:data-scientist:a0c2fe1",
-          "detail": "started voltagent-data-ai:data-scientist:a0c2fe1",
-          "sourceKey": "session-start:a0c2fe161c6145836"
-        },
-        {
-          "id": "session-start:a66f5469ae1891bb1:2026-04-10T22:14:00.462Z",
-          "at": "2026-04-10T22:14:00.462Z",
-          "kind": "update",
-          "agent": "everything-claude-code:typescript-reviewer:a66f546",
-          "detail": "started everything-claude-code:typescript-reviewer:a66f546",
-          "sourceKey": "session-start:a66f5469ae1891bb1"
-        },
-        {
-          "id": "session-stop:a6dc95e7596851439:2026-04-10T22:15:09.381Z",
-          "at": "2026-04-10T22:15:09.381Z",
+          "id": "session-stop:ac226f5a30b9e54b3:2026-04-10T22:39:24.898Z",
+          "at": "2026-04-10T22:39:24.898Z",
           "kind": "completion",
-          "agent": "voltagent-data-ai:data-scientist:a6dc95e",
+          "agent": "general-purpose:ac226f5",
           "detail": "completed",
-          "sourceKey": "session-stop:a6dc95e7596851439"
+          "sourceKey": "session-stop:ac226f5a30b9e54b3"
         },
         {
-          "id": "session-stop:a5411d6b78724a343:2026-04-10T22:15:38.042Z",
-          "at": "2026-04-10T22:15:38.042Z",
+          "id": "session-stop:a5bac3d4393996770:2026-04-10T22:40:06.619Z",
+          "at": "2026-04-10T22:40:06.619Z",
           "kind": "completion",
-          "agent": "voltagent-data-ai:data-scientist:a5411d6",
+          "agent": "general-purpose:a5bac3d",
           "detail": "completed",
-          "sourceKey": "session-stop:a5411d6b78724a343"
+          "sourceKey": "session-stop:a5bac3d4393996770"
         },
         {
-          "id": "session-stop:ac0c4a2b53cf52884:2026-04-10T22:15:42.165Z",
-          "at": "2026-04-10T22:15:42.165Z",
+          "id": "session-stop:a0b03af5bb6134513:2026-04-10T22:41:12.257Z",
+          "at": "2026-04-10T22:41:12.257Z",
           "kind": "completion",
-          "agent": "voltagent-data-ai:data-scientist:ac0c4a2",
+          "agent": "general-purpose:a0b03af",
           "detail": "completed",
-          "sourceKey": "session-stop:ac0c4a2b53cf52884"
+          "sourceKey": "session-stop:a0b03af5bb6134513"
         },
         {
-          "id": "session-stop:a0c2fe161c6145836:2026-04-10T22:15:48.873Z",
-          "at": "2026-04-10T22:15:48.873Z",
+          "id": "session-stop:a63373dd7a32a161a:2026-04-10T22:41:15.257Z",
+          "at": "2026-04-10T22:41:15.257Z",
           "kind": "completion",
-          "agent": "voltagent-data-ai:data-scientist:a0c2fe1",
+          "agent": "general-purpose:a63373d",
           "detail": "completed",
-          "sourceKey": "session-stop:a0c2fe161c6145836"
+          "sourceKey": "session-stop:a63373dd7a32a161a"
         },
         {
-          "id": "session-stop:ab1dbdf5103ffac33:2026-04-10T22:16:17.208Z",
-          "at": "2026-04-10T22:16:17.208Z",
+          "id": "session-stop:abff4f886622e36b9:2026-04-10T22:41:16.728Z",
+          "at": "2026-04-10T22:41:16.728Z",
           "kind": "completion",
-          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "agent": "general-purpose:abff4f8",
           "detail": "completed",
-          "sourceKey": "session-stop:ab1dbdf5103ffac33"
-        },
-        {
-          "id": "session-stop:a64d472b22ee15f5e:2026-04-10T22:17:00.353Z",
-          "at": "2026-04-10T22:17:00.353Z",
-          "kind": "completion",
-          "agent": "voltagent-research:research-analyst:acf9ebb",
-          "detail": "completed",
-          "sourceKey": "session-stop:a64d472b22ee15f5e"
-        },
-        {
-          "id": "session-stop:a33583f3ce8e13f3c:2026-04-10T22:17:49.775Z",
-          "at": "2026-04-10T22:17:49.775Z",
-          "kind": "completion",
-          "agent": "voltagent-research:research-analyst:acf9ebb",
-          "detail": "completed",
-          "sourceKey": "session-stop:a33583f3ce8e13f3c"
-        },
-        {
-          "id": "session-stop:a5387a6c4a0e101ff:2026-04-10T22:27:30.417Z",
-          "at": "2026-04-10T22:27:30.417Z",
-          "kind": "completion",
-          "agent": "voltagent-research:research-analyst:acf9ebb",
-          "detail": "completed",
-          "sourceKey": "session-stop:a5387a6c4a0e101ff"
+          "sourceKey": "session-stop:abff4f886622e36b9"
         }
       ]
     }

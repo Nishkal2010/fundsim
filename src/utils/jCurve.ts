@@ -89,15 +89,20 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
     // NAV: unrealized investments at interpolated value
     let nav = 0;
     companies.forEach((company) => {
-      if (company.investYear <= year && company.exitYear >= year) {
+      if (company.investYear <= year && company.exitYear > year) {
         const yearsHeld = year - company.investYear;
         const holdPeriod = company.exitYear - company.investYear;
+        // Loss companies are modelled as total write-offs (0 recovery).
+        // Winners are exited at avgExitMultiple on invested capital.
         const exitValue = company.isLoss
           ? 0
           : company.investedCapital * avgExitMultiple;
+        // Guard against holdPeriod === 0 (should not occur given exitYear
+        // is clamped to >= investYear + 1, but defensive in case of bad input).
+        const progress = holdPeriod > 0 ? yearsHeld / holdPeriod : 1;
         const interpolatedValue =
           company.investedCapital +
-          (exitValue - company.investedCapital) * (yearsHeld / holdPeriod);
+          (exitValue - company.investedCapital) * progress;
         nav += interpolatedValue;
       }
     });
@@ -141,6 +146,9 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
     }
   });
 
+  // NOTE: "finalNetMultiple" is gross-of-carry, net-of-fees (MOIC before carry
+  // is deducted). It is NOT a true net-of-carry multiple. Rename or subtract
+  // carry if a net-of-carry figure is needed downstream.
   const finalNetMultiple =
     cumulativeCapitalCalled > 0
       ? cumulativeDistributions / cumulativeCapitalCalled

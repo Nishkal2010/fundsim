@@ -248,6 +248,7 @@ export interface ComputedCashFlowMonth {
   insurance: number;
   technology: number;
   professionalServices: number;
+  miscOpEx: number;
   startupCostsPayment: number;
   loanPrincipal: number;
   interestPayment: number;

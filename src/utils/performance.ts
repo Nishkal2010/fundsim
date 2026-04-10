@@ -20,13 +20,19 @@ export function calculatePerformance(inputs: FundInputs): PerformanceData {
     totalCapitalCalled > 0 ? Math.max(0, navActual / totalCapitalCalled) : 0;
   const tvpi = dpi + rvpi;
   const netIRR = jCurve.netIRR;
+  // grossMOIC: gross back the LP-scaled distributions to fund-level before
+  // dividing by fund-level netInvestableCapital. Guard against gpCommitment===1
+  // (degenerate case) to avoid division by zero.
+  const lpScale = 1 - inputs.gpCommitment;
   const grossMOIC =
-    lifecycle.netInvestableCapital > 0
-      ? totalDistributions / lifecycle.netInvestableCapital
+    lifecycle.netInvestableCapital > 0 && lpScale > 0
+      ? totalDistributions / lpScale / lifecycle.netInvestableCapital
       : 0;
   const netMOIC = tvpi;
 
-  // PME: compare to S&P
+  // NOTE: This is a simplified PME approximation (TVPI / index terminal value).
+  // A proper Kaplan-Schoar PME would discount each capital call and distribution
+  // at the index return.
   const spGrowth = Math.pow(1 + inputs.spReturn, inputs.fundLife);
   const pme = spGrowth > 0 ? tvpi / spGrowth : 0;
 

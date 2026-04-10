@@ -699,7 +699,8 @@ export function DCFCalculator({
       // FCFE
       const interest = annualInterestExpense * Math.pow(1 + g, yr - 1);
       const netBorrowing = revenue * (netBorrowingRate / 100) - interest;
-      const netIncome = (ebit - interest) * (1 - effectiveTax) + nolShield;
+      // NOL benefit already reflected in effectiveTax via nolUsed; do not add nolShield again
+      const netIncome = (ebit - interest - nolUsed) * (1 - effectiveTax);
       const fcfe = fcff - interest * (1 - effectiveTax) + netBorrowing;
 
       const dps = baseDPS * Math.pow(1 + dividendGrowthPhase1 / 100, yr);
@@ -736,7 +737,9 @@ export function DCFCalculator({
     }, 0);
 
     const tvGordon =
-      wacc > tgr ? (last.fcff * (1 + tgr)) / (wacc - tgr) : last.fcff * 25;
+      wacc - tgr > 1e-6
+        ? (last.fcff * (1 + tgr)) / (wacc - tgr)
+        : last.fcff * 25;
 
     const tvExit = last.ebitda * terminalEVEBITDA;
 
@@ -774,7 +777,9 @@ export function DCFCalculator({
     const ddmRows: { yr: number; dps: number; pv: number }[] = [];
     let ddmPVSum = 0;
     let currentDPS = baseDPS;
-    for (let yr = 1; yr <= Math.max(dividendPhase1Years, 5); yr++) {
+    // Run Phase 1 (dividendPhase1Years) + 5 explicit Phase 2 years before TV
+    const ddmTotalYears = dividendPhase1Years + 5;
+    for (let yr = 1; yr <= ddmTotalYears; yr++) {
       const g =
         yr <= dividendPhase1Years
           ? dividendGrowthPhase1 / 100
@@ -790,15 +795,14 @@ export function DCFCalculator({
         ? (ddmRows[ddmRows.length - 1].dps * (1 + dividendGrowthPhase2 / 100)) /
           (ke_cost - dividendGrowthPhase2 / 100)
         : ddmRows[ddmRows.length - 1].dps * 20;
-    const pvTVDDM =
-      tvDDM / Math.pow(1 + ke_cost, Math.max(dividendPhase1Years, 5));
+    const pvTVDDM = tvDDM / Math.pow(1 + ke_cost, ddmTotalYears);
     const intrinsicValueDDM = ddmPVSum + pvTVDDM;
 
     // ── APV ─────────────────────────────────────────────────────────────────
     // Unlevered cost of equity: same risk premia as levered ke, unlevered beta
     const ke_unlevered =
       riskFreeRate / 100 +
-      (beta /
+      (adjustedBeta /
         (1 +
           (1 - effectiveTax) *
             (targetDebtRatio / (100 - targetDebtRatio + 0.001)))) *
@@ -884,6 +888,7 @@ export function DCFCalculator({
       let pvFCFFScen = 0;
       let lastEBITDA = 0;
       let lastFCFF = 0;
+      let scenNolRemaining = nolBalance;
 
       for (let yr = 1; yr <= years; yr++) {
         const g = getGrowthRate(yr) + revAdj / 100;
@@ -891,11 +896,16 @@ export function DCFCalculator({
         const ebitda = revenue * (adjEBITDAMargin / 100);
         const da = revenue * (daRate / 100);
         const ebit = ebitda - da;
-        const nopat = ebit * (1 - effectiveTax);
+        // Apply NOL shield matching the main loop logic
+        const scenNolUsed = Math.min(scenNolRemaining, ebit);
+        scenNolRemaining -= scenNolUsed;
+        const scenTaxableIncome = ebit - scenNolUsed;
+        const nopat = ebit - scenTaxableIncome * effectiveTax;
         const capex = revenue * (capexRate / 100);
         const deltaNWC = revenue * (nwcRate / 100) - prevRev * (nwcRate / 100);
         const sbc = revenue * (sbcRate / 100);
-        const fcff = nopat + da - capex - deltaNWC - sbc;
+        // SBC excluded to match main FCFF loop (EBIT margin already reflects it)
+        const fcff = nopat + da - capex - deltaNWC;
 
         pvFCFFScen += fcff / Math.pow(1 + adjWacc, yr);
         lastEBITDA = ebitda;
@@ -997,9 +1007,28 @@ export function DCFCalculator({
 
     const ffDCF = ffRange(ffWACCLow, ffWACCHigh, ffTGRLow, ffTGRHigh);
     const ffExit = ffExitRange(ffWACCLow, ffWACCHigh, ffExitLow, ffExitHigh);
+    // DDM football field: vary ke by ±1% and re-run DDM TV formula
+    function ddmValueAtKe(keAdj: number): number {
+      const keScen = ke_cost + keAdj;
+      let scenPVSum = 0;
+      let scenDPS = baseDPS;
+      for (let yr = 1; yr <= ddmTotalYears; yr++) {
+        const g =
+          yr <= dividendPhase1Years
+            ? dividendGrowthPhase1 / 100
+            : dividendGrowthPhase2 / 100;
+        scenDPS = scenDPS * (1 + g);
+        scenPVSum += scenDPS / Math.pow(1 + keScen, yr);
+      }
+      const g2 = dividendGrowthPhase2 / 100;
+      const scenTV =
+        keScen > g2 ? (scenDPS * (1 + g2)) / (keScen - g2) : scenDPS * 20;
+      const scenPVTV = scenTV / Math.pow(1 + keScen, ddmTotalYears);
+      return scenPVSum + scenPVTV;
+    }
     const ffDDM = {
-      low: intrinsicValueDDM * 0.85,
-      high: intrinsicValueDDM * 1.15,
+      low: ddmValueAtKe(0.01),
+      high: ddmValueAtKe(-0.01),
     };
 
     return {

@@ -56,7 +56,7 @@ export function buildAmortizationSchedule(
         ? (principal * monthlyRate) /
           (1 - Math.pow(1 + monthlyRate, -termMonths))
         : principal / termMonths;
-    const principalPmt = Math.min(payment - interest, balance);
+    const principalPmt = Math.max(0, Math.min(payment - interest, balance));
     balance = Math.max(0, balance - principalPmt);
     rows.push({
       month: m,
@@ -243,6 +243,7 @@ export function computeAllCashFlowMonths(
     const insurance = inc.insurance;
     const technology = inc.technology;
     const professionalServices = inc.professionalServices;
+    const miscOpEx = inc.miscOpEx;
     const startupCostsPayment = m === 1 ? totalStartupCost : 0;
     const loanPrincipal = amort ? amort.principal : 0;
     const interestPayment = amort ? amort.interest : 0;
@@ -264,6 +265,7 @@ export function computeAllCashFlowMonths(
       insurance +
       technology +
       professionalServices +
+      miscOpEx +
       startupCostsPayment +
       loanPrincipal +
       interestPayment +
@@ -289,6 +291,7 @@ export function computeAllCashFlowMonths(
       insurance,
       technology,
       professionalServices,
+      miscOpEx,
       startupCostsPayment,
       loanPrincipal,
       interestPayment,
@@ -392,8 +395,10 @@ export function computeBreakEven(
   overrides: BreakEvenOverrides,
 ) {
   const annual = annualTotals(incomeMonths);
+  const monthlyUtilities = assumptions.monthlyRent * 0.1;
   const fixedCosts =
     (assumptions.monthlyRent +
+      monthlyUtilities +
       assumptions.employeeCountYear1 * assumptions.avgMonthlySalary +
       assumptions.monthlyMarketing +
       assumptions.monthlyInsurance +
@@ -451,9 +456,20 @@ export function computeThreeYearPlan(
     12 *
     payrollFactor;
 
-  // Separate salary from non-salary OpEx so non-salary scales with revenue growth
+  // Separate salary from non-salary OpEx.
+  // Fixed costs (rent, utilities, insurance, technology, professionalServices,
+  // depreciation) do NOT scale with revenue. Only variable costs (marketing,
+  // miscOpEx) scale with revenue growth.
   const y1SalaryBase = year1Annual.salaries + year1Annual.payrollTaxes;
-  const y1NonSalaryBase = year1Annual.totalOpEx - y1SalaryBase;
+  const y1FixedNonSalary =
+    year1Annual.rent +
+    year1Annual.utilities +
+    year1Annual.insurance +
+    year1Annual.technology +
+    year1Annual.professionalServices +
+    year1Annual.depreciation;
+  const y1VariableNonSalary =
+    year1Annual.totalOpEx - y1SalaryBase - y1FixedNonSalary;
   const y2RevFactor = 1 + plan.year2RevenueGrowthRate / 100;
   const y3RevFactor = y2RevFactor * (1 + plan.year3RevenueGrowthRate / 100);
 
@@ -461,13 +477,16 @@ export function computeThreeYearPlan(
     revenue: number,
     cogsPct: number,
     extraSalary: number,
-    nonSalaryScale: number,
+    variableScale: number,
   ) => {
     const cogs = revenue * cogsPct;
     const grossProfit = revenue - cogs;
     const grossMarginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
     const totalOpEx =
-      y1NonSalaryBase * nonSalaryScale + y1SalaryBase + extraSalary;
+      y1FixedNonSalary +
+      y1VariableNonSalary * variableScale +
+      y1SalaryBase +
+      extraSalary;
     const netIncome = grossProfit - totalOpEx;
     const netMarginPct = revenue > 0 ? (netIncome / revenue) * 100 : 0;
     return {
@@ -483,7 +502,7 @@ export function computeThreeYearPlan(
   return [
     makeYear(y1Rev, baseCogsPct, 0, 1),
     makeYear(y2Rev, y2CogsPct, extraSalaryY2, y2RevFactor),
-    makeYear(y3Rev, y3CogsPct, extraSalaryY2 + extraSalaryY3, y3RevFactor),
+    makeYear(y3Rev, y3CogsPct, extraSalaryY3, y3RevFactor),
   ];
 }
 

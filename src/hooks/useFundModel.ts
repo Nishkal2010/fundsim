@@ -84,13 +84,25 @@ export function useFundModelState(
       // Auto-save for authenticated (non-demo) users, debounced 1.5s
       if (userId && loaded.current) {
         if (saveTimer.current) clearTimeout(saveTimer.current);
-        saveTimer.current = setTimeout(() => {
-          supabase
-            .from("fund_models")
-            .upsert(
-              { user_id: userId, inputs: next },
-              { onConflict: "user_id" },
-            );
+        // Capture userId at scheduling time to avoid a race where a different
+        // user logs in before the timer fires and the save targets the wrong row.
+        const capturedUserId = userId;
+        saveTimer.current = setTimeout(async () => {
+          // Bail out if the active user has changed since the timer was set
+          if (capturedUserId !== userId) return;
+          try {
+            const { error } = await supabase
+              .from("fund_models")
+              .upsert(
+                { user_id: capturedUserId, inputs: next },
+                { onConflict: "user_id" },
+              );
+            if (error) {
+              console.error("useFundModel: failed to save inputs", error);
+            }
+          } catch (err) {
+            console.error("useFundModel: unexpected error saving inputs", err);
+          }
         }, 1500);
       }
       return next;
