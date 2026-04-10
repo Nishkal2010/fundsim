@@ -1102,16 +1102,21 @@ export function IBSimulator() {
     // LBO — debt is ~65% of Enterprise Value, not just cash consideration
     const lboDebt = offerEV * 0.65;
     const lboEquity = offerEV - lboDebt;
+    // Exit EBITDA = exit revenue * target EBITDA margin
     const exitEBITDA =
-      tgtEBITDA *
-      Math.pow(1 + revenueGrowth / 100, 5) *
-      (ebitdaMarginPct /
-        (tgtRevenue > 0 ? (tgtEBITDA / tgtRevenue) * 100 : ebitdaMarginPct));
+      tgtRevenue > 0
+        ? tgtRevenue *
+          Math.pow(1 + revenueGrowth / 100, holdPeriod) *
+          (ebitdaMarginPct / 100)
+        : tgtEBITDA * Math.pow(1 + revenueGrowth / 100, holdPeriod);
     const exitEV = exitEBITDA * compsMultiple;
     const lboDebtRepaid = Math.min(lboDebt, tgtEBITDA * 5 * 0.3);
     const exitEquity = exitEV - (lboDebt - lboDebtRepaid);
     const moic = lboEquity > 0 ? exitEquity / lboEquity : 0;
-    const irr = lboEquity > 0 && moic > 0 ? (Math.pow(moic, 0.2) - 1) * 100 : 0;
+    const irr =
+      lboEquity > 0 && moic > 0
+        ? (Math.pow(moic, 1 / Math.max(1, holdPeriod)) - 1) * 100
+        : 0;
 
     // Football field
     const allEVs = [
@@ -1196,10 +1201,14 @@ export function IBSimulator() {
     const interestCovTranche =
       totalLBOInterest > 0 ? tgtEBITDA / totalLBOInterest : 99;
     const fcfYield = offerEV > 0 ? (tgtFCF / offerEV) * 100 : 0;
-    const dscr = totalLBOInterest > 0 ? tgtFCF / totalLBOInterest : 99;
+    const hp = Math.max(1, holdPeriod);
+    const annualPrincipal = totalTranchedDebt / hp;
+    const dscr =
+      totalLBOInterest + annualPrincipal > 0
+        ? tgtFCF / (totalLBOInterest + annualPrincipal)
+        : 99;
 
     // Debt paydown schedule over hold period
-    const hp = Math.max(1, holdPeriod);
     const debtSchedule = Array.from({ length: hp }, (_, i) => {
       const yr = i + 1;
       const fcfYr = tgtFCF * Math.pow(1 + revenueGrowth / 200, yr);
@@ -3412,7 +3421,7 @@ export function IBSimulator() {
                               : "#22C55E",
                     },
                     {
-                      label: "FCF / Total Debt (Yield)",
+                      label: "FCF Yield (FCF / EV)",
                       value: fmtN(C.fcfYield, 1) + "%",
                       sub: "Free cash flow as % of EV — > 5% preferred",
                       color:

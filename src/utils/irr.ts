@@ -1,4 +1,12 @@
-export function calculateIRR(cashFlows: number[], guess: number = 0.1): number | null {
+export function calculateIRR(
+  cashFlows: number[],
+  guess: number = 0.1,
+): number | null {
+  // IRR requires both positive and negative cash flows to be defined
+  const hasPositive = cashFlows.some((cf) => cf > 0);
+  const hasNegative = cashFlows.some((cf) => cf < 0);
+  if (!hasPositive || !hasNegative) return null;
+
   const maxIterations = 1000;
   const tolerance = 0.0001;
   let rate = guess;
@@ -10,14 +18,14 @@ export function calculateIRR(cashFlows: number[], guess: number = 0.1): number |
       const cf = cashFlows[t];
       const disc = Math.pow(1 + rate, t);
       npv += cf / disc;
-      dnpv -= t * cf / (disc * (1 + rate));
+      dnpv -= (t * cf) / (disc * (1 + rate));
     }
     if (Math.abs(dnpv) < 1e-12) return null;
     const newRate = rate - npv / dnpv;
     if (Math.abs(newRate - rate) < tolerance) {
       return isFinite(newRate) ? newRate : null;
     }
-    rate = newRate;
+    rate = Math.max(-0.9999, newRate); // clamp to prevent domain errors
   }
   return null;
 }

@@ -89,10 +89,116 @@
       "status": "completed",
       "completed_at": "2026-04-10T03:52:19.905Z",
       "duration_ms": 43143
+    },
+    {
+      "agent_id": "a4b4b3429bde64ca0",
+      "agent_type": "Explore",
+      "started_at": "2026-04-10T04:44:20.367Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T04:46:29.208Z",
+      "duration_ms": 128841
+    },
+    {
+      "agent_id": "a8666e41ca896a8ea",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T14:40:02.544Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T14:54:53.857Z",
+      "duration_ms": 891313
+    },
+    {
+      "agent_id": "a55933d99d488f54a",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T14:40:13.837Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T14:56:00.255Z",
+      "duration_ms": 946418
+    },
+    {
+      "agent_id": "ad9aa0b9a40d05c01",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T14:55:56.518Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T15:04:59.819Z",
+      "duration_ms": 543301
+    },
+    {
+      "agent_id": "a76d646fef02b8992",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T14:56:05.368Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T15:05:38.862Z",
+      "duration_ms": 573494
+    },
+    {
+      "agent_id": "a4214b09bc0d64ee0",
+      "agent_type": "general-purpose",
+      "started_at": "2026-04-10T15:00:16.682Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T15:08:42.048Z",
+      "duration_ms": 505366
+    },
+    {
+      "agent_id": "a5951097bdec9db4e",
+      "agent_type": "general-purpose",
+      "started_at": "2026-04-10T15:00:27.650Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T15:10:28.641Z",
+      "duration_ms": 600991
+    },
+    {
+      "agent_id": "ac0c4a2b53cf52884",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T22:13:27.661Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T22:15:42.165Z",
+      "duration_ms": 134504
+    },
+    {
+      "agent_id": "a5411d6b78724a343",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T22:13:36.129Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T22:15:38.042Z",
+      "duration_ms": 121913
+    },
+    {
+      "agent_id": "a6dc95e7596851439",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T22:13:46.486Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T22:15:09.381Z",
+      "duration_ms": 82895
+    },
+    {
+      "agent_id": "a0c2fe161c6145836",
+      "agent_type": "voltagent-data-ai:data-scientist",
+      "started_at": "2026-04-10T22:13:53.700Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T22:15:48.873Z",
+      "duration_ms": 115173
+    },
+    {
+      "agent_id": "a66f5469ae1891bb1",
+      "agent_type": "everything-claude-code:typescript-reviewer",
+      "started_at": "2026-04-10T22:14:00.462Z",
+      "parent_mode": "none",
+      "status": "running"
     }
   ],
-  "total_spawned": 10,
-  "total_completed": 10,
+  "total_spawned": 22,
+  "total_completed": 21,
   "total_failed": 0,
-  "last_updated": "2026-04-10T03:55:54.972Z"
+  "last_updated": "2026-04-10T22:27:30.519Z"
 }

@@ -606,8 +606,7 @@ export function DCFCalculator({
     } = inputs;
 
     const years = Math.max(1, Math.min(10, projectionYears));
-    const effectiveTax =
-      taxMethod === "override" ? taxRate / 100 : taxRate / 100;
+    const effectiveTax = taxRate / 100;
 
     // ── WACC ────────────────────────────────────────────────────────────────
     const adjustedBeta =
@@ -681,7 +680,8 @@ export function DCFCalculator({
       nolRemaining -= nolUsed;
       const nolShield = nolUsed * effectiveTax;
       const taxableIncome = ebit - nolUsed;
-      const nopat = taxableIncome * (1 - effectiveTax) + nolShield;
+      // NOPAT = EBIT - taxes paid; taxes paid on (EBIT - NOL used)
+      const nopat = ebit - taxableIncome * effectiveTax;
 
       const capex =
         capexMethod === "pct_da"
@@ -693,11 +693,11 @@ export function DCFCalculator({
 
       const sbc = revenue * (sbcRate / 100);
 
-      // FCFF = NOPAT + D&A - CapEx - ΔNWC - SBC
-      const fcff = nopat + da - capex - deltaNWC - sbc;
+      // FCFF = NOPAT + D&A - CapEx - ΔNWC (SBC excluded: EBIT margin already reflects it)
+      const fcff = nopat + da - capex - deltaNWC;
 
       // FCFE
-      const interest = annualInterestExpense * (1 + g * (yr - 1));
+      const interest = annualInterestExpense * Math.pow(1 + g, yr - 1);
       const netBorrowing = revenue * (netBorrowingRate / 100) - interest;
       const netIncome = (ebit - interest) * (1 - effectiveTax) + nolShield;
       const fcfe = fcff - interest * (1 - effectiveTax) + netBorrowing;
@@ -773,15 +773,17 @@ export function DCFCalculator({
     // ── DDM ─────────────────────────────────────────────────────────────────
     const ddmRows: { yr: number; dps: number; pv: number }[] = [];
     let ddmPVSum = 0;
+    let currentDPS = baseDPS;
     for (let yr = 1; yr <= Math.max(dividendPhase1Years, 5); yr++) {
       const g =
         yr <= dividendPhase1Years
           ? dividendGrowthPhase1 / 100
           : dividendGrowthPhase2 / 100;
-      const dps = baseDPS * Math.pow(1 + g, yr);
-      const pv = dps / Math.pow(1 + ke_cost, yr);
+      // Compound running DPS so phase-2 correctly builds on phase-1 ending DPS
+      currentDPS = currentDPS * (1 + g);
+      const pv = currentDPS / Math.pow(1 + ke_cost, yr);
       ddmPVSum += pv;
-      ddmRows.push({ yr, dps, pv });
+      ddmRows.push({ yr, dps: currentDPS, pv });
     }
     const tvDDM =
       ke_cost > dividendGrowthPhase2 / 100
@@ -793,14 +795,16 @@ export function DCFCalculator({
     const intrinsicValueDDM = ddmPVSum + pvTVDDM;
 
     // ── APV ─────────────────────────────────────────────────────────────────
-    // Unlevered cost of equity = ke (assume all equity firm)
+    // Unlevered cost of equity: same risk premia as levered ke, unlevered beta
     const ke_unlevered =
       riskFreeRate / 100 +
       (beta /
         (1 +
           (1 - effectiveTax) *
             (targetDebtRatio / (100 - targetDebtRatio + 0.001)))) *
-        (equityRiskPremium / 100);
+        (equityRiskPremium / 100) +
+      sizePreium / 100 +
+      specificRisk / 100;
 
     const pvFCFFUnlevered = rows.reduce((acc, r) => {
       return acc + r.fcff / Math.pow(1 + ke_unlevered, r.yr);
@@ -838,7 +842,8 @@ export function DCFCalculator({
           (acc, r) => acc + r.fcff / Math.pow(1 + w, r.yr),
           0,
         );
-        const tv = w > g ? (last.fcff * (1 + g)) / (w - g) : last.fcff * 25;
+        const tv =
+          w - g > 1e-6 ? (last.fcff * (1 + g)) / (w - g) : last.fcff * 25;
         const pv_tv = tv / Math.pow(1 + w, years);
         const ev = pvF + pv_tv;
         const eq = ev - netDebt - minorityInterest - preferredStock;
@@ -898,12 +903,17 @@ export function DCFCalculator({
         prevRev = revenue;
       }
 
+      const gordonScen =
+        adjWacc > adjTGR
+          ? (lastFCFF * (1 + adjTGR)) / (adjWacc - adjTGR)
+          : lastFCFF * 25;
+      const exitScen = lastEBITDA * (terminalEVEBITDA + exitAdj);
       const tvScen =
-        terminalMethod === "gordon" || terminalMethod === "avg"
-          ? adjWacc > adjTGR
-            ? (lastFCFF * (1 + adjTGR)) / (adjWacc - adjTGR)
-            : lastFCFF * 25
-          : lastEBITDA * (terminalEVEBITDA + exitAdj);
+        terminalMethod === "gordon"
+          ? gordonScen
+          : terminalMethod === "exit_multiple"
+            ? exitScen
+            : (gordonScen + exitScen) / 2;
 
       const pvTVScen = tvScen / Math.pow(1 + adjWacc, years);
       const evScen = pvFCFFScen + pvTVScen;
@@ -949,7 +959,8 @@ export function DCFCalculator({
           (acc, r) => acc + r.fcff / Math.pow(1 + w, r.yr),
           0,
         );
-        const tv = w > g ? (last.fcff * (1 + g)) / (w - g) : last.fcff * 25;
+        const tv =
+          w - g > 1e-6 ? (last.fcff * (1 + g)) / (w - g) : last.fcff * 25;
         const pvt = tv / Math.pow(1 + w, years);
         const ev = pvF + pvt;
         const eq = ev - netDebt - minorityInterest - preferredStock;

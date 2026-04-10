@@ -16,6 +16,7 @@ import {
   computeAllIncomeMonths,
   buildAmortizationSchedule,
   annualTotals,
+  computeThreeYearPlan,
 } from "../utils/decaUtils";
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ function computeScenario(
     }[];
   },
   label: string,
+  threeYearPlan: ReturnType<typeof Object.assign>,
 ): ScenarioResult {
   const modifiedAssumptions = {
     ...baseAssumptions,
@@ -130,14 +132,16 @@ function computeScenario(
   }
   if (breakEvenMonth === 0) breakEvenMonth = 13; // not achieved in year 1
 
-  // 3-year cumulative: year1 + rough year2 + rough year3 using simple growth
-  const y2Revenue = annual.totalRevenue * 1.5;
-  const y3Revenue = y2Revenue * 1.4;
-  const y2NetIncome =
-    y2Revenue * (annual.netIncome / (annual.totalRevenue || 1));
-  const y3NetIncome =
-    y3Revenue * (annual.netIncome / (annual.totalRevenue || 1));
-  const threeYearCumNetIncome = annual.netIncome + y2NetIncome + y3NetIncome;
+  // 3-year cumulative: use actual plan growth rates via computeThreeYearPlan
+  const threeYearData = computeThreeYearPlan(
+    annual,
+    threeYearPlan,
+    modifiedAssumptions,
+  );
+  const threeYearCumNetIncome = threeYearData.reduce(
+    (sum, yr) => sum + yr.netIncome,
+    0,
+  );
 
   return {
     label,
@@ -283,15 +287,39 @@ function TornadoTooltip({ active, payload, label }: TooltipProps) {
 
 export function Step10_Sensitivity() {
   const { state, dispatch } = useDECA();
-  const { assumptions, startupCosts, sensitivity } = state;
+  const { assumptions, startupCosts, sensitivity, threeYearPlan } = state;
 
   const scenarios: ScenarioResult[] = useMemo(() => {
     return [
-      computeScenario(assumptions, 0.5, 5, 0.7, startupCosts, "Worst Case"),
-      computeScenario(assumptions, 1.0, 0, 1.0, startupCosts, "Expected Case"),
-      computeScenario(assumptions, 1.5, -5, 1.3, startupCosts, "Best Case"),
+      computeScenario(
+        assumptions,
+        0.5,
+        5,
+        0.7,
+        startupCosts,
+        "Worst Case",
+        threeYearPlan,
+      ),
+      computeScenario(
+        assumptions,
+        1.0,
+        0,
+        1.0,
+        startupCosts,
+        "Expected Case",
+        threeYearPlan,
+      ),
+      computeScenario(
+        assumptions,
+        1.5,
+        -5,
+        1.3,
+        startupCosts,
+        "Best Case",
+        threeYearPlan,
+      ),
     ];
-  }, [assumptions, startupCosts]);
+  }, [assumptions, startupCosts, threeYearPlan]);
 
   const tornadoData = useMemo(
     () => computeTornadoData(assumptions, startupCosts),

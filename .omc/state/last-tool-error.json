@@ -1,7 +1,7 @@
 {
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"sleep 15 && for f in a9025db66ce68470b ab78decb398262b91 afaed0da7a29a4976 ae01b754df103a1a4; do\\n  status=$(tail -1 /private/tmp/claude-501/-Users-nishkaldachepelly/501af95c-2e63-4a40-bdd...",
-  "error": "Exit code 1\n(eval):2: read-only variable: status",
-  "timestamp": "2026-04-10T03:52:56.596Z",
-  "retry_count": 1
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/nishkaldachepelly/fundsim/src/components/DCF/DCFCalculator.tsx\"}",
+  "error": "File content (30524 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-04-10T22:14:06.431Z",
+  "retry_count": 5
 }

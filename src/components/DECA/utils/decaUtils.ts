@@ -121,7 +121,9 @@ export function computeIncomeMonth(
     .filter((i) => i.category === "Equipment")
     .reduce((sum, i) => sum + i.cost, 0);
   const depreciation =
-    equipmentCost / (assumptions.equipmentUsefulLifeYears * 12);
+    assumptions.equipmentUsefulLifeYears > 0
+      ? equipmentCost / (assumptions.equipmentUsefulLifeYears * 12)
+      : 0;
 
   const miscOpEx = subtotalOpEx * (data.miscOpExPct / 100);
   const totalOpEx = subtotalOpEx + depreciation + miscOpEx;
@@ -244,11 +246,11 @@ export function computeAllCashFlowMonths(
     const startupCostsPayment = m === 1 ? totalStartupCost : 0;
     const loanPrincipal = amort ? amort.principal : 0;
     const interestPayment = amort ? amort.interest : 0;
-    // Quarterly tax payments
+    // Quarterly tax payments: sum actual taxes from the 3 months in the quarter
     const taxPayments = [3, 6, 9, 12].includes(m)
-      ? inc.taxes > 0
-        ? inc.taxes * 3
-        : 0
+      ? incomeMonths
+          .slice(m - 3, m)
+          .reduce((sum, im) => sum + (im.taxes > 0 ? im.taxes : 0), 0)
       : 0;
     const otherOutflows = 0;
 
@@ -331,8 +333,9 @@ export function computeBalanceSheet(
 
   // Liabilities
   const accountsPayable = overrides.accountsPayable;
+  // Short-term portion = principal due in the NEXT 12 months (months 13–24)
   const shortTermLoanPortion = amortRows
-    .slice(0, 12)
+    .slice(12, 24)
     .reduce((s, r) => s + r.principal, 0);
   const accruedExpenses = overrides.accruedExpenses;
   const totalCurrentLiabilities =
@@ -435,10 +438,18 @@ export function computeThreeYearPlan(
   const y2CogsPct = Math.max(0, baseCogsPct + plan.year2CogsChange / 100);
   const y3CogsPct = Math.max(0, y2CogsPct + plan.year3CogsChange / 100);
 
+  // Include payroll taxes on new hires, same as Year 1 base employees
+  const payrollFactor = 1 + assumptions.payrollTaxRate / 100;
   const extraSalaryY2 =
-    plan.year2HeadcountAdditions * assumptions.avgMonthlySalary * 12;
+    plan.year2HeadcountAdditions *
+    assumptions.avgMonthlySalary *
+    12 *
+    payrollFactor;
   const extraSalaryY3 =
-    plan.year3HeadcountAdditions * assumptions.avgMonthlySalary * 12;
+    plan.year3HeadcountAdditions *
+    assumptions.avgMonthlySalary *
+    12 *
+    payrollFactor;
 
   // Separate salary from non-salary OpEx so non-salary scales with revenue growth
   const y1SalaryBase = year1Annual.salaries + year1Annual.payrollTaxes;

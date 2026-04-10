@@ -31,8 +31,14 @@ function calculateEuropeanWaterfall(
   gpCapital: number,
   totalCapitalCalled: number,
 ): WaterfallData {
-  const { totalProceeds, hurdleRate, carryPercentage, catchUpRate, fundLife } =
-    inputs;
+  const {
+    totalProceeds,
+    hurdleRate,
+    carryPercentage,
+    catchUpRate,
+    fundLife,
+    gpCommitment,
+  } = inputs;
 
   const tiers: WaterfallTier[] = [];
   let remaining = totalProceeds;
@@ -80,9 +86,10 @@ function calculateEuropeanWaterfall(
     );
   }
 
-  // Tier 3: GP Catch-Up
-  const totalProfits = totalProceeds - (lpCapital + gpCapital);
-  const targetGPCarry = Math.max(0, totalProfits * carryPercentage);
+  // Tier 3: GP Catch-Up — carry is on LP profits only, not GP's own gains
+  const lpShare = 1 - gpCommitment;
+  const lpProfits = totalProceeds * lpShare - lpCapital;
+  const targetGPCarry = Math.max(0, lpProfits * carryPercentage);
 
   let gpCatchUp = 0;
   let lpDuringCatchUp = 0;
@@ -193,7 +200,7 @@ function calculateAmericanWaterfall(
 
     // Tier 2
     const pref =
-      dealLPCapital * (Math.pow(1 + hurdleRate, Math.min(5, fundLife)) - 1);
+      dealLPCapital * (Math.pow(1 + hurdleRate, inputs.avgHoldPeriod) - 1);
     const prefPaid = Math.min(pref, dealRemaining);
     tiers[1].lpAmount += prefPaid;
     dealRemaining -= prefPaid;

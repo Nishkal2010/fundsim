@@ -89,7 +89,7 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
     // NAV: unrealized investments at interpolated value
     let nav = 0;
     companies.forEach((company) => {
-      if (company.investYear < year && company.exitYear >= year) {
+      if (company.investYear <= year && company.exitYear >= year) {
         const yearsHeld = year - company.investYear;
         const holdPeriod = company.exitYear - company.investYear;
         const exitValue = company.isLoss
@@ -146,7 +146,7 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
       ? cumulativeDistributions / cumulativeCapitalCalled
       : 0;
 
-  const netIRR = calculateIRR(lpCashFlows.slice(1));
+  const netIRR = calculateIRR(lpCashFlows);
 
   return {
     points,
