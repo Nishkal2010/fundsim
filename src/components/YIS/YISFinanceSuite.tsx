@@ -201,7 +201,7 @@ function OverviewTab() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <SectionHeader>Prizes</SectionHeader>
-          <Sub>2024–25 prize structure</Sub>
+          <Sub>2025–26 prize structure</Sub>
           <div className="space-y-2">
             {prizes.map((p) => (
               <div

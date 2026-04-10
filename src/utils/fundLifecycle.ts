@@ -1,12 +1,7 @@
-import type { FundInputs, LifecycleData, YearlyData } from '../types/fund';
+import type { FundInputs, LifecycleData, YearlyData } from "../types/fund";
 
 export function calculateLifecycle(inputs: FundInputs): LifecycleData {
-  const {
-    fundSize,
-    fundLife,
-    investmentPeriod,
-    managementFee,
-  } = inputs;
+  const { fundSize, fundLife, investmentPeriod, managementFee } = inputs;
 
   // During investment period: fee on committed capital
   const investmentPeriodFees = managementFee * fundSize * investmentPeriod;
@@ -16,7 +11,11 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
 
   // Harvest period: fees on declining invested capital
   let remainingInvested = netInvestableCapital;
-  const exitPerYear = netInvestableCapital / (fundLife - investmentPeriod);
+  const harvestYears = fundLife - investmentPeriod;
+  const exitPerYear =
+    harvestYears > 0
+      ? netInvestableCapital / harvestYears
+      : netInvestableCapital;
   let harvestFees = 0;
   for (let y = investmentPeriod + 1; y <= fundLife; y++) {
     harvestFees += managementFee * remainingInvested;
@@ -40,7 +39,10 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
       capitalDeployed = annualDeployment;
     } else {
       // Step-down: fee on remaining invested capital
-      const remainingAtYearStart = finalNetInvestable - (year - investmentPeriod - 1) * (finalNetInvestable / (fundLife - investmentPeriod));
+      const remainingAtYearStart =
+        finalNetInvestable -
+        (year - investmentPeriod - 1) *
+          (finalNetInvestable / (fundLife - investmentPeriod));
       mgmtFee = managementFee * Math.max(0, remainingAtYearStart);
       capitalDeployed = 0;
     }
@@ -48,7 +50,10 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
     cumulativeDeployed += capitalDeployed;
     const capitalCalled = mgmtFee + capitalDeployed;
     cumulativeCalledForDeployment += capitalCalled;
-    const remainingCommitment = Math.max(0, fundSize - cumulativeCalledForDeployment);
+    const remainingCommitment = Math.max(
+      0,
+      fundSize - cumulativeCalledForDeployment,
+    );
 
     years.push({
       year,

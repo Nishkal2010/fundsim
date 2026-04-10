@@ -19,13 +19,6 @@ interface ComparePanelProps {
   onTabChange: (tab: TabId) => void;
 }
 
-const tabContent: Record<TabId, React.ReactNode> = {
-  lifecycle: <FundLifecycleTab />,
-  jcurve: <JCurveTab />,
-  waterfall: <WaterfallTab />,
-  performance: <PerformanceTab />,
-};
-
 export function ComparePanel({
   model,
   label,
@@ -34,6 +27,13 @@ export function ComparePanel({
   onTabChange,
 }: ComparePanelProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const tabContent: Record<TabId, React.ReactNode> = {
+    lifecycle: <FundLifecycleTab />,
+    jcurve: <JCurveTab />,
+    waterfall: <WaterfallTab />,
+    performance: <PerformanceTab />,
+  };
 
   return (
     <FundModelContext.Provider value={model}>

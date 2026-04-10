@@ -1,0 +1,131 @@
+{
+  "updatedAt": "2026-04-10T00:02:38.386Z",
+  "missions": [
+    {
+      "id": "session:501af95c-2e63-4a40-bdd3-6c8b83155ccc:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-04-09T04:20:16.300Z",
+      "updatedAt": "2026-04-10T00:02:38.386Z",
+      "status": "done",
+      "workerCount": 4,
+      "taskCounts": {
+        "total": 4,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 4,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "voltagent-research:research-analyst:acf9ebb",
+          "role": "voltagent-research:research-analyst",
+          "ownership": "acf9ebb569c43c18d",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T00:02:38.386Z"
+        },
+        {
+          "name": "voltagent-research:research-analyst:a71c72e",
+          "role": "voltagent-research:research-analyst",
+          "ownership": "a71c72eac29d6fb7c",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-09T04:25:26.727Z"
+        },
+        {
+          "name": "Explore:acd1b1e",
+          "role": "Explore",
+          "ownership": "acd1b1e7a3781e07b",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-09T05:52:49.289Z"
+        },
+        {
+          "name": "Explore:a777a58",
+          "role": "Explore",
+          "ownership": "a777a5862a90d4e1d",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-09T06:15:20.648Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-stop:af88f7642aa803207:2026-04-09T05:55:27.199Z",
+          "at": "2026-04-09T05:55:27.199Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:af88f7642aa803207"
+        },
+        {
+          "id": "session-stop:ad9364003d6b667d9:2026-04-09T06:02:27.030Z",
+          "at": "2026-04-09T06:02:27.030Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:ad9364003d6b667d9"
+        },
+        {
+          "id": "session-start:a777a5862a90d4e1d:2026-04-09T06:14:32.333Z",
+          "at": "2026-04-09T06:14:32.333Z",
+          "kind": "update",
+          "agent": "Explore:a777a58",
+          "detail": "started Explore:a777a58",
+          "sourceKey": "session-start:a777a5862a90d4e1d"
+        },
+        {
+          "id": "session-stop:a777a5862a90d4e1d:2026-04-09T06:15:20.648Z",
+          "at": "2026-04-09T06:15:20.648Z",
+          "kind": "completion",
+          "agent": "Explore:a777a58",
+          "detail": "completed",
+          "sourceKey": "session-stop:a777a5862a90d4e1d"
+        },
+        {
+          "id": "session-stop:a6ffafa2cb357a405:2026-04-09T06:20:58.508Z",
+          "at": "2026-04-09T06:20:58.508Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:a6ffafa2cb357a405"
+        },
+        {
+          "id": "session-stop:a3b53130570473aef:2026-04-09T23:55:08.000Z",
+          "at": "2026-04-09T23:55:08.000Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:a3b53130570473aef"
+        },
+        {
+          "id": "session-stop:a673e0fa5f138a853:2026-04-09T23:56:53.982Z",
+          "at": "2026-04-09T23:56:53.982Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:a673e0fa5f138a853"
+        },
+        {
+          "id": "session-stop:a79579d1aca77c6e5:2026-04-10T00:02:38.386Z",
+          "at": "2026-04-10T00:02:38.386Z",
+          "kind": "completion",
+          "agent": "voltagent-research:research-analyst:acf9ebb",
+          "detail": "completed",
+          "sourceKey": "session-stop:a79579d1aca77c6e5"
+        }
+      ]
+    }
+  ]
+}

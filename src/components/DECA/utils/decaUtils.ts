@@ -219,9 +219,7 @@ export function computeAllCashFlowMonths(
 ): ComputedCashFlowMonth[] {
   const months: ComputedCashFlowMonth[] = [];
   let beginningBalance = 0;
-  const totalStartupCost =
-    startupCosts.items.reduce((s, i) => s + i.cost, 0) +
-    assumptions.avgMonthlySalary * assumptions.employeeCountYear1 * 3;
+  const totalStartupCost = startupCosts.items.reduce((s, i) => s + i.cost, 0);
 
   for (let m = 1; m <= 12; m++) {
     const inc = incomeMonths[m - 1];
@@ -394,6 +392,7 @@ export function computeBreakEven(
   const fixedCosts =
     (assumptions.monthlyRent +
       assumptions.employeeCountYear1 * assumptions.avgMonthlySalary +
+      assumptions.monthlyMarketing +
       assumptions.monthlyInsurance +
       assumptions.monthlyTechnology +
       assumptions.monthlyProfessionalServices) *
@@ -441,16 +440,23 @@ export function computeThreeYearPlan(
   const extraSalaryY3 =
     plan.year3HeadcountAdditions * assumptions.avgMonthlySalary * 12;
 
+  // Separate salary from non-salary OpEx so non-salary scales with revenue growth
+  const y1SalaryBase = year1Annual.salaries + year1Annual.payrollTaxes;
+  const y1NonSalaryBase = year1Annual.totalOpEx - y1SalaryBase;
+  const y2RevFactor = 1 + plan.year2RevenueGrowthRate / 100;
+  const y3RevFactor = y2RevFactor * (1 + plan.year3RevenueGrowthRate / 100);
+
   const makeYear = (
     revenue: number,
     cogsPct: number,
     extraSalary: number,
-    baseOpEx: number,
+    nonSalaryScale: number,
   ) => {
     const cogs = revenue * cogsPct;
     const grossProfit = revenue - cogs;
     const grossMarginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
-    const totalOpEx = baseOpEx + extraSalary;
+    const totalOpEx =
+      y1NonSalaryBase * nonSalaryScale + y1SalaryBase + extraSalary;
     const netIncome = grossProfit - totalOpEx;
     const netMarginPct = revenue > 0 ? (netIncome / revenue) * 100 : 0;
     return {
@@ -464,14 +470,9 @@ export function computeThreeYearPlan(
   };
 
   return [
-    makeYear(y1Rev, baseCogsPct, 0, year1Annual.totalOpEx),
-    makeYear(y2Rev, y2CogsPct, extraSalaryY2, year1Annual.totalOpEx),
-    makeYear(
-      y3Rev,
-      y3CogsPct,
-      extraSalaryY2 + extraSalaryY3,
-      year1Annual.totalOpEx,
-    ),
+    makeYear(y1Rev, baseCogsPct, 0, 1),
+    makeYear(y2Rev, y2CogsPct, extraSalaryY2, y2RevFactor),
+    makeYear(y3Rev, y3CogsPct, extraSalaryY2 + extraSalaryY3, y3RevFactor),
   ];
 }
 

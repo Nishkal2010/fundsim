@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/nishkaldachepelly/fundsim/src/utils/decaUtils.ts\"}",
+  "error": "File does not exist. Note: your current working directory is /Users/nishkaldachepelly/fundsim.",
+  "timestamp": "2026-04-09T06:02:36.876Z",
+  "retry_count": 1
+}

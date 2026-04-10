@@ -121,6 +121,7 @@ export function LoginPage({ onDemoLogin }: LoginPageProps) {
   function handleDemo() {
     setLoading(true);
     setTimeout(() => {
+      setLoading(false);
       onDemoLogin({ name: "Demo User", email: "demo@fundsim.io" });
     }, 400);
   }

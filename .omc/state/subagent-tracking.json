@@ -1,0 +1,44 @@
+{
+  "agents": [
+    {
+      "agent_id": "acf9ebb569c43c18d",
+      "agent_type": "voltagent-research:research-analyst",
+      "started_at": "2026-04-09T04:20:16.300Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-09T04:26:12.571Z",
+      "duration_ms": 356271
+    },
+    {
+      "agent_id": "a71c72eac29d6fb7c",
+      "agent_type": "voltagent-research:research-analyst",
+      "started_at": "2026-04-09T04:20:27.911Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-09T04:25:26.727Z",
+      "duration_ms": 298816
+    },
+    {
+      "agent_id": "acd1b1e7a3781e07b",
+      "agent_type": "Explore",
+      "started_at": "2026-04-09T05:52:34.398Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-09T05:52:49.289Z",
+      "duration_ms": 14891
+    },
+    {
+      "agent_id": "a777a5862a90d4e1d",
+      "agent_type": "Explore",
+      "started_at": "2026-04-09T06:14:32.333Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-09T06:15:20.648Z",
+      "duration_ms": 48315
+    }
+  ],
+  "total_spawned": 4,
+  "total_completed": 4,
+  "total_failed": 0,
+  "last_updated": "2026-04-10T00:02:38.487Z"
+}

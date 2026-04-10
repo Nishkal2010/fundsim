@@ -18,10 +18,14 @@ type TabId =
   | "offer"
   | "accretion"
   | "synergies"
+  | "credit"
+  | "returns"
+  | "contribution"
   | "score"
   | "glossary";
 
 interface DealInputs {
+  // Acquirer
   acqName: string;
   acqRevenue: number;
   acqEBITDA: number;
@@ -29,6 +33,7 @@ interface DealInputs {
   acqShares: number;
   acqPrice: number;
   acqNetDebt: number;
+  // Target
   tgtName: string;
   tgtRevenue: number;
   tgtEBITDA: number;
@@ -36,11 +41,29 @@ interface DealInputs {
   tgtShares: number;
   tgtPrice: number;
   tgtNetDebt: number;
+  tgtFCF: number; // Target free cash flow ($M)
+  // Deal parameters
   sector: string;
   dealType: string;
   offerPremium: number;
   cashPct: number;
   debtRate: number;
+  // Advanced deal terms
+  transactionFees: number; // % of deal value (advisory + financing)
+  earnoutAmount: number; // Contingent consideration ($M)
+  breakupFee: number; // Termination fee ($M)
+  managementRollover: number; // % of target equity rolling (MBO)
+  minorityStakePct: number; // % stake acquired (minority deals)
+  // LBO / Credit
+  seniorLeverage: number; // Senior debt as x EBITDA
+  mezzLeverage: number; // Mezz debt as x EBITDA
+  seniorRate: number; // Senior debt interest rate %
+  mezzRate: number; // Mezz interest rate %
+  revolver: number; // Revolver availability ($M)
+  holdPeriod: number; // LBO hold period (years)
+  exitMultipleOverride: number; // Override exit EBITDA multiple (0 = use comps)
+  noBalance: number; // NOL carryforward balance ($M)
+  // DCF / Valuation
   costSynergies: number;
   revSynergies: number;
   wacc: number;
@@ -51,9 +74,28 @@ interface DealInputs {
   taxRate: number;
 }
 
+// ─── Default extra fields ─────────────────────────────────────────────────────
+const DEAL_DEFAULTS = {
+  tgtFCF: 0,
+  transactionFees: 1.5,
+  earnoutAmount: 0,
+  breakupFee: 0,
+  managementRollover: 0,
+  minorityStakePct: 100,
+  seniorLeverage: 4.0,
+  mezzLeverage: 1.5,
+  seniorRate: 6.5,
+  mezzRate: 10.5,
+  revolver: 50,
+  holdPeriod: 5,
+  exitMultipleOverride: 0,
+  noBalance: 0,
+};
+
 // ─── Presets ──────────────────────────────────────────────────────────────────
 const PRESETS: Record<string, DealInputs> = {
   tech: {
+    ...DEAL_DEFAULTS,
     acqName: "NovaSphere",
     acqRevenue: 5000,
     acqEBITDA: 1500,
@@ -68,6 +110,7 @@ const PRESETS: Record<string, DealInputs> = {
     tgtShares: 100,
     tgtPrice: 45,
     tgtNetDebt: 300,
+    tgtFCF: 130,
     sector: "tech",
     dealType: "strategic",
     offerPremium: 35,
@@ -81,8 +124,11 @@ const PRESETS: Record<string, DealInputs> = {
     ebitdaMarginPct: 25,
     capexPct: 5,
     taxRate: 25,
+    breakupFee: 120,
+    transactionFees: 1.5,
   },
   biotech: {
+    ...DEAL_DEFAULTS,
     acqName: "OmegaPharma",
     acqRevenue: 12000,
     acqEBITDA: 4000,
@@ -97,6 +143,7 @@ const PRESETS: Record<string, DealInputs> = {
     tgtShares: 150,
     tgtPrice: 60,
     tgtNetDebt: 400,
+    tgtFCF: 170,
     sector: "healthcare",
     dealType: "strategic",
     offerPremium: 55,
@@ -110,8 +157,11 @@ const PRESETS: Record<string, DealInputs> = {
     ebitdaMarginPct: 22,
     capexPct: 6,
     taxRate: 21,
+    breakupFee: 280,
+    transactionFees: 1.2,
   },
   lbo: {
+    ...DEAL_DEFAULTS,
     acqName: "Cascade Capital",
     acqRevenue: 0,
     acqEBITDA: 0,
@@ -126,6 +176,7 @@ const PRESETS: Record<string, DealInputs> = {
     tgtShares: 80,
     tgtPrice: 30,
     tgtNetDebt: 200,
+    tgtFCF: 100,
     sector: "industrial",
     dealType: "financial",
     offerPremium: 30,
@@ -139,6 +190,253 @@ const PRESETS: Record<string, DealInputs> = {
     ebitdaMarginPct: 24,
     capexPct: 4,
     taxRate: 25,
+    seniorLeverage: 4.5,
+    mezzLeverage: 1.5,
+    seniorRate: 7.0,
+    mezzRate: 11.5,
+    holdPeriod: 5,
+    revolver: 75,
+    transactionFees: 2.0,
+  },
+  hostile: {
+    ...DEAL_DEFAULTS,
+    acqName: "Apex Corp",
+    acqRevenue: 18000,
+    acqEBITDA: 4500,
+    acqNI: 3000,
+    acqShares: 1200,
+    acqPrice: 95,
+    acqNetDebt: 6000,
+    tgtName: "Summit Media",
+    tgtRevenue: 3200,
+    tgtEBITDA: 720,
+    tgtNI: 420,
+    tgtShares: 280,
+    tgtPrice: 52,
+    tgtNetDebt: 800,
+    tgtFCF: 480,
+    sector: "consumer",
+    dealType: "hostile",
+    offerPremium: 42,
+    cashPct: 100,
+    debtRate: 5.5,
+    costSynergies: 120,
+    revSynergies: 60,
+    wacc: 9,
+    revenueGrowth: 7,
+    terminalGrowth: 2.5,
+    ebitdaMarginPct: 22,
+    capexPct: 5,
+    taxRate: 25,
+    breakupFee: 220,
+    transactionFees: 1.8,
+  },
+  spac: {
+    ...DEAL_DEFAULTS,
+    acqName: "Vantage Acquisition Corp",
+    acqRevenue: 0,
+    acqEBITDA: 0,
+    acqNI: 0,
+    acqShares: 200,
+    acqPrice: 10,
+    acqNetDebt: -400,
+    tgtName: "EcoCharge EV",
+    tgtRevenue: 180,
+    tgtEBITDA: -20,
+    tgtNI: -35,
+    tgtShares: 120,
+    tgtPrice: 0,
+    tgtNetDebt: 50,
+    tgtFCF: -30,
+    sector: "tech",
+    dealType: "spac",
+    offerPremium: 20,
+    cashPct: 100,
+    debtRate: 8,
+    costSynergies: 0,
+    revSynergies: 40,
+    wacc: 14,
+    revenueGrowth: 80,
+    terminalGrowth: 4,
+    ebitdaMarginPct: 18,
+    capexPct: 12,
+    taxRate: 21,
+    transactionFees: 3.5,
+    earnoutAmount: 150,
+  },
+  carveout: {
+    ...DEAL_DEFAULTS,
+    acqName: "StrategicCo",
+    acqRevenue: 22000,
+    acqEBITDA: 5500,
+    acqNI: 3800,
+    acqShares: 900,
+    acqPrice: 110,
+    acqNetDebt: 4000,
+    tgtName: "DataPro Division",
+    tgtRevenue: 1400,
+    tgtEBITDA: 340,
+    tgtNI: 200,
+    tgtShares: 0,
+    tgtPrice: 0,
+    tgtNetDebt: 100,
+    tgtFCF: 240,
+    sector: "tech",
+    dealType: "carveout",
+    offerPremium: 20,
+    cashPct: 100,
+    debtRate: 5.8,
+    costSynergies: 90,
+    revSynergies: 70,
+    wacc: 10,
+    revenueGrowth: 12,
+    terminalGrowth: 3,
+    ebitdaMarginPct: 24,
+    capexPct: 4,
+    taxRate: 25,
+    transactionFees: 1.8,
+    earnoutAmount: 100,
+  },
+  distressed: {
+    ...DEAL_DEFAULTS,
+    acqName: "Phoenix Capital",
+    acqRevenue: 0,
+    acqEBITDA: 0,
+    acqNI: 0,
+    acqShares: 0,
+    acqPrice: 0,
+    acqNetDebt: 0,
+    tgtName: "RidgeRetail Corp",
+    tgtRevenue: 2800,
+    tgtEBITDA: 180,
+    tgtNI: -120,
+    tgtShares: 400,
+    tgtPrice: 3,
+    tgtNetDebt: 1400,
+    tgtFCF: 60,
+    sector: "consumer",
+    dealType: "distressed",
+    offerPremium: 35,
+    cashPct: 100,
+    debtRate: 9,
+    costSynergies: 140,
+    revSynergies: 20,
+    wacc: 13,
+    revenueGrowth: 3,
+    terminalGrowth: 1.5,
+    ebitdaMarginPct: 10,
+    capexPct: 3,
+    taxRate: 0,
+    noBalance: 800,
+    transactionFees: 2.5,
+    seniorLeverage: 3.0,
+    mezzLeverage: 1.0,
+    seniorRate: 9.5,
+    mezzRate: 14.0,
+  },
+  mbo: {
+    ...DEAL_DEFAULTS,
+    acqName: "Apex Partners + Mgmt",
+    acqRevenue: 0,
+    acqEBITDA: 0,
+    acqNI: 0,
+    acqShares: 0,
+    acqPrice: 0,
+    acqNetDebt: 0,
+    tgtName: "NexGen Software",
+    tgtRevenue: 480,
+    tgtEBITDA: 145,
+    tgtNI: 90,
+    tgtShares: 60,
+    tgtPrice: 38,
+    tgtNetDebt: 80,
+    tgtFCF: 105,
+    sector: "tech",
+    dealType: "mbo",
+    offerPremium: 28,
+    cashPct: 100,
+    debtRate: 7.5,
+    costSynergies: 15,
+    revSynergies: 20,
+    wacc: 12,
+    revenueGrowth: 10,
+    terminalGrowth: 3,
+    ebitdaMarginPct: 30,
+    capexPct: 3,
+    taxRate: 25,
+    managementRollover: 15,
+    seniorLeverage: 4.5,
+    mezzLeverage: 1.5,
+    seniorRate: 7.5,
+    mezzRate: 12.0,
+    holdPeriod: 4,
+    transactionFees: 2.2,
+  },
+  crossborder: {
+    ...DEAL_DEFAULTS,
+    acqName: "US MedTech Inc",
+    acqRevenue: 8500,
+    acqEBITDA: 2200,
+    acqNI: 1500,
+    acqShares: 600,
+    acqPrice: 88,
+    acqNetDebt: 3000,
+    tgtName: "EuroBio GmbH",
+    tgtRevenue: 920,
+    tgtEBITDA: 230,
+    tgtNI: 145,
+    tgtShares: 110,
+    tgtPrice: 58,
+    tgtNetDebt: 180,
+    tgtFCF: 165,
+    sector: "healthcare",
+    dealType: "crossborder",
+    offerPremium: 40,
+    cashPct: 70,
+    debtRate: 5.2,
+    costSynergies: 60,
+    revSynergies: 80,
+    wacc: 9.5,
+    revenueGrowth: 11,
+    terminalGrowth: 3,
+    ebitdaMarginPct: 25,
+    capexPct: 5,
+    taxRate: 22,
+    transactionFees: 2.0,
+    breakupFee: 180,
+  },
+  minority: {
+    ...DEAL_DEFAULTS,
+    acqName: "General Atlantic",
+    acqRevenue: 0,
+    acqEBITDA: 0,
+    acqNI: 0,
+    acqShares: 0,
+    acqPrice: 0,
+    acqNetDebt: 0,
+    tgtName: "FastPay Fintech",
+    tgtRevenue: 320,
+    tgtEBITDA: 55,
+    tgtNI: 30,
+    tgtShares: 200,
+    tgtPrice: 18,
+    tgtNetDebt: -40,
+    tgtFCF: 35,
+    sector: "tech",
+    dealType: "minority",
+    offerPremium: 25,
+    cashPct: 100,
+    debtRate: 8,
+    costSynergies: 0,
+    revSynergies: 30,
+    wacc: 13,
+    revenueGrowth: 40,
+    terminalGrowth: 4,
+    ebitdaMarginPct: 20,
+    capexPct: 3,
+    taxRate: 25,
+    minorityStakePct: 30,
+    transactionFees: 1.0,
   },
 };
 
@@ -312,6 +610,114 @@ const GLOSSARY = [
     term: "WACC",
     def: "Weighted Average Cost of Capital. The blended discount rate = Cost of Equity × (E/V) + Cost of Debt × (D/V) × (1 – tax). Used to discount FCFFs in DCF.",
   },
+  {
+    term: "Bear Hug Letter",
+    def: "A formal takeover offer sent directly to a target's board, often disclosed publicly, that offers a premium so high the board finds it difficult to reject without shareholder backlash.",
+  },
+  {
+    term: "Collar (Deal Collar)",
+    def: "A provision in a stock deal that caps and floors the exchange ratio within a band as the acquirer's stock moves. Protects both parties from extreme price swings before closing.",
+  },
+  {
+    term: "Contribution Analysis",
+    def: "A table showing what % of combined revenue, EBITDA, and net income each company contributes, vs. the % of equity ownership implied by the deal. Reveals value transfer.",
+  },
+  {
+    term: "Debt Capacity",
+    def: "The maximum debt a company can service given its EBITDA and cash flow. Lenders typically allow 4–6x EBITDA in leveraged deals; investment-grade targets 2–3x.",
+  },
+  {
+    term: "Dividend Recapitalization",
+    def: "A PE technique where a portfolio company takes on new debt to pay a large dividend to its PE sponsor, returning capital before exit. Increases leverage risk.",
+  },
+  {
+    term: "DSCR (Debt Service Coverage Ratio)",
+    def: "EBITDA ÷ (principal + interest). Must exceed 1.0x for a company to service debt; lenders typically require 1.2–1.5x minimum with covenant headroom.",
+  },
+  {
+    term: "Earnout",
+    def: "Contingent deal consideration paid to sellers if the target hits agreed milestones post-closing (revenue, EBITDA, clinical trial success). Bridges valuation gaps.",
+  },
+  {
+    term: "FCF Yield",
+    def: "Free Cash Flow ÷ Enterprise Value. A key credit metric — higher FCF yield means faster deleveraging. LBO lenders often require > 8–10% FCF yield.",
+  },
+  {
+    term: "Goodwill",
+    def: "Purchase price minus fair value of net identifiable assets. Recorded on the balance sheet, tested annually for impairment. Large goodwill balances signal overpayment risk.",
+  },
+  {
+    term: "Management Buyout (MBO)",
+    def: "A buyout led by the existing management team, typically with PE backing. Management rolls equity (5–20%) to align incentives, while PE provides most of the capital.",
+  },
+  {
+    term: "Management Rollover",
+    def: "Equity contribution from target management in a buyout — managers reinvest a portion of their deal proceeds rather than taking all cash. Typically 5–20% of target equity.",
+  },
+  {
+    term: "Mezz (Mezzanine Debt)",
+    def: "Subordinated debt sitting between senior debt and equity in the capital structure. Higher risk (and return) than senior — typically 10–14% interest, often with PIK or warrants.",
+  },
+  {
+    term: "Minority Investment",
+    def: "Acquiring less than 50% of a company's equity, typically for growth capital or strategic access. No control premium; investor relies on drag-along and tag-along rights.",
+  },
+  {
+    term: "Net Operating Loss (NOL)",
+    def: "Tax losses that can be carried forward to offset future taxable income. Distressed acquisitions often capture significant NOL value, reducing post-acquisition taxes.",
+  },
+  {
+    term: "PIK (Payment in Kind)",
+    def: "Interest that accrues and compounds rather than being paid in cash. Used in highly leveraged deals to preserve cash flow. Increases principal over time — very risky.",
+  },
+  {
+    term: "PIPE (Private Investment in Public Equity)",
+    def: "A private placement of equity or convertible debt in a public company. Common in SPAC deals — institutional investors commit capital to ensure the deal closes.",
+  },
+  {
+    term: "Revolver (Revolving Credit Facility)",
+    def: "A flexible credit line a company draws and repays as needed — like a corporate credit card. Typically the cheapest source of debt; drawn to fund working capital or acquisitions.",
+  },
+  {
+    term: "Sensitivity Analysis",
+    def: "Testing how deal outcomes (MOIC, IRR, EPS) change as key assumptions vary (exit multiple, leverage, EBITDA growth). Essential for understanding risk in any transaction.",
+  },
+  {
+    term: "SPAC (Special Purpose Acquisition Company)",
+    def: "A shell company that raises capital in an IPO specifically to acquire a private target within ~2 years. The target 'goes public' by merging with the SPAC — bypassing a traditional IPO.",
+  },
+  {
+    term: "Stalking Horse Bid",
+    def: "In a bankruptcy auction, the initial bid that sets a floor price. The stalking horse bidder gets deal protections (break-up fee) in exchange for going first.",
+  },
+  {
+    term: "Standstill Agreement",
+    def: "A contract preventing a potential acquirer from increasing its stake or making further offers for a set period. Used to control hostile takeover dynamics.",
+  },
+  {
+    term: "Sum-of-the-Parts (SOTP)",
+    def: "Values each business segment separately using appropriate multiples, then adds them. Used for conglomerates where different divisions deserve different valuation approaches.",
+  },
+  {
+    term: "Term Loan B (TLB)",
+    def: "A senior secured leveraged loan sold to institutional investors (CLOs, hedge funds). Amortizes minimally (1% per year); the dominant debt instrument in LBOs. Floating rate (SOFR+).",
+  },
+  {
+    term: "Toehold",
+    def: "A small stake (5–10%) acquired in a target before launching a full bid. Gives the acquirer information, a profit on the toehold if a deal happens, and a head start in contests.",
+  },
+  {
+    term: "Transaction Fees",
+    def: "Advisory and financing fees paid to investment banks in M&A deals. Typically 1–2% of deal value for advisory; additional fees for debt financing. A real drag on returns.",
+  },
+  {
+    term: "White Knight",
+    def: "A friendly acquirer that saves a company from a hostile takeover by making a more attractive competing bid. The target board supports the white knight over the hostile bidder.",
+  },
+  {
+    term: "Working Capital Adjustment",
+    def: "A post-closing adjustment to the purchase price based on the difference between actual and target NWC at closing. Prevents sellers from manipulating cash/payables pre-close.",
+  },
 ];
 
 const TABS: { id: TabId; label: string }[] = [
@@ -320,6 +726,9 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "offer", label: "Offer & Structure" },
   { id: "accretion", label: "Accretion / Dilution" },
   { id: "synergies", label: "Synergies" },
+  { id: "credit", label: "Credit & Leverage" },
+  { id: "returns", label: "Returns" },
+  { id: "contribution", label: "Contribution" },
   { id: "score", label: "Deal Score" },
   { id: "glossary", label: "Glossary" },
 ];
@@ -547,8 +956,10 @@ function NumInput({
 // ─── Formatters ───────────────────────────────────────────────────────────────
 function fmtM(n: number, d = 0): string {
   if (!isFinite(n)) return "N/A";
-  if (Math.abs(n) >= 1000) return `$${(n / 1000).toFixed(1)}B`;
-  return `$${n.toFixed(d)}M`;
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(1)}B`;
+  return `${sign}$${abs.toFixed(d)}M`;
 }
 function fmtN(n: number, d = 1): string {
   if (!isFinite(n)) return "N/A";
@@ -598,6 +1009,18 @@ export function IBSimulator() {
       ebitdaMarginPct,
       capexPct,
       taxRate,
+      transactionFees,
+      earnoutAmount,
+      seniorLeverage,
+      mezzLeverage,
+      seniorRate,
+      mezzRate,
+      holdPeriod,
+      exitMultipleOverride,
+      noBalance,
+      tgtFCF,
+      minorityStakePct,
+      managementRollover,
     } = inputs;
 
     // Offer
@@ -632,9 +1055,23 @@ export function IBSimulator() {
     const precEVLow = precEV * 0.85;
     const precEVHigh = precEV * 1.15;
 
-    // DCF 5-year
-    const DA_RATE = 0.08;
-    const NWC_RATE = 0.02;
+    // DCF 5-year — D&A and NWC rates vary by sector
+    const DA_RATES: Record<string, number> = {
+      tech: 0.05,
+      healthcare: 0.07,
+      industrial: 0.1,
+      consumer: 0.06,
+      energy: 0.12,
+    };
+    const NWC_RATES: Record<string, number> = {
+      tech: 0.01,
+      healthcare: 0.03,
+      industrial: 0.04,
+      consumer: 0.05,
+      energy: 0.02,
+    };
+    const DA_RATE = DA_RATES[sector] ?? 0.08;
+    const NWC_RATE = NWC_RATES[sector] ?? 0.02;
     const projections = Array.from({ length: 5 }, (_, i) => {
       const yr = i + 1;
       const rev = tgtRevenue * Math.pow(1 + revenueGrowth / 100, yr);
@@ -662,8 +1099,8 @@ export function IBSimulator() {
     const dcfImpliedPrice = tgtShares > 0 ? dcfEquity / tgtShares : 0;
     const tvPct = dcfEV > 0 ? (pvTV / dcfEV) * 100 : 0;
 
-    // LBO
-    const lboDebt = cashAmount * 0.65;
+    // LBO — debt is ~65% of Enterprise Value, not just cash consideration
+    const lboDebt = offerEV * 0.65;
     const lboEquity = offerEV - lboDebt;
     const exitEBITDA =
       tgtEBITDA *
@@ -730,8 +1167,8 @@ export function IBSimulator() {
       standaloneEPS !== 0 ? (epsChange / standaloneEPS) * 100 : 0;
     const isAccretive = epsChange >= 0;
 
-    // Leverage
-    const leverageRatio = tgtEBITDA > 0 ? cashAmount / tgtEBITDA : 0;
+    // Leverage — ratio should use total LBO debt, not just cash consideration
+    const leverageRatio = tgtEBITDA > 0 ? lboDebt / tgtEBITDA : 0;
     const interestCoverage =
       newInterest > 0
         ? (tgtEBITDA + (costSynergies + revSynergies)) / newInterest
@@ -741,8 +1178,155 @@ export function IBSimulator() {
     const synPct =
       tgtRevenue > 0 ? ((costSynergies + revSynergies) / tgtRevenue) * 100 : 0;
 
-    // Score
-    const accrScore = isAccretive ? 25 : Math.max(0, 25 + epsChangePct * 1.5);
+    // ─── Transaction economics ─────────────────────────────────────────────
+    const totalFees = dealValue * (transactionFees / 100);
+    const totalConsideration = dealValue + totalFees + earnoutAmount;
+    const bookValueApprox = tgtRevenue * 0.3; // rough tangible book
+    const goodwill = Math.max(0, dealValue - bookValueApprox);
+
+    // ─── LBO Tranche Model ────────────────────────────────────────────────
+    const seniorDebt = tgtEBITDA * seniorLeverage;
+    const mezzDebt = tgtEBITDA * mezzLeverage;
+    const totalTranchedDebt = seniorDebt + mezzDebt;
+    const lboEquityTranche = Math.max(0, offerEV - totalTranchedDebt);
+    const seniorInterest = seniorDebt * (seniorRate / 100);
+    const mezzInterest = mezzDebt * (mezzRate / 100);
+    const totalLBOInterest = seniorInterest + mezzInterest;
+    const debtToEBITDA = tgtEBITDA > 0 ? totalTranchedDebt / tgtEBITDA : 0;
+    const interestCovTranche =
+      totalLBOInterest > 0 ? tgtEBITDA / totalLBOInterest : 99;
+    const fcfYield = offerEV > 0 ? (tgtFCF / offerEV) * 100 : 0;
+    const dscr = totalLBOInterest > 0 ? tgtFCF / totalLBOInterest : 99;
+
+    // Debt paydown schedule over hold period
+    const hp = Math.max(1, holdPeriod);
+    const debtSchedule = Array.from({ length: hp }, (_, i) => {
+      const yr = i + 1;
+      const fcfYr = tgtFCF * Math.pow(1 + revenueGrowth / 200, yr);
+      const cumRepay = Array.from({ length: i }, (_, j) => {
+        const f = tgtFCF * Math.pow(1 + revenueGrowth / 200, j + 1);
+        return f * 0.7;
+      }).reduce((a, b) => a + b, 0);
+      const openDebt = Math.max(0, totalTranchedDebt - cumRepay);
+      const repayment = Math.min(fcfYr * 0.7, openDebt);
+      const closeDebt = Math.max(0, openDebt - repayment);
+      return { yr, fcfYr, openDebt, repayment, closeDebt };
+    });
+
+    // NOL tax shield (reduces effective acquisition cost)
+    const nolShield =
+      noBalance > 0 ? Math.min(noBalance, tgtEBITDA * hp) * (taxRate / 100) : 0;
+
+    // LBO exit using hold period and tranche model
+    const exitEBITDAHold =
+      tgtEBITDA *
+      Math.pow(1 + revenueGrowth / 100, hp) *
+      (ebitdaMarginPct /
+        (tgtRevenue > 0 ? (tgtEBITDA / tgtRevenue) * 100 : ebitdaMarginPct));
+    const exitMultipleFinal =
+      exitMultipleOverride > 0 ? exitMultipleOverride : compsMultiple;
+    const exitEVHold = exitEBITDAHold * exitMultipleFinal;
+    const debtAtExit =
+      debtSchedule.length > 0
+        ? debtSchedule[debtSchedule.length - 1].closeDebt
+        : totalTranchedDebt;
+    const exitEquityHold = Math.max(0, exitEVHold - debtAtExit);
+    const moicTranche =
+      lboEquityTranche > 0 ? exitEquityHold / lboEquityTranche : 0;
+    const irrTranche =
+      lboEquityTranche > 0 && moicTranche > 0
+        ? (Math.pow(moicTranche, 1 / hp) - 1) * 100
+        : 0;
+
+    // ─── Returns sensitivity matrix (hold period × exit multiple) ─────────
+    const exitMultiplesRange = [
+      Math.max(4, compsMultiple - 4),
+      Math.max(4, compsMultiple - 2),
+      compsMultiple,
+      compsMultiple + 2,
+      compsMultiple + 4,
+    ];
+    const holdPeriodsRange = [3, 4, 5, 6, 7];
+    const sensitivityMatrix = holdPeriodsRange.map((hpS) => ({
+      holdPeriod: hpS,
+      irrs: exitMultiplesRange.map((em) => {
+        const exitEB =
+          tgtEBITDA *
+          Math.pow(1 + revenueGrowth / 100, hpS) *
+          (ebitdaMarginPct /
+            (tgtRevenue > 0
+              ? (tgtEBITDA / tgtRevenue) * 100
+              : ebitdaMarginPct));
+        const exitEV2 = exitEB * em;
+        const cumRepayS = Array.from({ length: hpS }, (_, j) => {
+          const f = tgtFCF * Math.pow(1 + revenueGrowth / 200, j + 1);
+          return f * 0.7;
+        }).reduce((a, b) => a + b, 0);
+        const debtS = Math.max(0, totalTranchedDebt - cumRepayS);
+        const exitEq = Math.max(0, exitEV2 - debtS);
+        const m = lboEquityTranche > 0 ? exitEq / lboEquityTranche : 0;
+        return lboEquityTranche > 0 && m > 0
+          ? (Math.pow(m, 1 / hpS) - 1) * 100
+          : 0;
+      }),
+    }));
+
+    // ─── Contribution analysis ────────────────────────────────────────────
+    const synEBITDAContribution =
+      costSynergies + revSynergies * (ebitdaMarginPct / 100);
+    const proFormaRevenueCombined = acqRevenue + tgtRevenue + revSynergies;
+    const proFormaEBITDACombined =
+      acqEBITDA + tgtEBITDA + synEBITDAContribution;
+    const acqRevContrib =
+      proFormaRevenueCombined > 0
+        ? (acqRevenue / proFormaRevenueCombined) * 100
+        : 0;
+    const tgtRevContrib =
+      proFormaRevenueCombined > 0
+        ? (tgtRevenue / proFormaRevenueCombined) * 100
+        : 0;
+    const synRevContrib =
+      proFormaRevenueCombined > 0
+        ? (revSynergies / proFormaRevenueCombined) * 100
+        : 0;
+    const acqEBITDAContrib =
+      proFormaEBITDACombined > 0
+        ? (acqEBITDA / proFormaEBITDACombined) * 100
+        : 0;
+    const tgtEBITDAContrib =
+      proFormaEBITDACombined > 0
+        ? (tgtEBITDA / proFormaEBITDACombined) * 100
+        : 0;
+    const synEBITDAContrib =
+      proFormaEBITDACombined > 0
+        ? (synEBITDAContribution / proFormaEBITDACombined) * 100
+        : 0;
+    const acqOwnership =
+      proFormaShares > 0 ? (acqShares / proFormaShares) * 100 : 100;
+    const tgtShareholderOwnership =
+      proFormaShares > 0 ? (newAcqShares / proFormaShares) * 100 : 0;
+
+    // ─── Minority / MBO adjustments ────────────────────────────────────────
+    const effectiveStakePct = Math.min(100, Math.max(0, minorityStakePct));
+    const effectiveDealValue = dealValue * (effectiveStakePct / 100);
+    const mgmtRolloverValue =
+      dealType === "mbo" ? dealValue * (managementRollover / 100) : 0;
+
+    // Score — for LBO deals, accr/dilution is N/A; score on IRR instead
+    const accrScore =
+      dealType === "lbo"
+        ? irr >= 25
+          ? 25
+          : irr >= 20
+            ? 20
+            : irr >= 15
+              ? 14
+              : irr >= 12
+                ? 8
+                : 3
+        : isAccretive
+          ? 25
+          : Math.max(0, 25 + epsChangePct * 1.5);
     const premScore =
       offerPremium >= 15 && offerPremium <= 45
         ? 20
@@ -818,6 +1402,50 @@ export function IBSimulator() {
       synScore,
       strScore,
       totalScore,
+      // Transaction economics
+      totalFees,
+      totalConsideration,
+      goodwill,
+      // LBO tranche model
+      seniorDebt,
+      mezzDebt,
+      totalTranchedDebt,
+      lboEquityTranche,
+      seniorInterest,
+      mezzInterest,
+      totalLBOInterest,
+      debtToEBITDA,
+      interestCovTranche,
+      fcfYield,
+      dscr,
+      debtSchedule,
+      nolShield,
+      exitEBITDAHold,
+      exitMultipleFinal,
+      exitEVHold,
+      debtAtExit,
+      exitEquityHold,
+      moicTranche,
+      irrTranche,
+      // Sensitivity
+      exitMultiplesRange,
+      holdPeriodsRange,
+      sensitivityMatrix,
+      // Contribution
+      proFormaRevenueCombined,
+      proFormaEBITDACombined,
+      acqRevContrib,
+      tgtRevContrib,
+      synRevContrib,
+      acqEBITDAContrib,
+      tgtEBITDAContrib,
+      synEBITDAContrib,
+      acqOwnership,
+      tgtShareholderOwnership,
+      // Minority / MBO
+      effectiveStakePct,
+      effectiveDealValue,
+      mgmtRolloverValue,
     };
   }, [inputs]);
 
@@ -999,48 +1627,97 @@ export function IBSimulator() {
                 </Sub>
 
                 {/* Preset buttons */}
-                <div className="flex gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
                   {[
                     {
                       key: "tech",
-                      label: "Tech Acquisition",
-                      sub: "NovaSphere → CloudAxis",
+                      label: "Tech Acq.",
+                      sub: "Strategic",
+                      tag: "STRATEGIC",
                     },
                     {
                       key: "biotech",
                       label: "Pharma M&A",
-                      sub: "OmegaPharma → ViriGen",
+                      sub: "Healthcare",
+                      tag: "STRATEGIC",
                     },
                     {
                       key: "lbo",
                       label: "LBO",
-                      sub: "Cascade Capital → Ridgemont",
+                      sub: "PE Buyout",
+                      tag: "FINANCIAL",
                     },
-                  ].map((p) => (
-                    <button
-                      key={p.key}
-                      onClick={() => setInputs(PRESETS[p.key])}
-                      className="flex-1 p-3 rounded-xl text-left"
-                      style={{
-                        background:
-                          inputs.acqName === PRESETS[p.key].acqName
-                            ? A.dim
-                            : "#111827",
-                        border: `1px solid ${inputs.acqName === PRESETS[p.key].acqName ? A.border : "#374151"}`,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
-                        className="text-xs font-bold mb-0.5"
-                        style={{ color: A.light }}
+                    {
+                      key: "hostile",
+                      label: "Hostile",
+                      sub: "Takeover",
+                      tag: "HOSTILE",
+                    },
+                    { key: "spac", label: "SPAC", sub: "De-SPAC", tag: "SPAC" },
+                    {
+                      key: "carveout",
+                      label: "Carve-Out",
+                      sub: "Division",
+                      tag: "CARVEOUT",
+                    },
+                    {
+                      key: "distressed",
+                      label: "Distressed",
+                      sub: "Chapter 11",
+                      tag: "DISTRESSED",
+                    },
+                    {
+                      key: "mbo",
+                      label: "MBO",
+                      sub: "Mgmt Buyout",
+                      tag: "MBO",
+                    },
+                    {
+                      key: "crossborder",
+                      label: "Cross-Border",
+                      sub: "Intl M&A",
+                      tag: "INTL",
+                    },
+                    {
+                      key: "minority",
+                      label: "Minority",
+                      sub: "Growth Eq.",
+                      tag: "MINORITY",
+                    },
+                  ].map((p) => {
+                    const active = inputs.acqName === PRESETS[p.key].acqName;
+                    return (
+                      <button
+                        key={p.key}
+                        onClick={() => setInputs(PRESETS[p.key])}
+                        className="p-2.5 rounded-lg text-left"
+                        style={{
+                          background: active ? A.dim : "#111827",
+                          border: `1px solid ${active ? A.border : "#374151"}`,
+                          cursor: "pointer",
+                        }}
                       >
-                        {p.label}
-                      </div>
-                      <div className="text-xs" style={{ color: "#6B7280" }}>
-                        {p.sub}
-                      </div>
-                    </button>
-                  ))}
+                        <div
+                          className="text-xs font-bold mb-0.5"
+                          style={{ color: active ? A.light : "#D1D5DB" }}
+                        >
+                          {p.label}
+                        </div>
+                        <div className="text-xs" style={{ color: "#6B7280" }}>
+                          {p.sub}
+                        </div>
+                        <div
+                          className="mt-1 text-xs font-mono"
+                          style={{
+                            color: active ? A.light : "#4B5563",
+                            fontSize: "9px",
+                          }}
+                        >
+                          {p.tag}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1055,12 +1732,6 @@ export function IBSimulator() {
                     >
                       ACQUIRER
                     </div>
-                    <NumInput
-                      label="Company Name"
-                      value={0}
-                      onChange={() => {}}
-                      prefix=""
-                    />
                     <input
                       type="text"
                       value={inputs.acqName}
@@ -1290,10 +1961,17 @@ export function IBSimulator() {
                           outline: "none",
                         }}
                       >
-                        <option value="strategic">
-                          Strategic (Corporate Buyer)
-                        </option>
+                        <option value="strategic">Strategic (Corporate)</option>
                         <option value="financial">Financial (LBO / PE)</option>
+                        <option value="hostile">Hostile Takeover</option>
+                        <option value="spac">SPAC / De-SPAC</option>
+                        <option value="carveout">Carve-Out</option>
+                        <option value="distressed">Distressed / 363</option>
+                        <option value="mbo">Management Buyout (MBO)</option>
+                        <option value="crossborder">Cross-Border</option>
+                        <option value="minority">
+                          Minority / Growth Equity
+                        </option>
                       </select>
                     </div>
                     <div>
@@ -1342,6 +2020,214 @@ export function IBSimulator() {
                     </div>
                   </div>
                 </Card>
+
+                {/* Advanced Deal Terms */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <Card>
+                    <div
+                      className="text-xs font-bold mb-4 tracking-widest"
+                      style={{ color: "#10B981", fontFamily: "monospace" }}
+                    >
+                      ADVANCED DEAL TERMS
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumInput
+                        label="Transaction Fees (% of deal)"
+                        value={inputs.transactionFees}
+                        onChange={(v) => setIn("transactionFees", v)}
+                        suffix="%"
+                      />
+                      <NumInput
+                        label="Earnout / CVR ($M)"
+                        value={inputs.earnoutAmount}
+                        onChange={(v) => setIn("earnoutAmount", v)}
+                        prefix="$"
+                      />
+                      <NumInput
+                        label="Breakup Fee ($M)"
+                        value={inputs.breakupFee}
+                        onChange={(v) => setIn("breakupFee", v)}
+                        prefix="$"
+                      />
+                      <NumInput
+                        label="Hold Period (yrs)"
+                        value={inputs.holdPeriod}
+                        onChange={(v) => setIn("holdPeriod", v)}
+                      />
+                      <NumInput
+                        label="Minority Stake (%)"
+                        value={inputs.minorityStakePct}
+                        onChange={(v) => setIn("minorityStakePct", v)}
+                        suffix="%"
+                      />
+                      <NumInput
+                        label="Mgmt Rollover (%)"
+                        value={inputs.managementRollover}
+                        onChange={(v) => setIn("managementRollover", v)}
+                        suffix="%"
+                      />
+                      <NumInput
+                        label="Target FCF ($M)"
+                        value={inputs.tgtFCF}
+                        onChange={(v) => setIn("tgtFCF", v)}
+                        prefix="$"
+                      />
+                      <NumInput
+                        label="NOL Balance ($M)"
+                        value={inputs.noBalance}
+                        onChange={(v) => setIn("noBalance", v)}
+                        prefix="$"
+                      />
+                    </div>
+                    <div
+                      className="mt-3 p-3 rounded-lg"
+                      style={{ background: "#1F2937" }}
+                    >
+                      <div
+                        className="flex justify-between text-xs"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Total Consideration (incl. fees + earnout)</span>
+                        <span style={{ color: "#10B981" }}>
+                          {fmtM(C.totalConsideration)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Advisory & Financing Fees</span>
+                        <span style={{ color: "#10B981" }}>
+                          {fmtM(C.totalFees)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Goodwill Created</span>
+                        <span style={{ color: "#10B981" }}>
+                          {fmtM(C.goodwill)}
+                        </span>
+                      </div>
+                      {C.nolShield > 0 && (
+                        <div
+                          className="flex justify-between text-xs mt-1"
+                          style={{ color: "#9CA3AF" }}
+                        >
+                          <span>NOL Tax Shield (PV)</span>
+                          <span style={{ color: "#10B981" }}>
+                            {fmtM(C.nolShield)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+
+                  <Card>
+                    <div
+                      className="text-xs font-bold mb-4 tracking-widest"
+                      style={{ color: "#8B5CF6", fontFamily: "monospace" }}
+                    >
+                      LBO / LEVERAGE STRUCTURE
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumInput
+                        label="Senior Leverage (x EBITDA)"
+                        value={inputs.seniorLeverage}
+                        onChange={(v) => setIn("seniorLeverage", v)}
+                        suffix="x"
+                      />
+                      <NumInput
+                        label="Mezz Leverage (x EBITDA)"
+                        value={inputs.mezzLeverage}
+                        onChange={(v) => setIn("mezzLeverage", v)}
+                        suffix="x"
+                      />
+                      <NumInput
+                        label="Senior Rate (%)"
+                        value={inputs.seniorRate}
+                        onChange={(v) => setIn("seniorRate", v)}
+                        suffix="%"
+                      />
+                      <NumInput
+                        label="Mezz Rate (%)"
+                        value={inputs.mezzRate}
+                        onChange={(v) => setIn("mezzRate", v)}
+                        suffix="%"
+                      />
+                      <NumInput
+                        label="Revolver ($M)"
+                        value={inputs.revolver}
+                        onChange={(v) => setIn("revolver", v)}
+                        prefix="$"
+                      />
+                      <NumInput
+                        label="Exit Multiple Override (x)"
+                        value={inputs.exitMultipleOverride}
+                        onChange={(v) => setIn("exitMultipleOverride", v)}
+                        suffix="x"
+                      />
+                    </div>
+                    <div
+                      className="mt-3 p-3 rounded-lg"
+                      style={{ background: "#1F2937" }}
+                    >
+                      <div
+                        className="flex justify-between text-xs"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Senior Debt</span>
+                        <span style={{ color: "#8B5CF6" }}>
+                          {fmtM(C.seniorDebt)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Mezz Debt</span>
+                        <span style={{ color: "#8B5CF6" }}>
+                          {fmtM(C.mezzDebt)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>
+                          Total Debt ({fmtN(C.debtToEBITDA, 1)}x EBITDA)
+                        </span>
+                        <span style={{ color: "#8B5CF6" }}>
+                          {fmtM(C.totalTranchedDebt)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Equity Check</span>
+                        <span style={{ color: "#8B5CF6" }}>
+                          {fmtM(C.lboEquityTranche)}
+                        </span>
+                      </div>
+                      <div
+                        className="flex justify-between text-xs mt-1"
+                        style={{ color: "#9CA3AF" }}
+                      >
+                        <span>Annual Interest Burden</span>
+                        <span
+                          style={{
+                            color:
+                              C.interestCovTranche < 2 ? "#EF4444" : "#8B5CF6",
+                          }}
+                        >
+                          {fmtM(C.totalLBOInterest)}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
               </div>
             )}
 
@@ -2332,6 +3218,897 @@ export function IBSimulator() {
                     within 2 years. Revenue synergies are riskier — analysts
                     discount them 50% and model a 2–4 year ramp. Synergies above
                     10% of target revenue are viewed skeptically by investors.
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ── CREDIT & LEVERAGE ─────────────────────────────────────────── */}
+            {activeTab === "credit" && (
+              <div>
+                <SectionHeader>Credit & Leverage Analysis</SectionHeader>
+                <Sub>
+                  Full debt tranche model, credit statistics, and paydown
+                  schedule. This is the credit memo a lender writes before
+                  committing to finance a deal.
+                </Sub>
+
+                {/* Tranche table */}
+                <Card style={{ marginBottom: "1.5rem" }}>
+                  <div
+                    className="text-xs font-bold mb-4 tracking-widest"
+                    style={{ color: "#8B5CF6", fontFamily: "monospace" }}
+                  >
+                    DEBT CAPITAL STRUCTURE
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr style={{ color: "#4B5563" }}>
+                          <td className="pb-2 pr-6">Tranche</td>
+                          <td className="pb-2 pr-6 text-right">Amount ($M)</td>
+                          <td className="pb-2 pr-6 text-right">x EBITDA</td>
+                          <td className="pb-2 pr-6 text-right">Rate</td>
+                          <td className="pb-2 pr-6 text-right">
+                            Ann. Interest ($M)
+                          </td>
+                          <td className="pb-2 text-right">% of Cap Stack</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          {
+                            label: "Senior Secured",
+                            amount: C.seniorDebt,
+                            xEBITDA: inputs.seniorLeverage,
+                            rate: inputs.seniorRate,
+                            interest: C.seniorInterest,
+                            color: "#8B5CF6",
+                          },
+                          {
+                            label: "Mezzanine / Sub Debt",
+                            amount: C.mezzDebt,
+                            xEBITDA: inputs.mezzLeverage,
+                            rate: inputs.mezzRate,
+                            interest: C.mezzInterest,
+                            color: "#A78BFA",
+                          },
+                          {
+                            label: "Revolver (undrawn)",
+                            amount: inputs.revolver,
+                            xEBITDA:
+                              inputs.tgtEBITDA > 0
+                                ? inputs.revolver / inputs.tgtEBITDA
+                                : 0,
+                            rate: inputs.seniorRate - 1,
+                            interest: 0,
+                            color: "#6B7280",
+                          },
+                          {
+                            label: "Sponsor Equity",
+                            amount: C.lboEquityTranche,
+                            xEBITDA:
+                              inputs.tgtEBITDA > 0
+                                ? C.lboEquityTranche / inputs.tgtEBITDA
+                                : 0,
+                            rate: 0,
+                            interest: 0,
+                            color: "#F59E0B",
+                          },
+                        ].map((row) => {
+                          const total =
+                            C.totalTranchedDebt +
+                            C.lboEquityTranche +
+                            inputs.revolver;
+                          const pct =
+                            total > 0 ? (row.amount / total) * 100 : 0;
+                          return (
+                            <tr
+                              key={row.label}
+                              style={{ borderTop: "1px solid #1F2937" }}
+                            >
+                              <td
+                                className="py-2 pr-6 font-medium"
+                                style={{ color: row.color }}
+                              >
+                                {row.label}
+                              </td>
+                              <td
+                                className="py-2 pr-6 text-right font-mono"
+                                style={{ color: "#D1D5DB" }}
+                              >
+                                {fmtM(row.amount)}
+                              </td>
+                              <td
+                                className="py-2 pr-6 text-right font-mono"
+                                style={{ color: "#9CA3AF" }}
+                              >
+                                {fmtN(row.xEBITDA, 1)}x
+                              </td>
+                              <td
+                                className="py-2 pr-6 text-right font-mono"
+                                style={{ color: "#9CA3AF" }}
+                              >
+                                {row.rate > 0 ? fmtN(row.rate, 1) + "%" : "—"}
+                              </td>
+                              <td
+                                className="py-2 pr-6 text-right font-mono"
+                                style={{ color: "#9CA3AF" }}
+                              >
+                                {row.interest > 0 ? fmtM(row.interest) : "—"}
+                              </td>
+                              <td
+                                className="py-2 text-right font-mono"
+                                style={{ color: "#6B7280" }}
+                              >
+                                {fmtN(pct, 1)}%
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        <tr style={{ borderTop: "2px solid #374151" }}>
+                          <td
+                            className="py-2 pr-6 font-bold"
+                            style={{ color: "#F9FAFB" }}
+                          >
+                            Total Funded Debt
+                          </td>
+                          <td
+                            className="py-2 pr-6 text-right font-mono font-bold"
+                            style={{ color: "#F9FAFB" }}
+                          >
+                            {fmtM(C.totalTranchedDebt)}
+                          </td>
+                          <td
+                            className="py-2 pr-6 text-right font-mono font-bold"
+                            style={{ color: "#F9FAFB" }}
+                          >
+                            {fmtN(C.debtToEBITDA, 1)}x
+                          </td>
+                          <td className="py-2 pr-6" />
+                          <td
+                            className="py-2 pr-6 text-right font-mono font-bold"
+                            style={{ color: "#F9FAFB" }}
+                          >
+                            {fmtM(C.totalLBOInterest)}
+                          </td>
+                          <td />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+
+                {/* Credit metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {[
+                    {
+                      label: "Total Debt / EBITDA",
+                      value: fmtN(C.debtToEBITDA, 1) + "x",
+                      sub: "< 5x = acceptable for LBO",
+                      color:
+                        C.debtToEBITDA > 6
+                          ? "#EF4444"
+                          : C.debtToEBITDA > 5
+                            ? "#F97316"
+                            : "#22C55E",
+                    },
+                    {
+                      label: "Interest Coverage",
+                      value: fmtN(C.interestCovTranche, 1) + "x",
+                      sub: "EBITDA ÷ interest — > 2x preferred",
+                      color:
+                        C.interestCovTranche < 1.5
+                          ? "#EF4444"
+                          : C.interestCovTranche < 2.5
+                            ? "#F97316"
+                            : "#22C55E",
+                    },
+                    {
+                      label: "FCF / Total Debt (Yield)",
+                      value: fmtN(C.fcfYield, 1) + "%",
+                      sub: "Free cash flow as % of EV — > 5% preferred",
+                      color:
+                        C.fcfYield < 3
+                          ? "#EF4444"
+                          : C.fcfYield < 5
+                            ? "#F97316"
+                            : "#22C55E",
+                    },
+                    {
+                      label: "DSCR",
+                      value: fmtN(C.dscr, 1) + "x",
+                      sub: "FCF ÷ interest — > 1.2x required",
+                      color:
+                        C.dscr < 1
+                          ? "#EF4444"
+                          : C.dscr < 1.5
+                            ? "#F97316"
+                            : "#22C55E",
+                    },
+                  ].map((m) => (
+                    <Card key={m.label}>
+                      <div
+                        className="text-xs mb-1"
+                        style={{ color: "#6B7280" }}
+                      >
+                        {m.label}
+                      </div>
+                      <div
+                        className="text-2xl font-bold font-mono mb-1"
+                        style={{ color: m.color }}
+                      >
+                        {m.value}
+                      </div>
+                      <div className="text-xs" style={{ color: "#4B5563" }}>
+                        {m.sub}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Debt paydown schedule */}
+                <Card>
+                  <div
+                    className="text-xs font-bold mb-4 tracking-widest"
+                    style={{ color: "#8B5CF6", fontFamily: "monospace" }}
+                  >
+                    DEBT PAYDOWN SCHEDULE
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr style={{ color: "#4B5563" }}>
+                          <td className="pb-2 pr-6">Year</td>
+                          <td className="pb-2 pr-6 text-right">
+                            Opening Debt ($M)
+                          </td>
+                          <td className="pb-2 pr-6 text-right">FCF ($M)</td>
+                          <td className="pb-2 pr-6 text-right">
+                            Repayment ($M)
+                          </td>
+                          <td className="pb-2 text-right">Closing Debt ($M)</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {C.debtSchedule.map((row) => (
+                          <tr
+                            key={row.yr}
+                            style={{ borderTop: "1px solid #1F2937" }}
+                          >
+                            <td
+                              className="py-2 pr-6"
+                              style={{ color: "#9CA3AF" }}
+                            >
+                              Year {row.yr}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: "#D1D5DB" }}
+                            >
+                              {fmtM(row.openDebt)}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: "#22C55E" }}
+                            >
+                              {fmtM(row.fcfYr)}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: "#8B5CF6" }}
+                            >
+                              {fmtM(row.repayment)}
+                            </td>
+                            <td
+                              className="py-2 text-right font-mono"
+                              style={{ color: "#F9FAFB" }}
+                            >
+                              {fmtM(row.closeDebt)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div
+                    className="mt-4 p-3 rounded-lg text-xs"
+                    style={{ background: "#1F2937", color: "#6B7280" }}
+                  >
+                    <strong style={{ color: "#9CA3AF" }}>
+                      Model assumption:
+                    </strong>{" "}
+                    70% of FCF allocated to debt repayment annually. FCF grows
+                    at half the revenue CAGR to be conservative. Adjust
+                    Senior/Mezz rates and hold period in Deal Setup to see how
+                    the schedule changes.
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ── RETURNS ────────────────────────────────────────────────────── */}
+            {activeTab === "returns" && (
+              <div>
+                <SectionHeader>Returns Analysis</SectionHeader>
+                <Sub>
+                  IRR and MOIC sensitivity across exit multiples and hold
+                  periods. The industry standard is 20–25%+ IRR for a buyout.
+                </Sub>
+
+                {/* Summary stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {[
+                    {
+                      label: "Tranche-Model IRR",
+                      value: fmtN(C.irrTranche, 1) + "%",
+                      sub: `${inputs.holdPeriod}-year hold, ${fmtN(C.exitMultipleFinal, 1)}x exit`,
+                      color:
+                        C.irrTranche >= 25
+                          ? "#22C55E"
+                          : C.irrTranche >= 20
+                            ? "#F59E0B"
+                            : C.irrTranche >= 15
+                              ? "#F97316"
+                              : "#EF4444",
+                    },
+                    {
+                      label: "MOIC",
+                      value: fmtN(C.moicTranche, 1) + "x",
+                      sub: "Entry equity to exit equity",
+                      color:
+                        C.moicTranche >= 3
+                          ? "#22C55E"
+                          : C.moicTranche >= 2
+                            ? "#F59E0B"
+                            : "#EF4444",
+                    },
+                    {
+                      label: "Exit EV",
+                      value: fmtM(C.exitEVHold),
+                      sub: `${fmtN(C.exitMultipleFinal, 1)}x EBITDA at exit`,
+                      color: "#6366F1",
+                    },
+                    {
+                      label: "Debt at Exit",
+                      value: fmtM(C.debtAtExit),
+                      sub: `After ${inputs.holdPeriod}yr paydown`,
+                      color: "#9CA3AF",
+                    },
+                  ].map((m) => (
+                    <Card key={m.label}>
+                      <div
+                        className="text-xs mb-1"
+                        style={{ color: "#6B7280" }}
+                      >
+                        {m.label}
+                      </div>
+                      <div
+                        className="text-2xl font-bold font-mono mb-1"
+                        style={{ color: m.color }}
+                      >
+                        {m.value}
+                      </div>
+                      <div className="text-xs" style={{ color: "#4B5563" }}>
+                        {m.sub}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Sensitivity matrix */}
+                <Card style={{ marginBottom: "1.5rem" }}>
+                  <div
+                    className="text-xs font-bold mb-1 tracking-widest"
+                    style={{ color: "#6366F1", fontFamily: "monospace" }}
+                  >
+                    IRR SENSITIVITY — Hold Period × Exit Multiple
+                  </div>
+                  <div className="text-xs mb-4" style={{ color: "#4B5563" }}>
+                    Green = ≥25% IRR (top-quartile) · Amber = 20–25% · Orange =
+                    15–20% · Red = &lt;15%
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr>
+                          <td
+                            className="pb-2 pr-4 text-xs"
+                            style={{ color: "#6B7280" }}
+                          >
+                            Hold → Exit Multiple ↓
+                          </td>
+                          {C.exitMultiplesRange.map((em) => (
+                            <td
+                              key={em}
+                              className="pb-2 pr-2 text-right font-mono text-xs"
+                              style={{ color: "#6B7280" }}
+                            >
+                              {fmtN(em, 1)}x
+                            </td>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {C.sensitivityMatrix.map((row) => (
+                          <tr
+                            key={row.holdPeriod}
+                            style={{ borderTop: "1px solid #1F2937" }}
+                          >
+                            <td
+                              className="py-2 pr-4 font-medium"
+                              style={{ color: "#9CA3AF" }}
+                            >
+                              {row.holdPeriod} yrs
+                            </td>
+                            {row.irrs.map((irr2, i) => {
+                              const irrColor =
+                                irr2 >= 25
+                                  ? "#22C55E"
+                                  : irr2 >= 20
+                                    ? "#F59E0B"
+                                    : irr2 >= 15
+                                      ? "#F97316"
+                                      : "#EF4444";
+                              const isBold =
+                                row.holdPeriod === inputs.holdPeriod &&
+                                Math.abs(
+                                  C.exitMultiplesRange[i] - C.exitMultipleFinal,
+                                ) < 0.1;
+                              return (
+                                <td
+                                  key={i}
+                                  className="py-2 pr-2 text-right font-mono"
+                                  style={{
+                                    color: irrColor,
+                                    fontWeight: isBold ? 700 : 400,
+                                    background: isBold
+                                      ? "rgba(99,102,241,0.12)"
+                                      : "transparent",
+                                    borderRadius: isBold ? "4px" : "0",
+                                  }}
+                                >
+                                  {irr2 > 0 ? fmtN(irr2, 1) + "%" : "—"}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+
+                {/* Returns bridge */}
+                <Card>
+                  <div
+                    className="text-xs font-bold mb-4 tracking-widest"
+                    style={{ color: "#6366F1", fontFamily: "monospace" }}
+                  >
+                    RETURNS BRIDGE
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      {
+                        label: "Entry EV (Offer)",
+                        value: C.offerEV,
+                        color: "#6366F1",
+                        sign: "",
+                      },
+                      {
+                        label: "→ Entry Debt Raised",
+                        value: -C.totalTranchedDebt,
+                        color: "#8B5CF6",
+                        sign: "",
+                      },
+                      {
+                        label: "→ Equity Check (entry)",
+                        value: C.lboEquityTranche,
+                        color: "#F59E0B",
+                        sign: "",
+                        bold: true,
+                      },
+                      {
+                        label: "Exit EV",
+                        value: C.exitEVHold,
+                        color: "#22C55E",
+                        sign: "",
+                      },
+                      {
+                        label: "→ Remaining Debt at Exit",
+                        value: -C.debtAtExit,
+                        color: "#EF4444",
+                        sign: "",
+                      },
+                      {
+                        label: "→ Exit Equity Proceeds",
+                        value: C.exitEquityHold,
+                        color: "#22C55E",
+                        sign: "",
+                        bold: true,
+                      },
+                      {
+                        label: "MOIC",
+                        value: C.moicTranche,
+                        color: C.moicTranche >= 2.5 ? "#22C55E" : "#F97316",
+                        suffix: "x",
+                        skip$: true,
+                        bold: true,
+                      },
+                      {
+                        label: "IRR",
+                        value: C.irrTranche,
+                        color: C.irrTranche >= 20 ? "#22C55E" : "#F97316",
+                        suffix: "%",
+                        skip$: true,
+                        bold: true,
+                      },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex justify-between items-center py-1"
+                        style={{ borderBottom: "1px solid #1F2937" }}
+                      >
+                        <span className="text-xs" style={{ color: "#9CA3AF" }}>
+                          {row.label}
+                        </span>
+                        <span
+                          className="text-xs font-mono"
+                          style={{
+                            color: row.color,
+                            fontWeight: (row as { bold?: boolean }).bold
+                              ? 700
+                              : 400,
+                          }}
+                        >
+                          {(row as { skip$?: boolean }).skip$
+                            ? fmtN(row.value, 1) +
+                              ((row as { suffix?: string }).suffix ?? "")
+                            : row.value < 0
+                              ? `-${fmtM(-row.value)}`
+                              : fmtM(row.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ── CONTRIBUTION ───────────────────────────────────────────────── */}
+            {activeTab === "contribution" && (
+              <div>
+                <SectionHeader>Contribution Analysis</SectionHeader>
+                <Sub>
+                  Who brings what to the combined company? Contribution analysis
+                  shows each party's share of combined revenue, EBITDA, and
+                  ownership — essential for evaluating deal fairness.
+                </Sub>
+
+                {/* Pro forma summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {[
+                    {
+                      title: "REVENUE CONTRIBUTION",
+                      total: C.proFormaRevenueCombined,
+                      rows: [
+                        {
+                          label: inputs.acqName || "Acquirer",
+                          value: inputs.acqRevenue,
+                          pct: C.acqRevContrib,
+                          color: "#6366F1",
+                        },
+                        {
+                          label: inputs.tgtName || "Target",
+                          value: inputs.tgtRevenue,
+                          pct: C.tgtRevContrib,
+                          color: A.light,
+                        },
+                        {
+                          label: "Revenue Synergies",
+                          value: inputs.revSynergies,
+                          pct: C.synRevContrib,
+                          color: "#22C55E",
+                        },
+                      ],
+                    },
+                    {
+                      title: "EBITDA CONTRIBUTION",
+                      total: C.proFormaEBITDACombined,
+                      rows: [
+                        {
+                          label: inputs.acqName || "Acquirer",
+                          value: inputs.acqEBITDA,
+                          pct: C.acqEBITDAContrib,
+                          color: "#6366F1",
+                        },
+                        {
+                          label: inputs.tgtName || "Target",
+                          value: inputs.tgtEBITDA,
+                          pct: C.tgtEBITDAContrib,
+                          color: A.light,
+                        },
+                        {
+                          label: "Total Synergies",
+                          value: inputs.costSynergies + inputs.revSynergies,
+                          pct: C.synEBITDAContrib,
+                          color: "#22C55E",
+                        },
+                      ],
+                    },
+                    {
+                      title: "OWNERSHIP (PRO FORMA)",
+                      total: 100,
+                      rows: [
+                        {
+                          label: "Existing Shareholders",
+                          value: C.acqOwnership,
+                          pct: C.acqOwnership,
+                          color: "#6366F1",
+                          isPct: true,
+                        },
+                        {
+                          label: "Target Shareholders",
+                          value: C.tgtShareholderOwnership,
+                          pct: C.tgtShareholderOwnership,
+                          color: A.light,
+                          isPct: true,
+                        },
+                      ],
+                    },
+                  ].map((section) => (
+                    <Card key={section.title}>
+                      <div
+                        className="text-xs font-bold mb-4 tracking-widest"
+                        style={{ color: "#9CA3AF", fontFamily: "monospace" }}
+                      >
+                        {section.title}
+                      </div>
+                      {section.rows.map((row) => (
+                        <div key={row.label} className="mb-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span style={{ color: row.color }}>
+                              {row.label}
+                            </span>
+                            <span style={{ color: "#9CA3AF" }}>
+                              {(row as { isPct?: boolean }).isPct
+                                ? fmtN(row.value, 1) + "%"
+                                : fmtM(row.value)}{" "}
+                              · {fmtN(row.pct, 1)}%
+                            </span>
+                          </div>
+                          <div
+                            className="rounded-full overflow-hidden"
+                            style={{ height: 6, background: "#1F2937" }}
+                          >
+                            <div
+                              style={{
+                                width: `${Math.max(0, Math.min(100, row.pct))}%`,
+                                height: "100%",
+                                background: row.color,
+                                borderRadius: "999px",
+                                transition: "width 0.4s",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <div
+                        className="pt-2 mt-2 flex justify-between text-xs font-bold"
+                        style={{
+                          borderTop: "1px solid #1F2937",
+                          color: "#F9FAFB",
+                        }}
+                      >
+                        <span>Combined Total</span>
+                        <span>
+                          {section.title.includes("OWN")
+                            ? "100%"
+                            : fmtM(section.total)}
+                        </span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Pro forma income statement */}
+                <Card style={{ marginBottom: "1.5rem" }}>
+                  <div
+                    className="text-xs font-bold mb-4 tracking-widest"
+                    style={{ color: "#9CA3AF", fontFamily: "monospace" }}
+                  >
+                    PRO FORMA INCOME STATEMENT BRIDGE
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr style={{ color: "#4B5563" }}>
+                          <td className="pb-2 pr-6">Line Item ($M)</td>
+                          <td className="pb-2 pr-6 text-right">
+                            {inputs.acqName || "Acquirer"}
+                          </td>
+                          <td className="pb-2 pr-6 text-right">
+                            {inputs.tgtName || "Target"}
+                          </td>
+                          <td className="pb-2 pr-6 text-right">Synergies</td>
+                          <td className="pb-2 pr-6 text-right">
+                            Adj. (Interest/D&A)
+                          </td>
+                          <td className="pb-2 text-right">Pro Forma</td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          {
+                            label: "Revenue",
+                            acq: inputs.acqRevenue,
+                            tgt: inputs.tgtRevenue,
+                            syn: inputs.revSynergies,
+                            adj: 0,
+                            pf: C.proFormaRevenueCombined,
+                          },
+                          {
+                            label: "EBITDA",
+                            acq: inputs.acqEBITDA,
+                            tgt: inputs.tgtEBITDA,
+                            syn: inputs.costSynergies + inputs.revSynergies,
+                            adj: 0,
+                            pf: C.proFormaEBITDACombined,
+                          },
+                          {
+                            label: "Net Income",
+                            acq: inputs.acqNI,
+                            tgt: inputs.tgtNI,
+                            syn: C.synAfterTax,
+                            adj: -(C.newInterestAfterTax + C.daStepUpAfterTax),
+                            pf: C.proFormaNI,
+                          },
+                          {
+                            label: "EPS",
+                            acq: C.standaloneEPS,
+                            tgt:
+                              inputs.tgtShares > 0
+                                ? inputs.tgtNI / inputs.tgtShares
+                                : 0,
+                            syn: 0,
+                            adj: 0,
+                            pf: C.proFormaEPS,
+                            isEPS: true,
+                          },
+                        ].map((row) => (
+                          <tr
+                            key={row.label}
+                            style={{ borderTop: "1px solid #1F2937" }}
+                          >
+                            <td
+                              className="py-2 pr-6 font-medium"
+                              style={{ color: "#D1D5DB" }}
+                            >
+                              {row.label}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: "#6366F1" }}
+                            >
+                              {(row as { isEPS?: boolean }).isEPS
+                                ? "$" + fmtN(row.acq, 2)
+                                : fmtM(row.acq)}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: A.light }}
+                            >
+                              {(row as { isEPS?: boolean }).isEPS
+                                ? "$" + fmtN(row.tgt, 2)
+                                : fmtM(row.tgt)}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{ color: "#22C55E" }}
+                            >
+                              {(row as { isEPS?: boolean }).isEPS
+                                ? "—"
+                                : fmtM(row.syn)}
+                            </td>
+                            <td
+                              className="py-2 pr-6 text-right font-mono"
+                              style={{
+                                color: row.adj < 0 ? "#EF4444" : "#9CA3AF",
+                              }}
+                            >
+                              {(row as { isEPS?: boolean }).isEPS
+                                ? "—"
+                                : row.adj !== 0
+                                  ? fmtM(row.adj)
+                                  : "—"}
+                            </td>
+                            <td
+                              className="py-2 text-right font-mono font-bold"
+                              style={{ color: "#F9FAFB" }}
+                            >
+                              {(row as { isEPS?: boolean }).isEPS
+                                ? "$" + fmtN(row.pf, 2)
+                                : fmtM(row.pf)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+
+                {/* EPS accretion detail */}
+                <Card>
+                  <div
+                    className="text-xs font-bold mb-4 tracking-widest"
+                    style={{ color: "#9CA3AF", fontFamily: "monospace" }}
+                  >
+                    EPS BRIDGE — STANDALONE TO PRO FORMA
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      {
+                        label: "Acquirer Standalone EPS",
+                        value: C.standaloneEPS,
+                        color: "#6366F1",
+                      },
+                      {
+                        label: "+ Target Net Income (per acq. share)",
+                        value: inputs.tgtNI / Math.max(1, C.proFormaShares),
+                        color: A.light,
+                      },
+                      {
+                        label: "+ After-Tax Synergies (per share)",
+                        value: C.synAfterTax / Math.max(1, C.proFormaShares),
+                        color: "#22C55E",
+                      },
+                      {
+                        label: "− Interest on Deal Debt (per share)",
+                        value:
+                          -C.newInterestAfterTax /
+                          Math.max(1, C.proFormaShares),
+                        color: "#EF4444",
+                      },
+                      {
+                        label: "− D&A Step-Up (per share)",
+                        value:
+                          -C.daStepUpAfterTax / Math.max(1, C.proFormaShares),
+                        color: "#EF4444",
+                      },
+                      {
+                        label: "Pro Forma EPS",
+                        value: C.proFormaEPS,
+                        color: C.isAccretive ? "#22C55E" : "#EF4444",
+                        bold: true,
+                      },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex justify-between text-xs py-1"
+                        style={{ borderBottom: "1px solid #1F2937" }}
+                      >
+                        <span style={{ color: "#9CA3AF" }}>{row.label}</span>
+                        <span
+                          className="font-mono"
+                          style={{
+                            color: row.color,
+                            fontWeight: (row as { bold?: boolean }).bold
+                              ? 700
+                              : 400,
+                          }}
+                        >
+                          ${fmtN(row.value, 2)}
+                        </span>
+                      </div>
+                    ))}
+                    <div
+                      className="pt-2 text-xs text-center font-bold"
+                      style={{ color: C.isAccretive ? "#22C55E" : "#EF4444" }}
+                    >
+                      {C.isAccretive ? "▲ ACCRETIVE" : "▼ DILUTIVE"} —{" "}
+                      {fmtN(Math.abs(C.epsChangePct), 1)}% EPS{" "}
+                      {C.isAccretive ? "increase" : "decrease"}
+                    </div>
                   </div>
                 </Card>
               </div>

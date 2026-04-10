@@ -1,0 +1,17 @@
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:brainstorm"}
+{"t":0,"agent":"acf9ebb","agent_type":"voltagent-research:research-analyst","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a71c72e","agent_type":"voltagent-research:research-analyst","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a71c72e","agent_type":"voltagent-research:research-analyst","event":"agent_stop","success":true,"duration_ms":298816}
+{"t":0,"agent":"acf9ebb","agent_type":"voltagent-research:research-analyst","event":"agent_stop","success":true,"duration_ms":356271}
+{"t":0,"agent":"a41bcc6","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"aa35063","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"acd1b1e","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"acd1b1e","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":14891}
+{"t":0,"agent":"af88f76","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ad93640","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a777a58","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a777a58","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":48315}
+{"t":0,"agent":"a6ffafa","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a3b5313","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a673e0f","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a79579d","agent_type":"unknown","event":"agent_stop","success":true}

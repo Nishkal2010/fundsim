@@ -315,6 +315,20 @@ export function Step4_IncomeStatement() {
 
   const totalCols = 13; // 12 months + annual
 
+  // Annual sums for each revenue stream (computed from base + overrides)
+  const annualRevenue1 = Array.from(
+    { length: 12 },
+    (_, i) => getBase(i).revenue1,
+  ).reduce((s, v) => s + v, 0);
+  const annualRevenue2 = Array.from(
+    { length: 12 },
+    (_, i) => getBase(i).revenue2,
+  ).reduce((s, v) => s + v, 0);
+  const annualRevenue3 = Array.from(
+    { length: 12 },
+    (_, i) => getBase(i).revenue3,
+  ).reduce((s, v) => s + v, 0);
+
   // Bar chart data
   const chartData = incomeMonths.map((m, i) => ({
     name: MONTH_LABELS[i],
@@ -517,7 +531,7 @@ export function Step4_IncomeStatement() {
                   />
                 );
               })}
-              <ReadonlyCell value={annual.totalRevenue} bold color="#f9fafb" />
+              <ReadonlyCell value={annualRevenue1} bold color="#f9fafb" />
             </tr>
 
             {/* Revenue Stream 2 */}
@@ -534,7 +548,7 @@ export function Step4_IncomeStatement() {
                   />
                 );
               })}
-              <ReadonlyCell value={0} color="#6b7280" />
+              <ReadonlyCell value={annualRevenue2} color="#6b7280" />
             </tr>
 
             {/* Revenue Stream 3 */}
@@ -551,7 +565,7 @@ export function Step4_IncomeStatement() {
                   />
                 );
               })}
-              <ReadonlyCell value={0} color="#6b7280" />
+              <ReadonlyCell value={annualRevenue3} color="#6b7280" />
             </tr>
 
             {/* Total Revenue */}
