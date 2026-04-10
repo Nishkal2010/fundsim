@@ -712,22 +712,39 @@ function ReportTab() {
   );
 }
 
-
 // ─── Tab: Valuation / DCF Calculator ────────────────────────────────────────
 function ValuationTab() {
   return <DCFCalculator embedded />;
 }
 
-
 // ─── Tab: Checklist ───────────────────────────────────────────────────────────
 function ChecklistTab() {
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [checked, setChecked] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("yis-checklist");
+      return stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
+  const [saved, setSaved] = useState(false);
+
   const toggle = (id: string) =>
     setChecked((prev) => {
       const n = new Set(prev);
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+
+  const saveProgress = () => {
+    try {
+      localStorage.setItem("yis-checklist", JSON.stringify([...checked]));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // localStorage unavailable
+    }
+  };
 
   const sections = [
     {
@@ -886,6 +903,20 @@ function ChecklistTab() {
           </div>
         )}
       </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={saveProgress}
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            background: saved ? "#065F46" : G.primary,
+            color: "#fff",
+          }}
+        >
+          {saved ? "✓ Saved" : "Save Progress"}
+        </button>
+      </div>
 
       {sections.map((section) => (
         <Card key={section.title}>
