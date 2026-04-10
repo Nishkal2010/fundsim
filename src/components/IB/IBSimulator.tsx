@@ -1271,19 +1271,22 @@ export function IBSimulator() {
     const sensitivityMatrix = holdPeriodsRange.map((hpS) => ({
       holdPeriod: hpS,
       irrs: exitMultiplesRange.map((em) => {
+        const exitRevS =
+          tgtRevenue > 0
+            ? tgtRevenue * Math.pow(1 + revenueGrowth / 100, hpS)
+            : 0;
         const exitEB =
-          tgtEBITDA *
-          Math.pow(1 + revenueGrowth / 100, hpS) *
-          (ebitdaMarginPct /
-            (tgtRevenue > 0
-              ? (tgtEBITDA / tgtRevenue) * 100
-              : ebitdaMarginPct));
+          exitRevS > 0
+            ? exitRevS * (ebitdaMarginPct / 100)
+            : tgtEBITDA * Math.pow(1 + revenueGrowth / 100, hpS);
         const exitEV2 = exitEB * em;
-        const cumRepayS = Array.from({ length: hpS }, (_, j) => {
-          const f = tgtFCF * Math.pow(1 + revenueGrowth / 200, j + 1);
-          return f * 0.7;
-        }).reduce((a, b) => a + b, 0);
-        const debtS = Math.max(0, totalTranchedDebt - cumRepayS);
+        let _openDebtS = totalTranchedDebt;
+        for (let j = 0; j < hpS; j++) {
+          const fcfJ = tgtFCF * Math.pow(1 + revenueGrowth / 200, j + 1);
+          const repayJ = Math.min(fcfJ * 0.7, _openDebtS);
+          _openDebtS = Math.max(0, _openDebtS - repayJ);
+        }
+        const debtS = _openDebtS;
         const exitEq = Math.max(0, exitEV2 - debtS);
         const m = lboEquityTranche > 0 ? exitEq / lboEquityTranche : 0;
         return lboEquityTranche > 0 && m > 0
