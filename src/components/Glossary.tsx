@@ -27,8 +27,10 @@ export function Glossary({ open, onClose }: GlossaryProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40"
             style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 200,
               background: "rgba(0,0,0,0.6)",
               backdropFilter: "blur(4px)",
             }}
@@ -39,8 +41,19 @@ export function Glossary({ open, onClose }: GlossaryProps) {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm flex flex-col"
-            style={{ background: "#111827", borderLeft: "1px solid #374151" }}
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 201,
+              width: "100%",
+              maxWidth: 384,
+              display: "flex",
+              flexDirection: "column",
+              background: "#111827",
+              borderLeft: "1px solid #374151",
+            }}
           >
             <div
               className="flex items-center justify-between px-5 py-4"
