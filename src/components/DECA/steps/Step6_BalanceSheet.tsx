@@ -169,6 +169,47 @@ export function Step6_BalanceSheet() {
     val: number,
   ) => dispatch({ type: "SET_BS_OVERRIDES", payload: { [field]: val } });
 
+  const exportBalanceSheetCSV = () => {
+    const rows: [string, string][] = [
+      ["Field", "Value"],
+      ["ASSETS", ""],
+      ["Cash", String(bs.cash)],
+      ["Accounts Receivable", String(bs.accountsReceivable)],
+      ["Inventory", String(bs.inventory)],
+      ["Prepaid Expenses", String(bs.prepaidExpenses)],
+      ["Total Current Assets", String(bs.totalCurrentAssets)],
+      ["Equipment (Gross)", String(bs.equipmentGross)],
+      ["Accumulated Depreciation", String(bs.accumulatedDepreciation)],
+      ["Net Equipment", String(bs.netEquipment)],
+      ["Other Long-Term Assets", String(bs.otherLongTermAssets)],
+      ["Total Long-Term Assets", String(bs.totalLongTermAssets)],
+      ["TOTAL ASSETS", String(bs.totalAssets)],
+      ["", ""],
+      ["LIABILITIES", ""],
+      ["Accounts Payable", String(bs.accountsPayable)],
+      ["Short-Term Loan Portion", String(bs.shortTermLoanPortion)],
+      ["Accrued Expenses", String(bs.accruedExpenses)],
+      ["Total Current Liabilities", String(bs.totalCurrentLiabilities)],
+      ["Long-Term Debt", String(bs.longTermDebt)],
+      ["Total Long-Term Liabilities", String(bs.totalLongTermLiabilities)],
+      ["Total Liabilities", String(bs.totalLiabilities)],
+      ["", ""],
+      ["EQUITY", ""],
+      ["Initial Investment", String(bs.initialInvestment)],
+      ["Retained Earnings", String(bs.retainedEarnings)],
+      ["Total Owner Equity", String(bs.totalOwnerEquity)],
+      ["TOTAL LIABILITIES + EQUITY", String(bs.totalLiabilitiesAndEquity)],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "balance_sheet.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -177,15 +218,44 @@ export function Step6_BalanceSheet() {
       style={{ padding: "24px 0", color: "#f9fafb" }}
     >
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <h2
-          style={{ fontSize: 22, fontWeight: 700, color: "#f9fafb", margin: 0 }}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              color: "#f9fafb",
+              margin: 0,
+            }}
+          >
+            Balance Sheet
+          </h2>
+          <p style={{ color: "#6b7280", fontSize: 13, marginTop: 4 }}>
+            As of End of Year 1 — Editable fields marked with ✎
+          </p>
+        </div>
+        <button
+          onClick={exportBalanceSheetCSV}
+          style={{
+            background: "#1f2937",
+            border: "1px solid #374151",
+            borderRadius: "0.45rem",
+            padding: "0.4rem 0.875rem",
+            fontSize: "0.78rem",
+            color: "#9ca3af",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
         >
-          Balance Sheet
-        </h2>
-        <p style={{ color: "#6b7280", fontSize: 13, marginTop: 4 }}>
-          As of End of Year 1 — Editable fields marked with ✎
-        </p>
+          ↓ Export CSV
+        </button>
       </div>
 
       {/* Balance Check Banner */}

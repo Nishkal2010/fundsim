@@ -315,6 +315,94 @@ export function Step4_IncomeStatement() {
 
   const totalCols = 13; // 12 months + annual
 
+  // CSV export
+  const exportIncomeCSV = () => {
+    const cols = [...MONTH_LABELS, "Annual"];
+    const rows: [string, ...(string | number)[]][] = [
+      ["Metric", ...cols],
+      [
+        "Total Revenue",
+        ...incomeMonths.map((m) => m.totalRevenue),
+        annual.totalRevenue,
+      ],
+      ["COGS", ...incomeMonths.map((m) => m.cogs), annual.cogs],
+      [
+        "Gross Profit",
+        ...incomeMonths.map((m) => m.grossProfit),
+        annual.grossProfit,
+      ],
+      [
+        "Gross Margin %",
+        ...incomeMonths.map((m) => m.grossMarginPct.toFixed(1) + "%"),
+        (annual.grossMarginPct ?? 0).toFixed(1) + "%",
+      ],
+      ["— Rent", ...incomeMonths.map((m) => m.rent), annual.rent],
+      [
+        "— Utilities",
+        ...incomeMonths.map((m) => m.utilities),
+        annual.utilities,
+      ],
+      ["— Salaries", ...incomeMonths.map((m) => m.salaries), annual.salaries],
+      [
+        "— Payroll Taxes",
+        ...incomeMonths.map((m) => m.payrollTaxes),
+        annual.payrollTaxes,
+      ],
+      [
+        "— Marketing",
+        ...incomeMonths.map((m) => m.marketing),
+        annual.marketing,
+      ],
+      [
+        "— Insurance",
+        ...incomeMonths.map((m) => m.insurance),
+        annual.insurance,
+      ],
+      [
+        "— Technology",
+        ...incomeMonths.map((m) => m.technology),
+        annual.technology,
+      ],
+      [
+        "— Professional Services",
+        ...incomeMonths.map((m) => m.professionalServices),
+        annual.professionalServices,
+      ],
+      [
+        "— Depreciation",
+        ...incomeMonths.map((m) => m.depreciation),
+        annual.depreciation,
+      ],
+      ["— Misc OpEx", ...incomeMonths.map((m) => m.miscOpEx), annual.miscOpEx],
+      ["Total OpEx", ...incomeMonths.map((m) => m.totalOpEx), annual.totalOpEx],
+      [
+        "Operating Income",
+        ...incomeMonths.map((m) => m.operatingIncome),
+        annual.operatingIncome,
+      ],
+      [
+        "Interest Expense",
+        ...incomeMonths.map((m) => m.interestExpense),
+        annual.interestExpense,
+      ],
+      [
+        "Pre-Tax Income",
+        ...incomeMonths.map((m) => m.preTaxIncome),
+        annual.preTaxIncome,
+      ],
+      ["Taxes", ...incomeMonths.map((m) => m.taxes), annual.taxes],
+      ["Net Income", ...incomeMonths.map((m) => m.netIncome), annual.netIncome],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "income_statement.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Annual sums for each revenue stream (computed from base + overrides)
   const annualRevenue1 = Array.from(
     { length: 12 },
@@ -370,8 +458,23 @@ export function Step4_IncomeStatement() {
           </p>
         </div>
 
-        {/* Growth badge */}
+        {/* Growth badge + Export */}
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <button
+            onClick={exportIncomeCSV}
+            style={{
+              background: "#1f2937",
+              border: "1px solid #374151",
+              borderRadius: "0.45rem",
+              padding: "0.4rem 0.875rem",
+              fontSize: "0.78rem",
+              color: "#9ca3af",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            ↓ Export CSV
+          </button>
           {breakEvenMonth && (
             <div
               style={{
