@@ -1,6 +1,6 @@
-import type { FundInputs, JCurveData, JCurvePoint } from '../types/fund';
-import { calculateIRR } from './irr';
-import { calculateLifecycle } from './fundLifecycle';
+import type { FundInputs, JCurveData, JCurvePoint } from "../types/fund";
+import { calculateIRR } from "./irr";
+import { calculateLifecycle } from "./fundLifecycle";
 
 export function calculateJCurve(inputs: FundInputs): JCurveData {
   const {
@@ -19,12 +19,13 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
 
   // Assign exit year to each company
   const companies = Array.from({ length: numCompanies }, (_, i) => {
-    const investYear = Math.ceil((i + 1) * investmentPeriod / numCompanies);
+    const investYear = Math.ceil(((i + 1) * investmentPeriod) / numCompanies);
     let exitYear: number;
-    if (exitDistribution === 'even') {
+    if (exitDistribution === "even") {
       exitYear = investYear + avgHoldPeriod;
-    } else if (exitDistribution === 'backloaded') {
-      exitYear = investYear + avgHoldPeriod + Math.floor(i / numCompanies * 3);
+    } else if (exitDistribution === "backloaded") {
+      exitYear =
+        investYear + avgHoldPeriod + Math.floor((i / numCompanies) * 3);
     } else {
       // bell curve
       const variance = Math.sin((i / numCompanies) * Math.PI) * 1.5;
@@ -49,9 +50,11 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
 
   // Distributions from exits
   const distributionsByYear: number[] = Array(fundLife + 1).fill(0);
-  companies.forEach(company => {
+  companies.forEach((company) => {
     if (company.exitYear <= fundLife) {
-      const proceeds = company.isLoss ? 0 : company.investedCapital * avgExitMultiple;
+      const proceeds = company.isLoss
+        ? 0
+        : company.investedCapital * avgExitMultiple;
       distributionsByYear[company.exitYear] += proceeds;
     }
   });
@@ -69,7 +72,13 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
 
   for (let year = 0; year <= fundLife; year++) {
     if (year === 0) {
-      points.push({ year: 0, netCashFlow: 0, nav: 0, distributions: 0, capitalCalled: 0 });
+      points.push({
+        year: 0,
+        netCashFlow: 0,
+        nav: 0,
+        distributions: 0,
+        capitalCalled: 0,
+      });
       continue;
     }
 
@@ -79,18 +88,30 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
 
     // NAV: unrealized investments at interpolated value
     let nav = 0;
-    companies.forEach(company => {
+    companies.forEach((company) => {
       if (company.investYear < year && company.exitYear >= year) {
         const yearsHeld = year - company.investYear;
         const holdPeriod = company.exitYear - company.investYear;
-        const exitValue = company.isLoss ? 0 : company.investedCapital * avgExitMultiple;
-        const interpolatedValue = company.investedCapital + (exitValue - company.investedCapital) * (yearsHeld / holdPeriod);
+        const exitValue = company.isLoss
+          ? 0
+          : company.investedCapital * avgExitMultiple;
+        const interpolatedValue =
+          company.investedCapital +
+          (exitValue - company.investedCapital) * (yearsHeld / holdPeriod);
         nav += interpolatedValue;
       }
     });
 
-    const netCashPct = (cumulativeDistributions - cumulativeCapitalCalled) / fundSize * 100;
-    const navPct = (nav + cumulativeDistributions - cumulativeCapitalCalled) / fundSize * 100;
+    const netCashPct =
+      fundSize > 0
+        ? ((cumulativeDistributions - cumulativeCapitalCalled) / fundSize) * 100
+        : 0;
+    const navPct =
+      fundSize > 0
+        ? ((nav + cumulativeDistributions - cumulativeCapitalCalled) /
+            fundSize) *
+          100
+        : 0;
 
     points.push({
       year,
@@ -113,16 +134,17 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
   // Trough
   let troughYear = 1;
   let troughValue = 0;
-  points.forEach(p => {
+  points.forEach((p) => {
     if (p.netCashFlow < troughValue) {
       troughValue = p.netCashFlow;
       troughYear = p.year;
     }
   });
 
-  const finalNetMultiple = cumulativeCapitalCalled > 0
-    ? (cumulativeDistributions / cumulativeCapitalCalled)
-    : 0;
+  const finalNetMultiple =
+    cumulativeCapitalCalled > 0
+      ? cumulativeDistributions / cumulativeCapitalCalled
+      : 0;
 
   const netIRR = calculateIRR(lpCashFlows.slice(1));
 

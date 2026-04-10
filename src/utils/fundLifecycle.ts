@@ -24,7 +24,8 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
 
   const totalFees = investmentPeriodFees + harvestFees;
   const finalNetInvestable = fundSize - totalFees;
-  const annualDeployment = finalNetInvestable / investmentPeriod;
+  const annualDeployment =
+    investmentPeriod > 0 ? finalNetInvestable / investmentPeriod : 0;
 
   const years: YearlyData[] = [];
   let cumulativeDeployed = 0;
@@ -42,7 +43,9 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
       const remainingAtYearStart =
         finalNetInvestable -
         (year - investmentPeriod - 1) *
-          (finalNetInvestable / (fundLife - investmentPeriod));
+          (fundLife > investmentPeriod
+            ? finalNetInvestable / (fundLife - investmentPeriod)
+            : 0);
       mgmtFee = managementFee * Math.max(0, remainingAtYearStart);
       capitalDeployed = 0;
     }
@@ -65,7 +68,7 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
     });
   }
 
-  const capitalEfficiency = finalNetInvestable / fundSize;
+  const capitalEfficiency = fundSize > 0 ? finalNetInvestable / fundSize : 0;
 
   return {
     years,

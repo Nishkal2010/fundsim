@@ -227,44 +227,104 @@
   "hotPaths": [
     {
       "path": "src/components/IB/IBSimulator.tsx",
-      "accessCount": 69,
-      "lastAccessed": 1775716081141,
-      "type": "file"
-    },
-    {
-      "path": "src/App.tsx",
-      "accessCount": 17,
-      "lastAccessed": 1775784195708,
+      "accessCount": 88,
+      "lastAccessed": 1775793442343,
       "type": "file"
     },
     {
       "path": "src/components/YIS/YISFinanceSuite.tsx",
-      "accessCount": 15,
-      "lastAccessed": 1775784153420,
+      "accessCount": 28,
+      "lastAccessed": 1775793140526,
       "type": "file"
     },
     {
-      "path": "src/components/Glossary.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1775787556005,
+      "path": "src/App.tsx",
+      "accessCount": 18,
+      "lastAccessed": 1775793092782,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/fundLifecycle.ts",
+      "accessCount": 10,
+      "lastAccessed": 1775793280845,
       "type": "file"
     },
     {
       "path": "src/utils/performance.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775714849197,
+      "accessCount": 10,
+      "lastAccessed": 1775793387355,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Glossary.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1775793094342,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/jCurve.ts",
+      "accessCount": 9,
+      "lastAccessed": 1775793396380,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useFundModel.ts",
+      "accessCount": 9,
+      "lastAccessed": 1775793473542,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DECA/steps/Step7_ThreeYearPlan.tsx",
+      "accessCount": 7,
+      "lastAccessed": 1775793124376,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/waterfall.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775793300932,
       "type": "file"
     },
     {
       "path": "src/main.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1775714936829,
+      "accessCount": 5,
+      "lastAccessed": 1775793086746,
       "type": "file"
     },
     {
       "path": "src/components/LoginPage.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1775793094257,
+      "type": "file"
+    },
+    {
+      "path": "src/components/JCurve/JCurveChart.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1775793456337,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DECA/DECAFinanceSuite.tsx",
       "accessCount": 4,
-      "lastAccessed": 1775715026736,
+      "lastAccessed": 1775793081889,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ComparePage.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775793094281,
+      "type": "file"
+    },
+    {
+      "path": "src/components/DECA/steps/Step5_CashFlow.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1775793111277,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775793113285,
       "type": "file"
     },
     {
@@ -280,45 +340,123 @@
       "type": "file"
     },
     {
-      "path": "src/components/DECA/steps/Step7_ThreeYearPlan.tsx",
+      "path": "src/utils/irr.ts",
       "accessCount": 3,
-      "lastAccessed": 1775714168814,
+      "lastAccessed": 1775793105276,
       "type": "file"
     },
     {
-      "path": "src/components/DECA/DECAFinanceSuite.tsx",
+      "path": "src/types/fund.ts",
       "accessCount": 3,
-      "lastAccessed": 1775714179815,
+      "lastAccessed": 1775793116473,
       "type": "file"
     },
     {
-      "path": "src/components/DECA/steps/Step5_CashFlow.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1775714180440,
-      "type": "file"
-    },
-    {
-      "path": "src/components/ComparePage.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1775714735496,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/fundLifecycle.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775714835238,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/supabase.ts",
+      "path": "src/components/YIS/YISLanding.tsx",
       "accessCount": 2,
-      "lastAccessed": 1775713976294,
+      "lastAccessed": 1775793081674,
       "type": "file"
     },
     {
-      "path": "src/utils/jCurve.ts",
+      "path": "src/components/Header.tsx",
       "accessCount": 2,
-      "lastAccessed": 1775714557774,
+      "lastAccessed": 1775793092986,
+      "type": "file"
+    },
+    {
+      "path": "src/components/GlobalInputs.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793093186,
+      "type": "file"
+    },
+    {
+      "path": "src/components/TabBar.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793093400,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793093608,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793093847,
+      "type": "file"
+    },
+    {
+      "path": "src/components/FundLifecycle/FundLifecycleTab.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793098547,
+      "type": "file"
+    },
+    {
+      "path": "src/components/JCurve/JCurveTab.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793098723,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Waterfall/WaterfallTab.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793098941,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Performance/PerformanceTab.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793099316,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Waterfall/WaterfallBarChart.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793108227,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Performance/MetricsGrid.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793108689,
+      "type": "file"
+    },
+    {
+      "path": "src/components/FundLifecycle/DeploymentChart.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793108757,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Waterfall/WaterfallDiagram.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793108907,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Waterfall/DistributionTable.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793111071,
+      "type": "file"
+    },
+    {
+      "path": "src/components/Performance/TVPIChart.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793111504,
+      "type": "file"
+    },
+    {
+      "path": "src/components/JCurve/ScenarioComparison.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775793111789,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/formatting.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775793114146,
       "type": "file"
     },
     {
@@ -328,21 +466,9 @@
       "type": "file"
     },
     {
-      "path": "src/hooks/useFundModel.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775663752994,
-      "type": "file"
-    },
-    {
       "path": "src/components/DECA/DECALanding.tsx",
       "accessCount": 1,
       "lastAccessed": 1775666718825,
-      "type": "file"
-    },
-    {
-      "path": "src/components/YIS/YISLanding.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775666785556,
       "type": "file"
     },
     {
@@ -352,87 +478,9 @@
       "type": "file"
     },
     {
-      "path": "src/types/fund.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775713972808,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/irr.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775713973376,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/waterfall.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775713975059,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/formatting.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775713976068,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/FundLifecycleTab.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713980704,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/DeploymentChart.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713981180,
-      "type": "file"
-    },
-    {
       "path": "src/components/FundLifecycle/FeeTable.tsx",
       "accessCount": 1,
       "lastAccessed": 1775713981651,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/JCurveTab.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713982525,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/JCurveChart.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713982979,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/ScenarioComparison.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713983411,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallTab.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713984382,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallDiagram.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713984628,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallBarChart.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713988344,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/DistributionTable.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713989024,
       "type": "file"
     },
     {
@@ -442,57 +490,15 @@
       "type": "file"
     },
     {
-      "path": "src/components/Performance/PerformanceTab.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713990129,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/MetricsGrid.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713990614,
-      "type": "file"
-    },
-    {
       "path": "src/components/Performance/SensitivityTable.tsx",
       "accessCount": 1,
       "lastAccessed": 1775713991603,
       "type": "file"
     },
     {
-      "path": "src/components/Performance/TVPIChart.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713991891,
-      "type": "file"
-    },
-    {
       "path": "src/components/Performance/QuartileScale.tsx",
       "accessCount": 1,
       "lastAccessed": 1775713992322,
-      "type": "file"
-    },
-    {
-      "path": "src/components/GlobalInputs.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713995440,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Header.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713995889,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Hero.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713996306,
-      "type": "file"
-    },
-    {
-      "path": "src/components/TabBar.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775713996784,
       "type": "file"
     },
     {
@@ -511,12 +517,6 @@
       "path": "src/components/Tooltip.tsx",
       "accessCount": 1,
       "lastAccessed": 1775713998500,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Footer.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775714133082,
       "type": "file"
     },
     {

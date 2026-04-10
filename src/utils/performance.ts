@@ -12,8 +12,12 @@ export function calculatePerformance(inputs: FundInputs): PerformanceData {
 
   const dpi =
     totalCapitalCalled > 0 ? totalDistributions / totalCapitalCalled : 0;
-  // At fund end NAV ≈ 0 (all realized); rvpi is meaningful only mid-fund
-  const rvpi = 0;
+  const navActual =
+    (lastPoint.nav / 100) * inputs.fundSize +
+    lastPoint.capitalCalled -
+    lastPoint.distributions;
+  const rvpi =
+    totalCapitalCalled > 0 ? Math.max(0, navActual / totalCapitalCalled) : 0;
   const tvpi = dpi + rvpi;
   const netIRR = jCurve.netIRR;
   const grossMOIC =

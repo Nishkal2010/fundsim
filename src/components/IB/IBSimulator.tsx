@@ -3154,7 +3154,9 @@ export function IBSimulator() {
                     <Stat
                       label="Synergy Premium Coverage"
                       value={
-                        C.dealValue > 0 && inputs.tgtEBITDA > 0
+                        C.dealValue > 0 &&
+                        inputs.tgtEBITDA > 0 &&
+                        Math.abs(C.offerEV - C.compsEV) > 0.01
                           ? fmtPct(
                               ((inputs.costSynergies + inputs.revSynergies) /
                                 (C.offerEV - C.compsEV)) *
@@ -3395,14 +3397,19 @@ export function IBSimulator() {
                     },
                     {
                       label: "Interest Coverage",
-                      value: fmtN(C.interestCovTranche, 1) + "x",
+                      value:
+                        C.interestCovTranche >= 99
+                          ? "N/A"
+                          : fmtN(C.interestCovTranche, 1) + "x",
                       sub: "EBITDA ÷ interest — > 2x preferred",
                       color:
-                        C.interestCovTranche < 1.5
-                          ? "#EF4444"
-                          : C.interestCovTranche < 2.5
-                            ? "#F97316"
-                            : "#22C55E",
+                        C.interestCovTranche >= 99
+                          ? "#6B7280"
+                          : C.interestCovTranche < 1.5
+                            ? "#EF4444"
+                            : C.interestCovTranche < 2.5
+                              ? "#F97316"
+                              : "#22C55E",
                     },
                     {
                       label: "FCF / Total Debt (Yield)",
@@ -3417,14 +3424,16 @@ export function IBSimulator() {
                     },
                     {
                       label: "DSCR",
-                      value: fmtN(C.dscr, 1) + "x",
+                      value: C.dscr >= 99 ? "N/A" : fmtN(C.dscr, 1) + "x",
                       sub: "FCF ÷ interest — > 1.2x required",
                       color:
-                        C.dscr < 1
-                          ? "#EF4444"
-                          : C.dscr < 1.5
-                            ? "#F97316"
-                            : "#22C55E",
+                        C.dscr >= 99
+                          ? "#6B7280"
+                          : C.dscr < 1
+                            ? "#EF4444"
+                            : C.dscr < 1.5
+                              ? "#F97316"
+                              : "#22C55E",
                     },
                   ].map((m) => (
                     <Card key={m.label}>

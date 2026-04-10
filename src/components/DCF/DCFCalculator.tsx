@@ -689,10 +689,7 @@ export function DCFCalculator({
           : revenue * (capexRate / 100);
 
       const currNWC = revenue * (nwcRate / 100);
-      const deltaNWC =
-        nwcMethod === "fixed"
-          ? baseRevenue * (nwcRate / 100) - prevNWC
-          : currNWC - prevNWC;
+      const deltaNWC = nwcMethod === "fixed" ? 0 : currNWC - prevNWC;
 
       const sbc = revenue * (sbcRate / 100);
 
@@ -791,7 +788,8 @@ export function DCFCalculator({
         ? (ddmRows[ddmRows.length - 1].dps * (1 + dividendGrowthPhase2 / 100)) /
           (ke_cost - dividendGrowthPhase2 / 100)
         : ddmRows[ddmRows.length - 1].dps * 20;
-    const pvTVDDM = tvDDM / Math.pow(1 + ke_cost, dividendPhase1Years);
+    const pvTVDDM =
+      tvDDM / Math.pow(1 + ke_cost, Math.max(dividendPhase1Years, 5));
     const intrinsicValueDDM = ddmPVSum + pvTVDDM;
 
     // ── APV ─────────────────────────────────────────────────────────────────
@@ -815,7 +813,10 @@ export function DCFCalculator({
     const pvTVAPV = tvAPV / Math.pow(1 + ke_unlevered, years);
     const baseAPV = pvFCFFUnlevered + pvTVAPV;
 
-    const tsDiscount = debtTaxShieldDiscount === "rf" ? riskFreeRate / 100 : kd;
+    const tsDiscount =
+      debtTaxShieldDiscount === "rf"
+        ? riskFreeRate / 100
+        : preTaxCostOfDebt / 100;
     const annualTS = annualInterestExpense * effectiveTax;
     const pvTS = rows.reduce((acc, r) => {
       return acc + annualTS / Math.pow(1 + tsDiscount, r.yr);

@@ -15,3 +15,17 @@
 {"t":0,"agent":"a3b5313","agent_type":"unknown","event":"agent_stop","success":true}
 {"t":0,"agent":"a673e0f","agent_type":"unknown","event":"agent_stop","success":true}
 {"t":0,"agent":"a79579d","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:dispatching-parallel-agents"}
+{"t":0,"agent":"a9025db","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a5e02d6","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ab78dec","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"afaed0d","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a279e9d","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae01b75","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a279e9d","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":21064}
+{"t":0,"agent":"a5e02d6","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":44942}
+{"t":0,"agent":"afaed0d","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":49924}
+{"t":0,"agent":"a9025db","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":70338}
+{"t":0,"agent":"ae01b75","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":43143}
+{"t":0,"agent":"ab78dec","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":78192}
+{"t":0,"agent":"a11a018","agent_type":"unknown","event":"agent_stop","success":true}

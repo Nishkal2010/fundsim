@@ -50,17 +50,22 @@ export function useFundModelState(
       return;
     }
     loaded.current = false;
-    supabase
-      .from("fund_models")
-      .select("inputs")
-      .eq("user_id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("fund_models")
+          .select("inputs")
+          .eq("user_id", userId)
+          .maybeSingle();
         if (data?.inputs) {
           setInputs(data.inputs as FundInputs);
         }
+      } catch {
+        // ignore load errors, use defaults
+      } finally {
         loaded.current = true;
-      });
+      }
+    })();
   }, [userId]);
 
   // Cleanup debounce timer on unmount

@@ -158,18 +158,6 @@ export function Step6_BalanceSheet() {
   const { computed, dispatch } = useDECA();
   const bs = computed.balanceSheet;
 
-  const patch = (field: keyof typeof bs) => (val: number) =>
-    dispatch({
-      type: "SET_BS_OVERRIDES",
-      payload: { [field]: val } as Parameters<typeof dispatch>[0] extends {
-        type: "SET_BS_OVERRIDES";
-        payload: infer P;
-      }
-        ? P
-        : never,
-    });
-
-  // Typed dispatch helper
   const patchOverride = (
     field:
       | "accountsReceivable"
@@ -180,8 +168,6 @@ export function Step6_BalanceSheet() {
       | "accruedExpenses",
     val: number,
   ) => dispatch({ type: "SET_BS_OVERRIDES", payload: { [field]: val } });
-
-  void patch; // suppress unused warning
 
   return (
     <motion.div
