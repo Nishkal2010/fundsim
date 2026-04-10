@@ -2,6 +2,21 @@ import React, { useRef } from "react";
 import { useDECA } from "../DECAFinanceSuite";
 import { formatCurrency, formatPercentRaw } from "../utils/decaUtils";
 import type { ImplementationBudgetRow } from "../types/decaTypes";
+import {
+  blank,
+  colHeaders,
+  downloadCSV,
+  fmtPct,
+  fmtUSD,
+  grandTotal,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  subtotal,
+  type CsvRow,
+} from "../../../utils/csvExport";
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
@@ -84,58 +99,151 @@ function rowYear1Total(row: ImplementationBudgetRow): number {
 function exportToCSV(
   rows: ImplementationBudgetRow[],
   expectedBenefit: number,
+  bizName: string,
 ): void {
-  const headers = [
-    "Strategic Activity",
-    "Category",
-    "One-Time Cost",
-    "Monthly Cost",
-    "Year 1 Total",
-    "Notes",
-  ];
-  const dataRows = rows.map((r) => [
-    `"${r.activity.replace(/"/g, '""')}"`,
-    r.category,
-    r.oneTimeCost.toFixed(2),
-    r.monthlyCost.toFixed(2),
-    rowYear1Total(r).toFixed(2),
-    `"${r.notes.replace(/"/g, '""')}"`,
-  ]);
+  const today = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   const totalOneTime = rows.reduce((s, r) => s + r.oneTimeCost, 0);
   const totalMonthly = rows.reduce((s, r) => s + r.monthlyCost, 0);
   const totalYear1 = rows.reduce((s, r) => s + rowYear1Total(r), 0);
-  dataRows.push([
-    '"TOTALS"',
-    "",
-    totalOneTime.toFixed(2),
-    totalMonthly.toFixed(2),
-    totalYear1.toFixed(2),
-    "",
-  ]);
-  dataRows.push([]);
-  dataRows.push([
-    '"Expected Benefit"',
-    "",
-    "",
-    "",
-    expectedBenefit.toFixed(2),
-    "",
-  ]);
-  const totalCost = totalYear1;
   const roi =
-    totalCost > 0 ? ((expectedBenefit - totalCost) / totalCost) * 100 : 0;
-  dataRows.push(['"ROI %"', "", "", "", `"${roi.toFixed(1)}%"`, ""]);
+    totalYear1 > 0 ? ((expectedBenefit - totalYear1) / totalYear1) * 100 : 0;
+  const monthlyBenefit = expectedBenefit / 12;
+  const paybackMonths =
+    monthlyBenefit > 0 ? Math.ceil(totalYear1 / monthlyBenefit) : null;
 
-  const csv = [headers.join(","), ...dataRows.map((r) => r.join(","))].join(
-    "\n",
+  // Group by category
+  const CATEGORY_ORDER = [
+    "Marketing",
+    "Operations",
+    "Technology",
+    "Human Resources",
+    "Customer Experience",
+    "Product Development",
+    "Training",
+    "Compliance & Legal",
+    "Other",
+  ];
+  const grouped: Record<string, ImplementationBudgetRow[]> = {};
+  for (const r of rows) {
+    if (!grouped[r.category]) grouped[r.category] = [];
+    grouped[r.category].push(r);
+  }
+  const sortedCats = CATEGORY_ORDER.filter((c) => grouped[c]?.length).concat(
+    Object.keys(grouped).filter(
+      (c) => !CATEGORY_ORDER.includes(c) && grouped[c]?.length,
+    ),
   );
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "deca_implementation_budget.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+
+  const csvRows: CsvRow[] = [
+    // ── Metadata ─────────────────────────────────────
+    meta("Business Name", bizName),
+    meta("Report", "Implementation Budget — Strategic Plan"),
+    meta("Period", "Year 1"),
+    meta("Currency", "USD"),
+    meta("Prepared", today),
+    blank(),
+    colHeaders(
+      "Strategic Activity",
+      "Category",
+      "One-Time Cost (USD)",
+      "Monthly Cost (USD)",
+      "Year 1 Total (USD)",
+      "Notes",
+    ),
+    blank(),
+    section("IMPLEMENTATION ACTIVITIES BY CATEGORY"),
+    blank(),
+  ];
+
+  for (const cat of sortedCats) {
+    const catRows = grouped[cat];
+    const catOneTime = catRows.reduce((s, r) => s + r.oneTimeCost, 0);
+    const catMonthly = catRows.reduce((s, r) => s + r.monthlyCost, 0);
+    const catYear1 = catRows.reduce((s, r) => s + rowYear1Total(r), 0);
+
+    csvRows.push(section(cat));
+    for (const r of catRows) {
+      csvRows.push(
+        item(
+          r.activity || "(unnamed)",
+          r.category,
+          fmtUSD(r.oneTimeCost),
+          fmtUSD(r.monthlyCost),
+          fmtUSD(rowYear1Total(r)),
+          r.notes,
+        ),
+      );
+    }
+    csvRows.push(blank());
+    csvRows.push(
+      subtotal(
+        "  Total " + cat,
+        "",
+        fmtUSD(catOneTime),
+        fmtUSD(catMonthly),
+        fmtUSD(catYear1),
+        "",
+      ),
+    );
+    csvRows.push(blank());
+    csvRows.push(blank());
+  }
+
+  csvRows.push(rule());
+  csvRows.push(
+    grandTotal(
+      "TOTALS",
+      "",
+      fmtUSD(totalOneTime),
+      fmtUSD(totalMonthly),
+      fmtUSD(totalYear1),
+      "",
+    ),
+  );
+  csvRows.push(blank());
+  csvRows.push(blank());
+
+  // ── ROI Analysis ───────────────────────────────────
+  csvRows.push(rule());
+  csvRows.push(section("ROI ANALYSIS"));
+  csvRows.push(item("Year 1 Total Implementation Cost", fmtUSD(totalYear1)));
+  csvRows.push(item("Expected Annual Benefit", fmtUSD(expectedBenefit)));
+  csvRows.push(
+    item("Net Benefit (Benefit − Cost)", fmtUSD(expectedBenefit - totalYear1)),
+  );
+  csvRows.push(item("Return on Investment (ROI)", fmtPct(roi)));
+  csvRows.push(item("Monthly Benefit", fmtUSD(monthlyBenefit)));
+  csvRows.push(
+    item(
+      "Estimated Payback Period",
+      paybackMonths != null ? `${paybackMonths} months` : "N/A",
+    ),
+  );
+  csvRows.push(blank());
+  csvRows.push(blank());
+
+  // ── Notes ──────────────────────────────────────────
+  csvRows.push(rule());
+  csvRows.push(section("NOTES"));
+  csvRows.push(note("Year 1 Total = One-Time Cost + (Monthly Cost × 12)."));
+  csvRows.push(
+    note("ROI = (Expected Benefit − Year 1 Cost) / Year 1 Cost × 100%."),
+  );
+  csvRows.push(
+    note(
+      "Payback period assumes monthly benefit is received evenly throughout the year.",
+    ),
+  );
+  csvRows.push(
+    note("Source: DECA Business Finance Suite — Implementation Budget module."),
+  );
+
+  downloadCSV("implementation_budget.csv", csvRows);
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -235,7 +343,13 @@ export function Step11_ImplementationBudget() {
           <div style={LABEL}>Strategic Activity Budget</div>
           <div style={{ display: "flex", gap: 10 }}>
             <button
-              onClick={() => exportToCSV(rows, expectedBenefit)}
+              onClick={() =>
+                exportToCSV(
+                  rows,
+                  expectedBenefit,
+                  state.businessOverview.businessName || "My Business",
+                )
+              }
               style={{
                 background: "transparent",
                 border: "1px solid #374151",

@@ -3,6 +3,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDECA } from "../DECAFinanceSuite";
 import { formatCurrency } from "../utils/decaUtils";
 import type { StartupCostItem } from "../types/decaTypes";
+import {
+  blank,
+  colHeaders,
+  downloadCSV,
+  fmtUSD,
+  grandTotal as grandTotalRow,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  type CsvRow,
+} from "../../../utils/csvExport";
 
 const CATEGORIES = [
   "Legal & Licensing",
@@ -77,17 +90,63 @@ export function Step3_StartupCosts() {
   };
 
   const exportCSV = () => {
-    const header = "Category,Item,Cost,Notes\n";
-    const rows = items
-      .map((i) => `"${i.category}","${i.item}",${i.cost},"${i.notes}"`)
-      .join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "startup_costs.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const bizName = state.businessOverview.businessName || "My Business";
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const startupTotal = items.reduce((s, i) => s + (i.cost || 0), 0);
+
+    // Group items by category
+    const grouped: Record<string, typeof items> = {};
+    for (const cat of CATEGORIES) {
+      const catItems = items.filter((i) => i.category === cat);
+      if (catItems.length > 0) grouped[cat] = catItems;
+    }
+
+    const rows: CsvRow[] = [
+      meta("Business Name", bizName),
+      meta("Report", "Startup Costs Budget"),
+      meta("Phase", "Pre-Launch — One-Time Expenditures"),
+      meta("Currency", "USD"),
+      meta("Prepared", today),
+      blank(),
+      colHeaders("Category / Item", "Cost (USD)", "Notes"),
+      blank(),
+      section("STARTUP COSTS BY CATEGORY"),
+      blank(),
+    ];
+
+    for (const [cat, catItems] of Object.entries(grouped)) {
+      const catTotal = catItems.reduce((s, i) => s + (i.cost || 0), 0);
+      rows.push(section(cat));
+      for (const it of catItems) {
+        rows.push(item(it.item || "(unnamed)", fmtUSD(it.cost), it.notes));
+      }
+      rows.push(blank());
+      rows.push(item("Total " + cat, fmtUSD(catTotal)));
+      rows.push(blank());
+      rows.push(blank());
+    }
+
+    rows.push(rule());
+    rows.push(grandTotalRow("TOTAL STARTUP COSTS", fmtUSD(startupTotal)));
+    rows.push(blank());
+    rows.push(blank());
+    rows.push(rule());
+    rows.push(section("NOTES"));
+    rows.push(note("All figures are one-time pre-launch expenditures in USD."));
+    rows.push(
+      note(
+        "Startup costs should be fully covered by the initial capital raise before revenue begins.",
+      ),
+    );
+    rows.push(
+      note("Source: DECA Business Finance Suite — Startup Costs module."),
+    );
+
+    downloadCSV("startup_costs.csv", rows);
   };
 
   // Calculations

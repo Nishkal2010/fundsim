@@ -12,6 +12,20 @@ import {
 } from "recharts";
 import { useDECA } from "../DECAFinanceSuite";
 import { formatCurrency } from "../utils/decaUtils";
+import {
+  blank,
+  colHeaders,
+  downloadCSV,
+  fmtUSD,
+  grandTotal,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  subtotal,
+  type CsvRow,
+} from "../../../utils/csvExport";
 
 const MONTHS = [
   "Jan",
@@ -159,7 +173,7 @@ function SectionDivider({ label }: { label: string }) {
 }
 
 export function Step5_CashFlow() {
-  const { computed } = useDECA();
+  const { computed, state } = useDECA();
   const { cashFlowMonths } = computed;
   const [tooltip, setTooltip] = useState<{
     idx: number;
@@ -183,50 +197,186 @@ export function Step5_CashFlow() {
   }));
 
   const exportCSV = useCallback(() => {
-    const header = ["Row", ...MONTHS].join(",");
-    const rows = [
-      ["Beginning Balance", ...cashFlowMonths.map((m) => m.beginningBalance)],
-      [
+    const bizName = state.businessOverview.businessName || "My Business";
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const months = MONTHS.map((m) => m + " (Yr 1)");
+    const V = (fn: (m: (typeof cashFlowMonths)[0]) => number) =>
+      cashFlowMonths.map(fn).map(fmtUSD);
+    const annualSum = (fn: (m: (typeof cashFlowMonths)[0]) => number) =>
+      fmtUSD(cashFlowMonths.reduce((s, m) => s + fn(m), 0));
+
+    const rows: CsvRow[] = [
+      // ── Metadata ───────────────────────────────────
+      meta("Business Name", bizName),
+      meta("Report", "Cash Flow Statement — 12-Month Pro Forma"),
+      meta("Period", "Year 1 (Month 1 – Month 12)"),
+      meta("Currency", "USD"),
+      meta("Prepared", today),
+      blank(),
+      // ── Column headers ─────────────────────────────
+      colHeaders("METRIC", ...months, "FY Total"),
+      blank(),
+      // ── Opening position ───────────────────────────
+      item(
+        "Beginning Cash Balance",
+        ...V((m) => m.beginningBalance),
+        fmtUSD(cashFlowMonths[0]?.beginningBalance ?? 0),
+      ),
+      blank(),
+      blank(),
+      // ── Cash Inflows ───────────────────────────────
+      section("CASH INFLOWS"),
+      item(
         "Collections from Sales",
-        ...cashFlowMonths.map((m) => m.salesCollections),
-      ],
-      ["Loan Proceeds", ...cashFlowMonths.map((m) => m.loanProceeds)],
-      ["Equity Investment", ...cashFlowMonths.map((m) => m.equityInvestment)],
-      ["Other Inflows", ...cashFlowMonths.map((m) => m.otherInflows)],
-      ["Total Inflows", ...cashFlowMonths.map((m) => m.totalInflows)],
-      ["COGS Payments", ...cashFlowMonths.map((m) => m.cogsPayments)],
-      ["Rent", ...cashFlowMonths.map((m) => m.rent)],
-      ["Utilities", ...cashFlowMonths.map((m) => m.utilities)],
-      ["Salaries", ...cashFlowMonths.map((m) => m.salaries)],
-      ["Payroll Taxes", ...cashFlowMonths.map((m) => m.payrollTaxes)],
-      ["Marketing", ...cashFlowMonths.map((m) => m.marketing)],
-      ["Insurance", ...cashFlowMonths.map((m) => m.insurance)],
-      ["Technology", ...cashFlowMonths.map((m) => m.technology)],
-      [
+        ...V((m) => m.salesCollections),
+        annualSum((m) => m.salesCollections),
+      ),
+      item(
+        "Loan Proceeds (Month 1)",
+        ...V((m) => m.loanProceeds),
+        annualSum((m) => m.loanProceeds),
+      ),
+      item(
+        "Equity Investment (Month 1)",
+        ...V((m) => m.equityInvestment),
+        annualSum((m) => m.equityInvestment),
+      ),
+      item(
+        "Other Inflows",
+        ...V((m) => m.otherInflows),
+        annualSum((m) => m.otherInflows),
+      ),
+      blank(),
+      subtotal(
+        "Total Cash Inflows",
+        ...V((m) => m.totalInflows),
+        annualSum((m) => m.totalInflows),
+      ),
+      blank(),
+      blank(),
+      // ── Cash Outflows ──────────────────────────────
+      section("CASH OUTFLOWS"),
+      section("  Operating Outflows"),
+      item(
+        "COGS Payments",
+        ...V((m) => m.cogsPayments),
+        annualSum((m) => m.cogsPayments),
+      ),
+      item(
+        "Rent",
+        ...V((m) => m.rent),
+        annualSum((m) => m.rent),
+      ),
+      item(
+        "Utilities",
+        ...V((m) => m.utilities),
+        annualSum((m) => m.utilities),
+      ),
+      item(
+        "Salaries",
+        ...V((m) => m.salaries),
+        annualSum((m) => m.salaries),
+      ),
+      item(
+        "Payroll Taxes",
+        ...V((m) => m.payrollTaxes),
+        annualSum((m) => m.payrollTaxes),
+      ),
+      item(
+        "Marketing",
+        ...V((m) => m.marketing),
+        annualSum((m) => m.marketing),
+      ),
+      item(
+        "Insurance",
+        ...V((m) => m.insurance),
+        annualSum((m) => m.insurance),
+      ),
+      item(
+        "Technology",
+        ...V((m) => m.technology),
+        annualSum((m) => m.technology),
+      ),
+      item(
         "Professional Services",
-        ...cashFlowMonths.map((m) => m.professionalServices),
-      ],
-      ["Misc OpEx", ...cashFlowMonths.map((m) => m.miscOpEx)],
-      ["Startup Costs", ...cashFlowMonths.map((m) => m.startupCostsPayment)],
-      ["Loan Principal", ...cashFlowMonths.map((m) => m.loanPrincipal)],
-      ["Interest Payment", ...cashFlowMonths.map((m) => m.interestPayment)],
-      ["Tax Payments", ...cashFlowMonths.map((m) => m.taxPayments)],
-      ["Other Outflows", ...cashFlowMonths.map((m) => m.otherOutflows)],
-      ["Total Outflows", ...cashFlowMonths.map((m) => m.totalOutflows)],
-      ["Net Cash Flow", ...cashFlowMonths.map((m) => m.netCashFlow)],
-      ["Ending Balance", ...cashFlowMonths.map((m) => m.endingBalance)],
+        ...V((m) => m.professionalServices),
+        annualSum((m) => m.professionalServices),
+      ),
+      item(
+        "Miscellaneous OpEx",
+        ...V((m) => m.miscOpEx),
+        annualSum((m) => m.miscOpEx),
+      ),
+      item(
+        "Tax Payments (Quarterly)",
+        ...V((m) => m.taxPayments),
+        annualSum((m) => m.taxPayments),
+      ),
+      blank(),
+      section("  Investing & Other Outflows"),
+      item(
+        "Startup Costs (Month 1)",
+        ...V((m) => m.startupCostsPayment),
+        annualSum((m) => m.startupCostsPayment),
+      ),
+      item(
+        "Other Outflows",
+        ...V((m) => m.otherOutflows),
+        annualSum((m) => m.otherOutflows),
+      ),
+      blank(),
+      section("  Financing Outflows"),
+      item(
+        "Loan Principal Repayment",
+        ...V((m) => m.loanPrincipal),
+        annualSum((m) => m.loanPrincipal),
+      ),
+      item(
+        "Interest Expense",
+        ...V((m) => m.interestPayment),
+        annualSum((m) => m.interestPayment),
+      ),
+      blank(),
+      subtotal(
+        "Total Cash Outflows",
+        ...V((m) => m.totalOutflows),
+        annualSum((m) => m.totalOutflows),
+      ),
+      blank(),
+      blank(),
+      // ── Net & Closing ──────────────────────────────
+      grandTotal(
+        "NET CHANGE IN CASH",
+        ...V((m) => m.netCashFlow),
+        annualSum((m) => m.netCashFlow),
+      ),
+      grandTotal(
+        "ENDING CASH BALANCE",
+        ...V((m) => m.endingBalance),
+        fmtUSD(cashFlowMonths[cashFlowMonths.length - 1]?.endingBalance ?? 0),
+      ),
+      blank(),
+      blank(),
+      // ── Notes ──────────────────────────────────────
+      rule(),
+      section("NOTES"),
+      note("All figures in USD. Amounts rounded to nearest dollar."),
+      note("Loan Proceeds and Equity Investment appear only in Month 1."),
+      note("Startup Costs paid in full in Month 1."),
+      note("Tax Payments are quarterly (Months 3, 6, 9, 12)."),
+      note(
+        "FY Total for Beginning Balance shows Month 1 opening balance; for Ending Balance shows Month 12 closing balance.",
+      ),
+      note("Source: DECA Business Finance Suite — Cash Flow Statement module."),
     ];
-    const csv = [header, ...rows.map((r) => r.map(String).join(","))].join(
-      "\n",
-    );
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "cash_flow_statement.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [cashFlowMonths]);
+
+    downloadCSV("cash_flow_statement.csv", rows);
+  }, [cashFlowMonths, state]);
 
   const vals = (fn: (m: (typeof cashFlowMonths)[0]) => number) =>
     cashFlowMonths.map(fn);

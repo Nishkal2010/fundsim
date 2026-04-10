@@ -2,6 +2,20 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useDECA } from "../DECAFinanceSuite";
 import { formatCurrency } from "../utils/decaUtils";
+import {
+  blank,
+  colHeaders,
+  downloadCSV,
+  fmtUSD,
+  grandTotal,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  subtotal,
+  type CsvRow,
+} from "../../../utils/csvExport";
 
 const monoStyle: React.CSSProperties = {
   fontFamily: "monospace",
@@ -155,7 +169,7 @@ function Spacer() {
 }
 
 export function Step6_BalanceSheet() {
-  const { computed, dispatch } = useDECA();
+  const { computed, dispatch, state } = useDECA();
   const bs = computed.balanceSheet;
 
   const patchOverride = (
@@ -170,44 +184,121 @@ export function Step6_BalanceSheet() {
   ) => dispatch({ type: "SET_BS_OVERRIDES", payload: { [field]: val } });
 
   const exportBalanceSheetCSV = () => {
-    const rows: [string, string][] = [
-      ["Field", "Value"],
-      ["ASSETS", ""],
-      ["Cash", String(bs.cash)],
-      ["Accounts Receivable", String(bs.accountsReceivable)],
-      ["Inventory", String(bs.inventory)],
-      ["Prepaid Expenses", String(bs.prepaidExpenses)],
-      ["Total Current Assets", String(bs.totalCurrentAssets)],
-      ["Equipment (Gross)", String(bs.equipmentGross)],
-      ["Accumulated Depreciation", String(bs.accumulatedDepreciation)],
-      ["Net Equipment", String(bs.netEquipment)],
-      ["Other Long-Term Assets", String(bs.otherLongTermAssets)],
-      ["Total Long-Term Assets", String(bs.totalLongTermAssets)],
-      ["TOTAL ASSETS", String(bs.totalAssets)],
-      ["", ""],
-      ["LIABILITIES", ""],
-      ["Accounts Payable", String(bs.accountsPayable)],
-      ["Short-Term Loan Portion", String(bs.shortTermLoanPortion)],
-      ["Accrued Expenses", String(bs.accruedExpenses)],
-      ["Total Current Liabilities", String(bs.totalCurrentLiabilities)],
-      ["Long-Term Debt", String(bs.longTermDebt)],
-      ["Total Long-Term Liabilities", String(bs.totalLongTermLiabilities)],
-      ["Total Liabilities", String(bs.totalLiabilities)],
-      ["", ""],
-      ["EQUITY", ""],
-      ["Initial Investment", String(bs.initialInvestment)],
-      ["Retained Earnings", String(bs.retainedEarnings)],
-      ["Total Owner Equity", String(bs.totalOwnerEquity)],
-      ["TOTAL LIABILITIES + EQUITY", String(bs.totalLiabilitiesAndEquity)],
+    const bizName = state.businessOverview.businessName || "My Business";
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const balanceCheckMsg = bs.isBalanced
+      ? "BALANCED — Assets = Liabilities + Equity"
+      : `DOES NOT BALANCE — Difference: ${fmtUSD(Math.abs(bs.difference))}`;
+
+    const rows: CsvRow[] = [
+      // ── Metadata ───────────────────────────────────
+      meta("Business Name", bizName),
+      meta("Report", "Balance Sheet"),
+      meta("As Of", "End of Year 1"),
+      meta("Currency", "USD"),
+      meta("Prepared", today),
+      blank(),
+      colHeaders("Field", "Amount (USD)"),
+      blank(),
+      // ── Assets ─────────────────────────────────────
+      section("ASSETS"),
+      blank(),
+      section("  CURRENT ASSETS"),
+      item("Cash & Cash Equivalents", fmtUSD(bs.cash)),
+      item("Accounts Receivable", fmtUSD(bs.accountsReceivable)),
+      item("Inventory", fmtUSD(bs.inventory)),
+      item("Prepaid Expenses", fmtUSD(bs.prepaidExpenses)),
+      blank(),
+      subtotal("Total Current Assets", fmtUSD(bs.totalCurrentAssets)),
+      blank(),
+      blank(),
+      section("  NON-CURRENT ASSETS"),
+      item("Equipment (Gross)", fmtUSD(bs.equipmentGross)),
+      item(
+        "Less: Accumulated Depreciation",
+        fmtUSD(-bs.accumulatedDepreciation),
+      ),
+      item("Net Equipment", fmtUSD(bs.netEquipment)),
+      item("Other Long-Term Assets", fmtUSD(bs.otherLongTermAssets)),
+      blank(),
+      subtotal("Total Non-Current Assets", fmtUSD(bs.totalLongTermAssets)),
+      blank(),
+      blank(),
+      grandTotal("TOTAL ASSETS", fmtUSD(bs.totalAssets)),
+      blank(),
+      blank(),
+      // ── Liabilities ────────────────────────────────
+      section("LIABILITIES"),
+      blank(),
+      section("  CURRENT LIABILITIES"),
+      item("Accounts Payable", fmtUSD(bs.accountsPayable)),
+      item(
+        "Short-Term Loan Portion (due < 12 months)",
+        fmtUSD(bs.shortTermLoanPortion),
+      ),
+      item("Accrued Expenses", fmtUSD(bs.accruedExpenses)),
+      blank(),
+      subtotal("Total Current Liabilities", fmtUSD(bs.totalCurrentLiabilities)),
+      blank(),
+      blank(),
+      section("  LONG-TERM LIABILITIES"),
+      item("Long-Term Debt (due > 12 months)", fmtUSD(bs.longTermDebt)),
+      blank(),
+      subtotal(
+        "Total Long-Term Liabilities",
+        fmtUSD(bs.totalLongTermLiabilities),
+      ),
+      blank(),
+      blank(),
+      grandTotal("TOTAL LIABILITIES", fmtUSD(bs.totalLiabilities)),
+      blank(),
+      blank(),
+      // ── Equity ─────────────────────────────────────
+      section("SHAREHOLDERS' EQUITY"),
+      item(
+        "Initial Investment (Equity + Founder Capital)",
+        fmtUSD(bs.initialInvestment),
+      ),
+      item(
+        "Retained Earnings (Cumulative Net Income)",
+        fmtUSD(bs.retainedEarnings),
+      ),
+      blank(),
+      subtotal("Total Owner Equity", fmtUSD(bs.totalOwnerEquity)),
+      blank(),
+      blank(),
+      grandTotal(
+        "TOTAL LIABILITIES & EQUITY",
+        fmtUSD(bs.totalLiabilitiesAndEquity),
+      ),
+      blank(),
+      blank(),
+      // ── Balance Check ──────────────────────────────
+      rule(),
+      item("Balance Check", balanceCheckMsg),
+      blank(),
+      blank(),
+      // ── Notes ──────────────────────────────────────
+      rule(),
+      section("NOTES"),
+      note("Balance sheet as of end of Year 1."),
+      note(
+        "Editable fields: Accounts Receivable, Inventory, Prepaid Expenses, Other Long-Term Assets, Accounts Payable, Accrued Expenses.",
+      ),
+      note(
+        "Cash and loan balances are auto-computed from the Cash Flow Statement.",
+      ),
+      note(
+        "Retained Earnings = cumulative net income from the Income Statement.",
+      ),
+      note("Source: DECA Business Finance Suite — Balance Sheet module."),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "balance_sheet.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+
+    downloadCSV("balance_sheet.csv", rows);
   };
 
   return (

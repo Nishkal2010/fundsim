@@ -14,6 +14,21 @@ import { useDECA } from "../DECAFinanceSuite";
 import { formatCurrency } from "../utils/decaUtils";
 import { baseMonthIncome } from "../utils/decaUtils";
 import type { IncomeStatementMonthData } from "../types/decaTypes";
+import {
+  blank,
+  colHeaders,
+  downloadCSV,
+  fmtPct,
+  fmtUSD,
+  grandTotal,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  subtotal,
+  type CsvRow,
+} from "../../../utils/csvExport";
 
 const MONTH_LABELS = [
   "Jan",
@@ -317,90 +332,107 @@ export function Step4_IncomeStatement() {
 
   // CSV export
   const exportIncomeCSV = () => {
-    const cols = [...MONTH_LABELS, "Annual"];
-    const rows: [string, ...(string | number)[]][] = [
-      ["Metric", ...cols],
-      [
-        "Total Revenue",
-        ...incomeMonths.map((m) => m.totalRevenue),
-        annual.totalRevenue,
-      ],
-      ["COGS", ...incomeMonths.map((m) => m.cogs), annual.cogs],
-      [
-        "Gross Profit",
-        ...incomeMonths.map((m) => m.grossProfit),
-        annual.grossProfit,
-      ],
-      [
+    const bizName = state.businessOverview.businessName || "My Business";
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const months = MONTH_LABELS.map((m) => m + " (Yr 1)");
+    const V = (
+      fn: (m: (typeof incomeMonths)[0]) => number,
+      annualVal: number,
+    ) => [...incomeMonths.map(fn).map(fmtUSD), fmtUSD(annualVal)];
+    const P = (
+      fn: (m: (typeof incomeMonths)[0]) => number,
+      annualVal: number,
+    ) => [...incomeMonths.map(fn).map((v) => fmtPct(v)), fmtPct(annualVal)];
+
+    const rows: CsvRow[] = [
+      // ── Metadata ───────────────────────────────────
+      meta("Business Name", bizName),
+      meta("Report", "Income Statement — 12-Month Pro Forma"),
+      meta("Period", "Year 1 (Month 1 – Month 12)"),
+      meta("Currency", "USD"),
+      meta("Prepared", today),
+      blank(),
+      // ── Column headers ─────────────────────────────
+      colHeaders("METRIC", ...months, "FY Total"),
+      blank(),
+      // ── Revenue ────────────────────────────────────
+      section("REVENUE"),
+      item("Total Revenue", ...V((m) => m.totalRevenue, annual.totalRevenue)),
+      blank(),
+      item("Cost of Goods Sold (COGS)", ...V((m) => m.cogs, annual.cogs)),
+      blank(),
+      grandTotal(
+        "GROSS PROFIT",
+        ...V((m) => m.grossProfit, annual.grossProfit),
+      ),
+      item(
         "Gross Margin %",
-        ...incomeMonths.map((m) => m.grossMarginPct.toFixed(1) + "%"),
-        (annual.grossMarginPct ?? 0).toFixed(1) + "%",
-      ],
-      ["— Rent", ...incomeMonths.map((m) => m.rent), annual.rent],
-      [
-        "— Utilities",
-        ...incomeMonths.map((m) => m.utilities),
-        annual.utilities,
-      ],
-      ["— Salaries", ...incomeMonths.map((m) => m.salaries), annual.salaries],
-      [
-        "— Payroll Taxes",
-        ...incomeMonths.map((m) => m.payrollTaxes),
-        annual.payrollTaxes,
-      ],
-      [
-        "— Marketing",
-        ...incomeMonths.map((m) => m.marketing),
-        annual.marketing,
-      ],
-      [
-        "— Insurance",
-        ...incomeMonths.map((m) => m.insurance),
-        annual.insurance,
-      ],
-      [
-        "— Technology",
-        ...incomeMonths.map((m) => m.technology),
-        annual.technology,
-      ],
-      [
-        "— Professional Services",
-        ...incomeMonths.map((m) => m.professionalServices),
-        annual.professionalServices,
-      ],
-      [
-        "— Depreciation",
-        ...incomeMonths.map((m) => m.depreciation),
-        annual.depreciation,
-      ],
-      ["— Misc OpEx", ...incomeMonths.map((m) => m.miscOpEx), annual.miscOpEx],
-      ["Total OpEx", ...incomeMonths.map((m) => m.totalOpEx), annual.totalOpEx],
-      [
-        "Operating Income",
-        ...incomeMonths.map((m) => m.operatingIncome),
-        annual.operatingIncome,
-      ],
-      [
+        ...P((m) => m.grossMarginPct, annual.grossMarginPct ?? 0),
+      ),
+      blank(),
+      blank(),
+      // ── Operating Expenses ─────────────────────────
+      section("OPERATING EXPENSES"),
+      item("Rent", ...V((m) => m.rent, annual.rent)),
+      item("Utilities", ...V((m) => m.utilities, annual.utilities)),
+      item("Salaries", ...V((m) => m.salaries, annual.salaries)),
+      item("Payroll Taxes", ...V((m) => m.payrollTaxes, annual.payrollTaxes)),
+      item("Marketing", ...V((m) => m.marketing, annual.marketing)),
+      item("Insurance", ...V((m) => m.insurance, annual.insurance)),
+      item("Technology", ...V((m) => m.technology, annual.technology)),
+      item(
+        "Professional Services",
+        ...V((m) => m.professionalServices, annual.professionalServices),
+      ),
+      item(
+        "Depreciation & Amortization",
+        ...V((m) => m.depreciation, annual.depreciation),
+      ),
+      item("Miscellaneous OpEx", ...V((m) => m.miscOpEx, annual.miscOpEx)),
+      blank(),
+      subtotal(
+        "Total Operating Expenses",
+        ...V((m) => m.totalOpEx, annual.totalOpEx),
+      ),
+      blank(),
+      blank(),
+      // ── Below-the-line ─────────────────────────────
+      grandTotal(
+        "OPERATING INCOME (EBIT)",
+        ...V((m) => m.operatingIncome, annual.operatingIncome),
+      ),
+      item(
         "Interest Expense",
-        ...incomeMonths.map((m) => m.interestExpense),
-        annual.interestExpense,
-      ],
-      [
-        "Pre-Tax Income",
-        ...incomeMonths.map((m) => m.preTaxIncome),
-        annual.preTaxIncome,
-      ],
-      ["Taxes", ...incomeMonths.map((m) => m.taxes), annual.taxes],
-      ["Net Income", ...incomeMonths.map((m) => m.netIncome), annual.netIncome],
+        ...V((m) => m.interestExpense, annual.interestExpense),
+      ),
+      blank(),
+      grandTotal(
+        "PRE-TAX INCOME",
+        ...V((m) => m.preTaxIncome, annual.preTaxIncome),
+      ),
+      item("Income Tax Expense", ...V((m) => m.taxes, annual.taxes)),
+      blank(),
+      grandTotal("NET INCOME", ...V((m) => m.netIncome, annual.netIncome)),
+      blank(),
+      blank(),
+      // ── Notes ──────────────────────────────────────
+      rule(),
+      section("NOTES"),
+      note("All figures in USD. Amounts rounded to nearest dollar."),
+      note(
+        "COGS is computed as a percentage of Total Revenue per assumptions.",
+      ),
+      note("Payroll Taxes include employer-side FICA/FUTA contributions."),
+      note("Depreciation computed straight-line over equipment useful life."),
+      note("Source: DECA Business Finance Suite — Income Statement module."),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "income_statement.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+
+    downloadCSV("income_statement.csv", rows);
   };
 
   // Annual sums for each revenue stream (computed from base + overrides)

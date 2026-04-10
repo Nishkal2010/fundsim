@@ -1,4 +1,18 @@
 import React, { useState, useMemo } from "react";
+import {
+  blank,
+  colHeaders,
+  downloadCSV as triggerDownload,
+  fmtUSD,
+  grandTotal,
+  item,
+  meta,
+  note,
+  rule,
+  section,
+  subtotal,
+  type CsvRow,
+} from "../../utils/csvExport";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DCFInputs {
@@ -1083,126 +1097,192 @@ export function DCFCalculator({
   // ─── CSV Export ─────────────────────────────────────────────────────────────
   function exportCSV() {
     const { rows, wacc, ke, kd } = calc;
-    const lines: string[] = [];
-
-    lines.push(`DCF Analysis - ${inputs.companyName} (${inputs.ticker})`);
-    lines.push(`Currency: ${inputs.currency}M`);
-    lines.push(``);
-
-    lines.push("=== ASSUMPTIONS ===");
-    lines.push(`Company,${inputs.companyName}`);
-    lines.push(`Ticker,${inputs.ticker}`);
-    lines.push(`Sector,${inputs.sector}`);
-    lines.push(`Base Revenue,$${inputs.baseRevenue}M`);
-    lines.push(`Base EBITDA,$${inputs.baseEBITDA}M`);
-    lines.push(`Projection Years,${inputs.projectionYears}`);
-    lines.push(`Revenue Growth Mode,${inputs.revenueGrowthMode}`);
-    lines.push(`Uniform Growth Rate,${inputs.uniformGrowthRate}%`);
-    lines.push(`EBITDA Margin,${inputs.ebitdaMargin}%`);
-    lines.push(`D&A Rate,${inputs.daRate}%`);
-    lines.push(`CapEx Rate,${inputs.capexRate}%`);
-    lines.push(`NWC Rate,${inputs.nwcRate}%`);
-    lines.push(`SBC Rate,${inputs.sbcRate}%`);
-    lines.push(`Tax Rate,${inputs.taxRate}%`);
-    lines.push(`WACC Method,${inputs.waccMethod}`);
-    lines.push(`Risk-Free Rate,${inputs.riskFreeRate}%`);
-    lines.push(`Equity Risk Premium,${inputs.equityRiskPremium}%`);
-    lines.push(`Beta,${inputs.beta}`);
-    lines.push(`Beta Type,${inputs.betaType}`);
-    lines.push(`Pre-Tax Cost of Debt,${inputs.preTaxCostOfDebt}%`);
-    lines.push(`Target Debt Ratio,${inputs.targetDebtRatio}%`);
-    lines.push(`Terminal Method,${inputs.terminalMethod}`);
-    lines.push(`Terminal Growth Rate,${inputs.terminalGrowthRate}%`);
-    lines.push(`EV/EBITDA Exit Multiple,${inputs.terminalEVEBITDA}x`);
-    lines.push(`Shares Outstanding,${inputs.sharesOutstanding}M`);
-    lines.push(`Net Debt,$${inputs.netDebt}M`);
-    lines.push(``);
-
-    lines.push("=== DERIVED RATES ===");
-    lines.push(`WACC,${(wacc * 100).toFixed(2)}%`);
-    lines.push(`Cost of Equity (Ke),${(ke * 100).toFixed(2)}%`);
-    lines.push(`After-Tax Cost of Debt (Kd),${(kd * 100).toFixed(2)}%`);
-    lines.push(`Adjusted Beta,${calc.adjustedBeta.toFixed(3)}`);
-    lines.push(``);
-
-    lines.push("=== PROJECTED FREE CASH FLOWS (FCFF) ===");
-    lines.push(
-      "Year,Revenue,EBITDA,EBIT,D&A,NOPAT,CapEx,ΔNWC,SBC,FCFF,FCFE,Dividends/Share",
-    );
-    rows.forEach((r) => {
-      lines.push(
-        [
-          r.yr,
-          r.revenue.toFixed(1),
-          r.ebitda.toFixed(1),
-          r.ebit.toFixed(1),
-          r.da.toFixed(1),
-          r.nopat.toFixed(1),
-          r.capex.toFixed(1),
-          r.deltaNWC.toFixed(1),
-          r.sbc.toFixed(1),
-          r.fcff.toFixed(1),
-          r.fcfe.toFixed(1),
-          r.dps.toFixed(2),
-        ].join(","),
-      );
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
-    lines.push(``);
 
-    lines.push("=== VALUATION SUMMARY ===");
-    lines.push(
-      `Method,Enterprise Value ($M),Equity Value ($M),Implied Price ($)`,
-    );
-    lines.push(
-      `FCFF (Unlevered DCF),${calc.enterpriseValueFCFF.toFixed(1)},${calc.equityValueFCFF.toFixed(1)},${calc.impliedSharePriceFCFF.toFixed(2)}`,
-    );
-    lines.push(
-      `FCFE (Levered DCF),—,${calc.equityValueFCFE.toFixed(1)},${calc.impliedSharePriceFCFE.toFixed(2)}`,
-    );
-    lines.push(
-      `DDM,—,${calc.intrinsicValueDDM.toFixed(1)} (per share value),${calc.intrinsicValueDDM.toFixed(2)}`,
-    );
-    lines.push(
-      `APV,${calc.apvEnterpriseValue.toFixed(1)},${calc.apvEquityValue.toFixed(1)},${calc.impliedSharePriceAPV.toFixed(2)}`,
-    );
-    lines.push(``);
+    const projYears = rows.map((r) => `Year ${r.yr}`);
 
-    lines.push("=== SCENARIO ANALYSIS ===");
-    lines.push(`Scenario,EV ($M),Equity Value ($M),Price per Share ($)`);
-    lines.push(
-      `Bull,${calc.bull.ev.toFixed(1)},${calc.bull.eq.toFixed(1)},${calc.bull.price.toFixed(2)}`,
-    );
-    lines.push(
-      `Base,${calc.base.ev.toFixed(1)},${calc.base.eq.toFixed(1)},${calc.base.price.toFixed(2)}`,
-    );
-    lines.push(
-      `Bear,${calc.bear.ev.toFixed(1)},${calc.bear.eq.toFixed(1)},${calc.bear.price.toFixed(2)}`,
-    );
-    lines.push(``);
+    const csvRows: CsvRow[] = [
+      // ── Metadata ───────────────────────────────────────────────────
+      meta("Company", inputs.companyName),
+      meta("Ticker", inputs.ticker),
+      meta("Report", "Discounted Cash Flow (DCF) Analysis"),
+      meta("Currency", `${inputs.currency} Millions`),
+      meta("Prepared", today),
+      blank(),
+      blank(),
 
-    lines.push("=== SENSITIVITY (WACC vs TGR → Price) ===");
-    lines.push(
-      [
-        "WACC\\TGR",
-        ...calc.tgrRange.map((g) => `${(g * 100).toFixed(1)}%`),
-      ].join(","),
-    );
-    calc.waccRange.forEach((w, i) => {
-      lines.push(
-        [
-          `${(w * 100).toFixed(1)}%`,
+      // ── WACC & Cost of Capital ──────────────────────────────────────
+      rule(),
+      section("COST OF CAPITAL"),
+      item("WACC", fmtPct((wacc ?? 0) * 100)),
+      item("Cost of Equity (Ke)", fmtPct((ke ?? 0) * 100)),
+      item("After-Tax Cost of Debt (Kd)", fmtPct((kd ?? 0) * 100)),
+      item("Adjusted Beta", (calc.adjustedBeta ?? 0).toFixed(3)),
+      blank(),
+      blank(),
+
+      // ── Key Assumptions ────────────────────────────────────────────
+      rule(),
+      section("KEY ASSUMPTIONS"),
+      item("Sector", inputs.sector),
+      item("Base Revenue ($M)", inputs.baseRevenue.toFixed(1)),
+      item("Base EBITDA ($M)", inputs.baseEBITDA.toFixed(1)),
+      item("Projection Years", String(inputs.projectionYears)),
+      item("Revenue Growth Mode", inputs.revenueGrowthMode),
+      item("Uniform Growth Rate", fmtPct(inputs.uniformGrowthRate)),
+      item("EBITDA Margin", fmtPct(inputs.ebitdaMargin)),
+      item("D&A Rate (% Revenue)", fmtPct(inputs.daRate)),
+      item("CapEx Rate (% Revenue)", fmtPct(inputs.capexRate)),
+      item("NWC Rate (% Revenue)", fmtPct(inputs.nwcRate)),
+      item("SBC Rate (% Revenue)", fmtPct(inputs.sbcRate)),
+      item("Tax Rate", fmtPct(inputs.taxRate)),
+      item("WACC Method", inputs.waccMethod),
+      item("Risk-Free Rate", fmtPct(inputs.riskFreeRate)),
+      item("Equity Risk Premium", fmtPct(inputs.equityRiskPremium)),
+      item("Beta", String(inputs.beta)),
+      item("Beta Type", inputs.betaType),
+      item("Pre-Tax Cost of Debt", fmtPct(inputs.preTaxCostOfDebt)),
+      item("Target Debt Ratio", fmtPct(inputs.targetDebtRatio)),
+      item("Terminal Method", inputs.terminalMethod),
+      item("Terminal Growth Rate (TGR)", fmtPct(inputs.terminalGrowthRate)),
+      item("EV/EBITDA Exit Multiple", `${inputs.terminalEVEBITDA}x`),
+      item("Shares Outstanding (M)", inputs.sharesOutstanding.toFixed(1)),
+      item("Net Debt ($M)", inputs.netDebt.toFixed(1)),
+      blank(),
+      blank(),
+
+      // ── Projected Free Cash Flows ───────────────────────────────────
+      rule(),
+      section("PROJECTED FREE CASH FLOWS (FCFF)"),
+      blank(),
+      colHeaders("Metric", ...projYears),
+      blank(),
+      item("Revenue ($M)", ...rows.map((r) => r.revenue.toFixed(1))),
+      item("EBITDA ($M)", ...rows.map((r) => r.ebitda.toFixed(1))),
+      item("EBIT ($M)", ...rows.map((r) => r.ebit.toFixed(1))),
+      item("D&A ($M)", ...rows.map((r) => r.da.toFixed(1))),
+      item("NOPAT ($M)", ...rows.map((r) => r.nopat.toFixed(1))),
+      item("Less: CapEx ($M)", ...rows.map((r) => (-r.capex).toFixed(1))),
+      item("Less: ΔNWC ($M)", ...rows.map((r) => (-r.deltaNWC).toFixed(1))),
+      item("Less: SBC ($M)", ...rows.map((r) => (-r.sbc).toFixed(1))),
+      blank(),
+      grandTotal("FCFF ($M)", ...rows.map((r) => r.fcff.toFixed(1))),
+      item("FCFE ($M)", ...rows.map((r) => r.fcfe.toFixed(1))),
+      item("Dividends Per Share ($)", ...rows.map((r) => r.dps.toFixed(2))),
+      blank(),
+      blank(),
+
+      // ── Valuation Summary ───────────────────────────────────────────
+      rule(),
+      section("VALUATION SUMMARY"),
+      blank(),
+      colHeaders(
+        "Valuation Method",
+        "Enterprise Value ($M)",
+        "Equity Value ($M)",
+        "Implied Share Price ($)",
+      ),
+      blank(),
+      item(
+        "FCFF — Unlevered DCF",
+        calc.enterpriseValueFCFF.toFixed(1),
+        calc.equityValueFCFF.toFixed(1),
+        calc.impliedSharePriceFCFF.toFixed(2),
+      ),
+      item(
+        "FCFE — Levered DCF",
+        "—",
+        calc.equityValueFCFE.toFixed(1),
+        calc.impliedSharePriceFCFE.toFixed(2),
+      ),
+      item(
+        "DDM — Dividend Discount Model",
+        "—",
+        calc.intrinsicValueDDM.toFixed(1),
+        calc.intrinsicValueDDM.toFixed(2),
+      ),
+      item(
+        "APV — Adjusted Present Value",
+        calc.apvEnterpriseValue.toFixed(1),
+        calc.apvEquityValue.toFixed(1),
+        calc.impliedSharePriceAPV.toFixed(2),
+      ),
+      blank(),
+      blank(),
+
+      // ── Scenario Analysis ───────────────────────────────────────────
+      rule(),
+      section("SCENARIO ANALYSIS"),
+      blank(),
+      colHeaders(
+        "Scenario",
+        "Enterprise Value ($M)",
+        "Equity Value ($M)",
+        "Implied Price per Share ($)",
+      ),
+      blank(),
+      item(
+        "Bull (Upside)",
+        calc.bull.ev.toFixed(1),
+        calc.bull.eq.toFixed(1),
+        calc.bull.price.toFixed(2),
+      ),
+      item(
+        "Base (Central)",
+        calc.base.ev.toFixed(1),
+        calc.base.eq.toFixed(1),
+        calc.base.price.toFixed(2),
+      ),
+      item(
+        "Bear (Downside)",
+        calc.bear.ev.toFixed(1),
+        calc.bear.eq.toFixed(1),
+        calc.bear.price.toFixed(2),
+      ),
+      blank(),
+      blank(),
+
+      // ── Sensitivity Matrix ──────────────────────────────────────────
+      rule(),
+      section("SENSITIVITY ANALYSIS — IMPLIED SHARE PRICE ($)"),
+      blank(),
+      item("Rows: WACC    |    Columns: Terminal Growth Rate (TGR)"),
+      blank(),
+      colHeaders("WACC \\ TGR", ...calc.tgrRange.map((g) => fmtPct(g * 100))),
+      blank(),
+      ...calc.waccRange.map((w, i) =>
+        item(
+          fmtPct(w * 100),
           ...calc.sensitivityMatrix[i].map((p) => p.toFixed(2)),
-        ].join(","),
-      );
-    });
+        ),
+      ),
+      blank(),
+      blank(),
 
-    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${inputs.ticker}_DCF_Analysis.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      // ── Notes ───────────────────────────────────────────────────────
+      rule(),
+      section("NOTES"),
+      note(`All monetary figures in ${inputs.currency} Millions unless noted.`),
+      note(
+        "FCFF = Free Cash Flow to Firm (Unlevered); FCFE = Free Cash Flow to Equity (Levered).",
+      ),
+      note(
+        "Terminal Value computed using " + inputs.terminalMethod + " method.",
+      ),
+      note(
+        "IRR uses Newton-Raphson convergence; WACC uses target capital structure.",
+      ),
+      note(
+        "Sensitivity matrix shows implied share price across WACC and TGR ranges.",
+      ),
+      note("Source: DECA Business Finance Suite — DCF Calculator module."),
+    ];
+
+    triggerDownload(`${inputs.ticker}_DCF_Analysis.csv`, csvRows);
   }
 
   // ─── Tab Content ─────────────────────────────────────────────────────────────
