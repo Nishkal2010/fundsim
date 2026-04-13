@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Analytics } from "@vercel/analytics/react";
 import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
@@ -294,6 +295,7 @@ function App() {
   return (
     <FundModelContext.Provider value={model}>
       <AppContent user={user} onLogout={handleLogout} />
+      <Analytics />
     </FundModelContext.Provider>
   );
 }
