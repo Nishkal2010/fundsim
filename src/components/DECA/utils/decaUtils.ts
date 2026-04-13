@@ -12,6 +12,7 @@ import type {
 } from "../types/decaTypes";
 
 export function formatCurrency(n: number): string {
+  if (n === undefined || n === null || isNaN(n)) return "—";
   if (!isFinite(n)) return "$0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -228,7 +229,10 @@ export function computeAllCashFlowMonths(
     const amort = amortRows[m - 1];
 
     const loanProceeds = m === 1 ? assumptions.debtPortion : 0;
-    const equityInvestment = m === 1 ? assumptions.equityPortion : 0;
+    const equityInvestment =
+      m === 1
+        ? assumptions.equityPortion + assumptions.founderPersonalInvestment
+        : 0;
     const salesCollections = inc.totalRevenue;
     const otherInflows = 0;
     const totalInflows =
@@ -396,15 +400,23 @@ export function computeBreakEven(
 ) {
   const annual = annualTotals(incomeMonths);
   const monthlyUtilities = assumptions.monthlyRent * 0.1;
+  const monthlySalaries =
+    assumptions.employeeCountYear1 * assumptions.avgMonthlySalary;
+  const monthlyPayrollTaxes =
+    monthlySalaries * (assumptions.payrollTaxRate / 100);
+  const equipmentCost =
+    incomeMonths.length > 0 ? incomeMonths[0].depreciation * 12 : 0;
   const fixedCosts =
     (assumptions.monthlyRent +
       monthlyUtilities +
-      assumptions.employeeCountYear1 * assumptions.avgMonthlySalary +
+      monthlySalaries +
+      monthlyPayrollTaxes +
       assumptions.monthlyMarketing +
       assumptions.monthlyInsurance +
       assumptions.monthlyTechnology +
       assumptions.monthlyProfessionalServices) *
-    12;
+      12 +
+    equipmentCost;
 
   const grossMarginDecimal =
     annual.totalRevenue > 0 ? annual.grossProfit / annual.totalRevenue : 0;
@@ -502,7 +514,7 @@ export function computeThreeYearPlan(
   return [
     makeYear(y1Rev, baseCogsPct, 0, 1),
     makeYear(y2Rev, y2CogsPct, extraSalaryY2, y2RevFactor),
-    makeYear(y3Rev, y3CogsPct, extraSalaryY3, y3RevFactor),
+    makeYear(y3Rev, y3CogsPct, extraSalaryY2 + extraSalaryY3, y3RevFactor),
   ];
 }
 

@@ -131,14 +131,14 @@ export function calculateJCurve(inputs: FundInputs): JCurveData {
   let breakevenYear: number | null = null;
   for (let i = 1; i < points.length; i++) {
     if (points[i - 1].netCashFlow < 0 && points[i].netCashFlow >= 0) {
-      breakevenYear = i;
+      breakevenYear = points[i].year;
       break;
     }
   }
 
   // Trough
   let troughYear = 1;
-  let troughValue = 0;
+  let troughValue = Infinity;
   points.forEach((p) => {
     if (p.netCashFlow < troughValue) {
       troughValue = p.netCashFlow;

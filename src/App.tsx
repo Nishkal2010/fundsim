@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
@@ -17,6 +18,9 @@ import { DECAFinanceSuite } from "./components/DECA/DECAFinanceSuite";
 import { YISFinanceSuite } from "./components/YIS/YISFinanceSuite";
 import { IBSimulator } from "./components/IB/IBSimulator";
 import { ComparePage } from "./components/ComparePage";
+import { PortfolioTab } from "./components/Portfolio/PortfolioTab";
+import { LBOTab } from "./components/LBO/LBOTab";
+import { VCTab } from "./components/VC/VCTab";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -78,6 +82,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
     jcurve: <JCurveTab />,
     waterfall: <WaterfallTab />,
     performance: <PerformanceTab />,
+    portfolio: <PortfolioTab />,
+    lbo: <LBOTab />,
+    vc: <VCTab />,
   };
 
   return (
@@ -204,12 +211,16 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Check for existing session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // onAuthStateChange fires immediately with the current session on mount,
+    // so it serves as a single source of truth — no separate getSession() needed.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(mapSupabaseUser(session.user));
+        localStorage.removeItem("fundsim_auth");
       } else {
-        // Fallback: demo users stored in localStorage
+        // No Supabase session — check for a demo user in localStorage
         const stored = localStorage.getItem("fundsim_auth");
         if (stored) {
           try {
@@ -223,27 +234,18 @@ function App() {
             } else {
               // Malformed entry — discard it
               localStorage.removeItem("fundsim_auth");
+              setUser(null);
             }
           } catch {
             localStorage.removeItem("fundsim_auth");
+            setUser(null);
           }
+        } else {
+          // Only clear a Supabase-backed user; leave demo users untouched
+          setUser((prev) => (prev?.id ? null : prev));
         }
       }
-      setAuthChecked(true);
-    });
-
-    // Listen for Supabase auth state changes (OAuth redirect, sign out, etc.)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(mapSupabaseUser(session.user));
-        localStorage.removeItem("fundsim_auth");
-      } else {
-        // Only clear if not a demo user
-        setUser((prev) => (prev?.id ? null : prev));
-      }
-      // Ensure auth check is marked done even if this fires before getSession resolves
+      // Mark auth check complete after the first event fires
       setAuthChecked(true);
     });
 
@@ -294,6 +296,7 @@ function App() {
   return (
     <FundModelContext.Provider value={model}>
       <AppContent user={user} onLogout={handleLogout} />
+      <Analytics />
     </FundModelContext.Provider>
   );
 }

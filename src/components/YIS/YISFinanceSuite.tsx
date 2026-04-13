@@ -894,7 +894,7 @@ function ChecklistTab() {
             style={{ background: G.primary }}
           />
         </div>
-        {done === total && (
+        {done === total && total > 0 && (
           <div
             className="mt-3 text-center text-sm font-semibold"
             style={{ color: G.light }}

@@ -11,6 +11,7 @@ import { calculateLifecycle } from "../utils/fundLifecycle";
 import { calculateJCurve } from "../utils/jCurve";
 import { calculateWaterfall } from "../utils/waterfall";
 import { calculatePerformance } from "../utils/performance";
+import { calculatePortfolio } from "../utils/portfolio";
 import { supabase } from "../lib/supabase";
 
 const defaultInputs: FundInputs = {
@@ -31,6 +32,11 @@ const defaultInputs: FundInputs = {
   clawback: true,
   dealMultiples: [0.5, 1.0, 2.0, 3.5, 8.0],
   spReturn: 0.1,
+  // Portfolio construction defaults
+  numDeals: 20,
+  followOnReservePercent: 0.2,
+  fundStrategy: "buyout",
+  vintageYear: 2020,
 };
 
 export const FundModelContext = createContext<FundModel | null>(null);
@@ -41,6 +47,10 @@ export function useFundModelState(
   const [inputs, setInputs] = useState<FundInputs>(defaultInputs);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loaded = useRef(false);
+  const userIdRef = useRef(userId);
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   // Load saved inputs when user logs in; reset to defaults when logged out
   useEffect(() => {
@@ -58,7 +68,8 @@ export function useFundModelState(
           .eq("user_id", userId)
           .maybeSingle();
         if (data?.inputs) {
-          setInputs(data.inputs as FundInputs);
+          // Merge with defaults to handle new fields added after a user's data was saved
+          setInputs({ ...defaultInputs, ...(data.inputs as FundInputs) });
         }
       } catch {
         // ignore load errors, use defaults
@@ -81,15 +92,11 @@ export function useFundModelState(
   ) => {
     setInputs((prev) => {
       const next = { ...prev, [key]: value };
-      // Auto-save for authenticated (non-demo) users, debounced 1.5s
       if (userId && loaded.current) {
         if (saveTimer.current) clearTimeout(saveTimer.current);
-        // Capture userId at scheduling time to avoid a race where a different
-        // user logs in before the timer fires and the save targets the wrong row.
         const capturedUserId = userId;
         saveTimer.current = setTimeout(async () => {
-          // Bail out if the active user has changed since the timer was set
-          if (capturedUserId !== userId) return;
+          if (capturedUserId !== userIdRef.current) return;
           try {
             const { error } = await supabase
               .from("fund_models")
@@ -113,8 +120,17 @@ export function useFundModelState(
   const jCurve = useMemo(() => calculateJCurve(inputs), [inputs]);
   const waterfall = useMemo(() => calculateWaterfall(inputs), [inputs]);
   const performance = useMemo(() => calculatePerformance(inputs), [inputs]);
+  const portfolio = useMemo(() => calculatePortfolio(inputs), [inputs]);
 
-  return { inputs, setInput, lifecycle, jCurve, waterfall, performance };
+  return {
+    inputs,
+    setInput,
+    lifecycle,
+    jCurve,
+    waterfall,
+    performance,
+    portfolio,
+  };
 }
 
 export function useFundModel(): FundModel {

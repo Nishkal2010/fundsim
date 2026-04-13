@@ -20,31 +20,61 @@ export function calculatePerformance(inputs: FundInputs): PerformanceData {
     totalCapitalCalled > 0 ? Math.max(0, navActual / totalCapitalCalled) : 0;
   const tvpi = dpi + rvpi;
   const netIRR = jCurve.netIRR;
-  // grossMOIC: gross back the LP-scaled distributions to fund-level before
-  // dividing by fund-level netInvestableCapital. Guard against gpCommitment===1
-  // (degenerate case) to avoid division by zero.
+
   const lpScale = 1 - inputs.gpCommitment;
   const grossMOIC =
     lifecycle.netInvestableCapital > 0 && lpScale > 0
-      ? totalDistributions / lpScale / lifecycle.netInvestableCapital
+      ? totalDistributions / lifecycle.netInvestableCapital
       : 0;
   const netMOIC = tvpi;
 
-  // NOTE: This is a simplified PME approximation (TVPI / index terminal value).
-  // A proper Kaplan-Schoar PME would discount each capital call and distribution
-  // at the index return.
+  // ── Simplified PME (TVPI / index terminal value) ──────────────────────────
   const spGrowth = Math.pow(1 + inputs.spReturn, inputs.fundLife);
   const pme = spGrowth > 0 ? tvpi / spGrowth : 0;
 
-  // Over-time data: navPct = (unrealizedNAV + distributions - capitalCalled) / fundSize * 100
-  // → unrealizedNAV = navPct/100 * fundSize + capitalCalled - distributions
+  // ── Kaplan-Schoar PME ─────────────────────────────────────────────────────
+  // KS-PME = PV(distributions) / PV(capital calls), both discounted at index return
+  // Each cash flow is discounted to time 0 using (1 + spReturn)^(fundLife - t)
+  // so that capital calls early in the fund have a larger present value.
+  let ksPMENumer = 0; // sum of FV-adjusted distributions
+  let ksPMEDenom = 0; // sum of FV-adjusted capital calls
+
+  jCurve.points.forEach((p, idx) => {
+    if (idx === 0) return;
+    const yearlyData = idx <= jCurve.points.length - 1 ? idx : null;
+    if (yearlyData === null) return;
+
+    // Factor to compound to end of fund life
+    const compoundFactor = Math.pow(1 + inputs.spReturn, inputs.fundLife - idx);
+
+    // Annual capital called this year
+    const annualCalled =
+      idx === 1
+        ? p.capitalCalled
+        : p.capitalCalled - jCurve.points[idx - 1].capitalCalled;
+
+    // Annual distributions this year
+    const annualDist =
+      idx === 1
+        ? p.distributions
+        : p.distributions - jCurve.points[idx - 1].distributions;
+
+    ksPMENumer += annualDist * compoundFactor;
+    ksPMEDenom += annualCalled * compoundFactor;
+  });
+
+  // Add terminal NAV to numerator
+  ksPMENumer += Math.max(0, navActual);
+  const ksPME = ksPMEDenom > 0 ? ksPMENumer / ksPMEDenom : 0;
+
+  // Over-time data
   const dpiOverTime = jCurve.points.map((p) => {
     const pointDPI =
       p.capitalCalled > 0 ? p.distributions / p.capitalCalled : 0;
-    const navActual =
+    const navAtPoint =
       (p.nav / 100) * inputs.fundSize + p.capitalCalled - p.distributions;
     const pointRVPI =
-      p.capitalCalled > 0 ? Math.max(0, navActual / p.capitalCalled) : 0;
+      p.capitalCalled > 0 ? Math.max(0, navAtPoint / p.capitalCalled) : 0;
     return {
       year: p.year,
       dpi: pointDPI,
@@ -53,11 +83,11 @@ export function calculatePerformance(inputs: FundInputs): PerformanceData {
     };
   });
 
-  // Quartile
+  // Quartile benchmarks (Cambridge Associates / Preqin buyout medians)
   let quartile: "top" | "upper-mid" | "lower-mid" | "bottom";
-  if (tvpi > 2.0) quartile = "top";
-  else if (tvpi > 1.5) quartile = "upper-mid";
-  else if (tvpi > 1.2) quartile = "lower-mid";
+  if (tvpi >= 2.5) quartile = "top";
+  else if (tvpi >= 1.8) quartile = "upper-mid";
+  else if (tvpi >= 1.3) quartile = "lower-mid";
   else quartile = "bottom";
 
   // Sensitivity matrix
@@ -79,6 +109,7 @@ export function calculatePerformance(inputs: FundInputs): PerformanceData {
     grossMOIC,
     netMOIC,
     pme,
+    ksPME,
     dpiOverTime,
     quartile,
     sensitivityMatrix,

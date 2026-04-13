@@ -103,11 +103,12 @@ function calculateEuropeanWaterfall(
   let gpCatchUp = 0;
   let lpDuringCatchUp = 0;
 
-  if (catchUpRate > 0 && targetGPCarry > 0) {
-    const catchUpTotal = targetGPCarry / catchUpRate;
+  const effectiveCatchUpRate = catchUpRate || 0;
+  if (effectiveCatchUpRate > 0 && targetGPCarry > 0) {
+    const catchUpTotal = targetGPCarry / effectiveCatchUpRate;
     const actualCatchUpPool = Math.min(catchUpTotal, remaining);
-    gpCatchUp = actualCatchUpPool * catchUpRate;
-    lpDuringCatchUp = actualCatchUpPool * (1 - catchUpRate);
+    gpCatchUp = actualCatchUpPool * effectiveCatchUpRate;
+    lpDuringCatchUp = actualCatchUpPool * (1 - effectiveCatchUpRate);
     remaining -= actualCatchUpPool;
   }
 
@@ -298,7 +299,7 @@ function buildWaterfallResult(
   // distributions. This understates the true IRR whenever actual distributions
   // occur before the final year (earlier cash flows have higher time-value).
   // Bug 3: bias direction documented above.
-  const fundLife = inputs.fundLife;
+  const fundLife = inputs.fundLife || 10;
   const lpCashFlows = [-lpCapital, ...Array(fundLife - 1).fill(0), totalLP];
   const lpIRR = calculateIRR(lpCashFlows);
 

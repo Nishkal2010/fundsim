@@ -642,7 +642,7 @@ export function DCFCalculator({
     const debtWeight = targetDebtRatio / 100;
     const equityWeight = 1 - debtWeight;
     const waccCalc = ke * equityWeight + kd * debtWeight;
-    const wacc = waccOverride > 0 ? waccOverride / 100 : waccCalc;
+    const wacc = waccMethod === "override" ? waccOverride / 100 : waccCalc;
 
     // ── Revenue Growth Schedule ──────────────────────────────────────────────
     function getGrowthRate(yr: number): number {

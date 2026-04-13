@@ -1123,7 +1123,10 @@ export function IBSimulator() {
         ? exitRevenue * (ebitdaMarginPct / 100)
         : tgtEBITDA * Math.pow(1 + revenueGrowth / 100, holdPeriod);
     const exitEV = exitEBITDA * compsMultiple;
-    const lboDebtRepaid = Math.min(lboDebt, tgtEBITDA * 5 * 0.3);
+    const lboDebtRepaid = Math.min(
+      lboDebt,
+      tgtFCF > 0 ? tgtFCF * 0.7 * holdPeriod : 0,
+    );
     const exitEquity = exitEV - (lboDebt - lboDebtRepaid);
     const moic = lboEquity > 0 ? exitEquity / lboEquity : 0;
     const irr =
@@ -1217,9 +1220,11 @@ export function IBSimulator() {
     const hp = Math.max(1, holdPeriod);
     const annualPrincipal = totalTranchedDebt / hp;
     const dscr =
-      totalLBOInterest + annualPrincipal > 0
-        ? tgtFCF / (totalLBOInterest + annualPrincipal)
-        : 99;
+      tgtFCF <= 0
+        ? 0
+        : totalLBOInterest + annualPrincipal > 0
+          ? tgtFCF / (totalLBOInterest + annualPrincipal)
+          : 99;
 
     // Debt paydown schedule over hold period — carry openDebt forward each year
     let _openDebt = totalTranchedDebt;
@@ -4087,25 +4092,25 @@ export function IBSimulator() {
                       },
                       {
                         label: "+ Target Net Income (per acq. share)",
-                        value: inputs.tgtNI / Math.max(1, inputs.acqShares),
+                        value: inputs.tgtNI / Math.max(1, C.proFormaShares),
                         color: A.light,
                       },
                       {
                         label: "+ After-Tax Synergies (per share)",
-                        value: C.synAfterTax / Math.max(1, inputs.acqShares),
+                        value: C.synAfterTax / Math.max(1, C.proFormaShares),
                         color: "#22C55E",
                       },
                       {
                         label: "− Interest on Deal Debt (per share)",
                         value:
                           -C.newInterestAfterTax /
-                          Math.max(1, inputs.acqShares),
+                          Math.max(1, C.proFormaShares),
                         color: "#EF4444",
                       },
                       {
                         label: "− D&A Step-Up (per share)",
                         value:
-                          -C.daStepUpAfterTax / Math.max(1, inputs.acqShares),
+                          -C.daStepUpAfterTax / Math.max(1, C.proFormaShares),
                         color: "#EF4444",
                       },
                       {

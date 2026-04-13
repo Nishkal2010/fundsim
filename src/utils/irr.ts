@@ -40,7 +40,7 @@ export function calculateIRR(
       const cf = cashFlows[t];
       const disc = Math.pow(1 + rate, t);
       npv += cf / disc;
-      dnpv -= (t * cf) / (disc * (1 + rate));
+      dnpv += (t * cf) / (disc * (1 + rate));
     }
     if (Math.abs(dnpv) < 1e-12) return null;
     const newRate = rate - npv / dnpv;

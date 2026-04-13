@@ -33,6 +33,9 @@ export function ComparePanel({
     jcurve: <JCurveTab />,
     waterfall: <WaterfallTab />,
     performance: <PerformanceTab />,
+    portfolio: null,
+    lbo: null,
+    vc: null,
   };
 
   return (
