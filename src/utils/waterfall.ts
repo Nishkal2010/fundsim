@@ -31,14 +31,8 @@ function calculateEuropeanWaterfall(
   gpCapital: number,
   totalCapitalCalled: number,
 ): WaterfallData {
-  const {
-    totalProceeds,
-    hurdleRate,
-    carryPercentage,
-    catchUpRate,
-    fundLife,
-    gpCommitment,
-  } = inputs;
+  const { totalProceeds, hurdleRate, carryPercentage, catchUpRate, fundLife } =
+    inputs;
 
   const tiers: WaterfallTier[] = [];
   let remaining = totalProceeds;
@@ -65,14 +59,11 @@ function calculateEuropeanWaterfall(
   }
 
   // Tier 2: Preferred Return (Hurdle)
-  // LPs receive their preferred return first; GP then receives its own preferred
-  // return on gpCapital at the same hurdle rate before any carry is computed.
   const preferredReturnLP =
     lpCapital * (Math.pow(1 + hurdleRate, fundLife) - 1);
   const preferredLP = Math.min(preferredReturnLP, remaining);
   remaining -= preferredLP;
 
-  // GP preferred return on GP's own committed capital (Bug 2 fix)
   const preferredReturnGP =
     gpCapital * (Math.pow(1 + hurdleRate, fundLife) - 1);
   const preferredGP = Math.min(preferredReturnGP, remaining);
@@ -95,21 +86,37 @@ function calculateEuropeanWaterfall(
     );
   }
 
-  // Tier 3: GP Catch-Up — carry is on LP profits only, not GP's own gains
-  const lpShare = 1 - gpCommitment;
-  const lpProfits = totalProceeds * lpShare - lpCapital;
-  const targetGPCarry = Math.max(0, lpProfits * carryPercentage);
-
+  // Tier 3: GP Catch-Up
+  //
+  // FIX (Issue 2): The prior code used targetGPCarry = lpProfits * carryPct
+  // (wrong basis) and catch-up pool = targetGPCarry / catchUpRate, ignoring
+  // that Tier 4 also pays GP carryPct of every remaining dollar. This caused
+  // effective carry to reach ~28% against a 20% nominal — a systematic
+  // overstatement of GP economics.
+  //
+  // Correct derivation: let P = catch-up pool, c = catchUpRate,
+  // k = carryPercentage, R = remaining before catch-up.
+  //
+  //   Total GP carry = P·c + (R - P)·k = k · totalFundProfit
+  //   Solving for P:  P = k · totalPrefPaid / (c - k)
+  //
+  // where totalPrefPaid = preferredLP + preferredGP (all Tier 2 distributions).
+  // This ensures: effective carry ≡ carryPercentage for any catchUpRate > k.
+  //
+  const totalPrefPaid = preferredLP + preferredGP;
   let gpCatchUp = 0;
   let lpDuringCatchUp = 0;
 
   const effectiveCatchUpRate = catchUpRate || 0;
-  if (effectiveCatchUpRate > 0 && targetGPCarry > 0) {
-    const catchUpTotal = targetGPCarry / effectiveCatchUpRate;
-    const actualCatchUpPool = Math.min(catchUpTotal, remaining);
-    gpCatchUp = actualCatchUpPool * effectiveCatchUpRate;
-    lpDuringCatchUp = actualCatchUpPool * (1 - effectiveCatchUpRate);
-    remaining -= actualCatchUpPool;
+  if (effectiveCatchUpRate > carryPercentage && totalPrefPaid > 0) {
+    const catchUpPool = Math.min(
+      (carryPercentage * totalPrefPaid) /
+        (effectiveCatchUpRate - carryPercentage),
+      remaining,
+    );
+    gpCatchUp = catchUpPool * effectiveCatchUpRate;
+    lpDuringCatchUp = catchUpPool * (1 - effectiveCatchUpRate);
+    remaining -= catchUpPool;
   }
 
   tiers.push({
@@ -120,26 +127,6 @@ function calculateEuropeanWaterfall(
   });
 
   if (remaining <= 0) {
-    return buildWaterfallResult(
-      tiers,
-      lpCapital,
-      gpCapital,
-      totalCapitalCalled,
-      inputs,
-    );
-  }
-
-  // Bug 1 fix: if there was no GP carry target (profits didn't exceed LP
-  // preferred return), skip Tier 4 entirely — otherwise GP would receive
-  // carry on proceeds that haven't cleared the hurdle.
-  if (targetGPCarry <= 0) {
-    // All remaining proceeds belong to LPs (below-hurdle profits)
-    tiers.push({
-      name: "Carried Interest Split",
-      lpAmount: remaining,
-      gpAmount: 0,
-      description: "No carry earned — profits did not exceed hurdle",
-    });
     return buildWaterfallResult(
       tiers,
       lpCapital,
@@ -185,7 +172,7 @@ function calculateAmericanWaterfall(
   } = inputs;
 
   const numDeals = dealMultiples.length;
-  const capitalPerDeal = numDeals > 0 ? (fundSize * (1 - 0.15)) / numDeals : 0; // ~85% deployed
+  const capitalPerDeal = numDeals > 0 ? (fundSize * (1 - 0.15)) / numDeals : 0;
   const lpShare = 1 - gpCommitment;
 
   const tiers: WaterfallTier[] = [
@@ -220,7 +207,7 @@ function calculateAmericanWaterfall(
     const dealLPCapital = capitalPerDeal * lpShare;
     let dealRemaining = dealProceeds;
 
-    // Tier 1
+    // Tier 1: Return of Capital
     const roc = Math.min(capitalPerDeal, dealRemaining);
     tiers[0].lpAmount += roc * lpShare;
     tiers[0].gpAmount += roc * gpCommitment;
@@ -228,10 +215,7 @@ function calculateAmericanWaterfall(
 
     if (dealRemaining <= 0) return;
 
-    // Tier 2
-    // Guard against undefined/0 avgHoldPeriod to avoid NaN in Math.pow.
-    // Fall back to fundLife so the preferred return is still economically
-    // meaningful when hold-period data is absent. (Bug 6 fix)
+    // Tier 2: Preferred Return on LP capital
     const holdPeriod =
       inputs.avgHoldPeriod && inputs.avgHoldPeriod > 0
         ? inputs.avgHoldPeriod
@@ -243,19 +227,27 @@ function calculateAmericanWaterfall(
 
     if (dealRemaining <= 0) return;
 
-    // Tier 3 & 4
-    // NOTE (Bug 4): American waterfall carry base = total deal profit
-    // (dealProceeds - capitalPerDeal), which includes both LP and GP capital
-    // gains. European waterfall uses LP-only profits as the carry base
-    // (totalProceeds * lpShare - lpCapital). The two approaches are
-    // intentionally different: American carry is deal-by-deal on gross profit;
-    // European carry is fund-level on net LP profit. This is standard market
-    // practice for each structure but creates an apples-to-oranges comparison.
+    // Tiers 3 & 4: Catch-Up then Carried Interest Split
+    //
+    // FIX (Issue 3): The prior code set catch-up pool = targetCarry/catchUpRate,
+    // where targetCarry = dealProfit * carryPct. This ignored the fact that
+    // Tier 4 also pays GP carryPct of the remaining pool, producing a
+    // compounding overstatement (e.g. 42% effective carry vs 25% nominal).
+    //
+    // Same identity as European waterfall applies per deal:
+    //   GP carry = P·c + (remaining - P)·k = dealProfit·k
+    //   → P = k · prefPaid / (c - k)
+    //
+    // where prefPaid is the LP pref actually paid this deal.
+    // Constraint: effective per-deal carry ≡ carryPercentage (when c > k).
+    //
     const dealProfit = dealProceeds - capitalPerDeal;
     if (dealProfit > 0) {
-      const targetCarry = dealProfit * carryPercentage;
-      if (catchUpRate > 0) {
-        const catchUpPool = Math.min(targetCarry / catchUpRate, dealRemaining);
+      if (catchUpRate > carryPercentage && prefPaid > 0) {
+        const catchUpPool = Math.min(
+          (carryPercentage * prefPaid) / (catchUpRate - carryPercentage),
+          dealRemaining,
+        );
         tiers[2].gpAmount += catchUpPool * catchUpRate;
         tiers[2].lpAmount += catchUpPool * (1 - catchUpRate);
         dealRemaining -= catchUpPool;
@@ -264,6 +256,11 @@ function calculateAmericanWaterfall(
       if (dealRemaining > 0) {
         tiers[3].gpAmount += dealRemaining * carryPercentage;
         tiers[3].lpAmount += dealRemaining * (1 - carryPercentage);
+      }
+    } else {
+      // Loss deal: any remaining after pref shortfall returns to LPs
+      if (dealRemaining > 0) {
+        tiers[3].lpAmount += dealRemaining;
       }
     }
   });
@@ -294,11 +291,6 @@ function buildWaterfallResult(
   const lpNetMultiple = lpCapital > 0 ? totalLP / lpCapital : 0;
   const gpNetMultiple = gpCapital > 0 ? totalGP / gpCapital : 0;
 
-  // Approximate LP IRR using a bullet-return assumption: all LP proceeds are
-  // modelled as a single cash inflow at year `fundLife`, with zero interim
-  // distributions. This understates the true IRR whenever actual distributions
-  // occur before the final year (earlier cash flows have higher time-value).
-  // Bug 3: bias direction documented above.
   const fundLife = inputs.fundLife || 10;
   const lpCashFlows = [-lpCapital, ...Array(fundLife - 1).fill(0), totalLP];
   const lpIRR = calculateIRR(lpCashFlows);

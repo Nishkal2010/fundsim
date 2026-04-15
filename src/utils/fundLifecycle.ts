@@ -1,34 +1,38 @@
 import type { FundInputs, LifecycleData, YearlyData } from "../types/fund";
 
 export function calculateLifecycle(inputs: FundInputs): LifecycleData {
-  // NOTE: inputs.clawback is defined in FundInputs but is not implemented in this
-  // function. Clawback logic (GP returning excess carry to LPs) is not yet modelled
-  // here; it would need to be applied in the waterfall calculation instead.
   const { fundSize, fundLife, investmentPeriod, managementFee } = inputs;
 
-  // During investment period: fee on committed capital
+  const harvestYears = fundLife - investmentPeriod;
   const investmentPeriodFees = managementFee * fundSize * investmentPeriod;
 
-  // Estimate net investable capital
-  const netInvestableCapital = fundSize - investmentPeriodFees;
-
-  // Harvest period: fees on declining invested capital
-  let remainingInvested = netInvestableCapital;
-  const harvestYears = fundLife - investmentPeriod;
-  const exitPerYear =
+  // FIX (Issue 4): The prior code used a circular estimate:
+  //   netInvestableCapital = fundSize - investmentPeriodFees  (uses fund size as harvest base)
+  //   harvestFees = sum over harvest years using netInvestableCapital as base
+  //   finalNetInvestable = fundSize - investmentPeriodFees - harvestFees
+  //
+  // But the per-year loop then used finalNetInvestable as the harvest fee base,
+  // creating an inconsistency: fundSize - totalMgmtFees ≠ finalNetInvestable (~$0.32M
+  // gap on a $100M fund). The two bases differ because the estimate and the actual
+  // per-year loop used different starting values for the declining balance.
+  //
+  // Correct approach: let FNI = finalNetInvestable. The harvest fee sum over a
+  // declining balance starting at FNI, declining by FNI/H per year, is:
+  //   harvestFees = managementFee × FNI × (H+1)/2   (arithmetic series)
+  //
+  // Substituting into FNI = (fundSize - invFees) - harvestFees and solving:
+  //   FNI = (fundSize - invFees) / (1 + managementFee × (H+1) / 2)
+  //
+  // This is exact and self-consistent: fundSize - totalMgmtFees = FNI exactly.
+  //
+  const netInvestableCapital =
     harvestYears > 0
-      ? netInvestableCapital / harvestYears
-      : netInvestableCapital;
-  let harvestFees = 0;
-  for (let y = investmentPeriod + 1; y <= fundLife; y++) {
-    harvestFees += managementFee * remainingInvested;
-    remainingInvested = Math.max(0, remainingInvested - exitPerYear);
-  }
+      ? (fundSize - investmentPeriodFees) /
+        (1 + (managementFee * (harvestYears + 1)) / 2)
+      : fundSize - investmentPeriodFees;
 
-  const totalFees = investmentPeriodFees + harvestFees;
-  const finalNetInvestable = fundSize - totalFees;
   const annualDeployment =
-    investmentPeriod > 0 ? finalNetInvestable / investmentPeriod : 0;
+    investmentPeriod > 0 ? netInvestableCapital / investmentPeriod : 0;
 
   const years: YearlyData[] = [];
   let cumulativeDeployed = 0;
@@ -42,13 +46,12 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
       mgmtFee = managementFee * fundSize;
       capitalDeployed = annualDeployment;
     } else {
-      // Step-down: fee on remaining invested capital
+      // Harvest period: fee on beginning-of-year invested balance.
+      // Balance declines linearly from NIC (year IP+1) to NIC/H (year fundLife).
+      // k = 1-indexed harvest year (1 = first harvest year)
+      const k = year - investmentPeriod;
       const remainingAtYearStart =
-        finalNetInvestable -
-        (year - investmentPeriod - 1) *
-          (fundLife > investmentPeriod
-            ? finalNetInvestable / (fundLife - investmentPeriod)
-            : 0);
+        (netInvestableCapital * (harvestYears - k + 1)) / harvestYears;
       mgmtFee = managementFee * Math.max(0, remainingAtYearStart);
       capitalDeployed = 0;
     }
@@ -71,18 +74,15 @@ export function calculateLifecycle(inputs: FundInputs): LifecycleData {
     });
   }
 
-  // Recompute totalMgmtFees as the exact sum of per-year mgmtFee values so that
-  // totalMgmtFees is always consistent with what the years[] array reports.
-  // The pre-loop harvestFees estimate used netInvestableCapital as the base, while
-  // per-year harvest mgmtFee uses finalNetInvestable — summing here reconciles the two.
+  // totalMgmtFees is authoritative — summed from per-year values.
+  // With the self-consistent FNI formula, fundSize - totalMgmtFees = netInvestableCapital exactly.
   const totalMgmtFees = years.reduce((sum, y) => sum + y.mgmtFee, 0);
-
-  const capitalEfficiency = fundSize > 0 ? finalNetInvestable / fundSize : 0;
+  const capitalEfficiency = fundSize > 0 ? netInvestableCapital / fundSize : 0;
 
   return {
     years,
     totalMgmtFees,
-    netInvestableCapital: finalNetInvestable,
+    netInvestableCapital,
     capitalEfficiency,
   };
 }
