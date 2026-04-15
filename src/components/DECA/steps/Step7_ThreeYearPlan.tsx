@@ -101,6 +101,12 @@ const TABLE_ROWS: {
   { key: "netMarginPct", label: "Net Margin %", format: "percent" },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useProjections() {
+  const { computed } = useDECA();
+  return computed.threeYearProjections;
+}
+
 export function Step7_ThreeYearPlan() {
   const { state, dispatch, computed } = useDECA();
   const { threeYearPlan: plan } = state;
