@@ -58,7 +58,7 @@ function generateId(): string {
 }
 
 export function Step3_StartupCosts() {
-  const { state, dispatch, computed } = useDECA();
+  const { state, dispatch } = useDECA();
   const items = state.startupCosts.items;
   const assumptions = state.assumptions;
 

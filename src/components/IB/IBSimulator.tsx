@@ -1234,6 +1234,7 @@ export function IBSimulator() {
       const repayment = Math.min(fcfYr * 0.7, _openDebt);
       const closeDebt = Math.max(0, _openDebt - repayment);
       const result = { yr, fcfYr, openDebt: _openDebt, repayment, closeDebt };
+      // eslint-disable-next-line react-hooks/immutability
       _openDebt = closeDebt;
       return result;
     });

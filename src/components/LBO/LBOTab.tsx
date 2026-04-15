@@ -6,7 +6,6 @@ import { Tooltip } from "../Tooltip";
 import { calculateLBO } from "../../utils/lbo";
 import {
   formatMillions,
-  formatPercent,
   formatMultiple,
   formatIRR,
 } from "../../utils/formatting";

@@ -221,19 +221,23 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     const prefPaidPerInvestor = investorPools.map(
       (p) => p.cost * p.liquidationPref,
     );
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     remainingProceeds -= prefPaidPerInvestor.reduce((a, b) => a + b, 0);
 
     // Step 2: distribute remainder pro-rata on fully diluted shares
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const totalInvestorShares = investorPools.reduce((s, p) => s + p.shares, 0);
     const esopSharesFinal = totalESOPShares;
     const totalFDShares = totalShares; // founderShares + esopShares + all investor shares
 
     const founderProRata =
       totalFDShares > 0 ? founderShares / totalFDShares : 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const esopProRata = totalFDShares > 0 ? esopSharesFinal / totalFDShares : 0;
 
     // Participating preferred: investor gets pref + pro-rata remainder
     // Non-participating: investor gets max(pref, pro-rata of TOTAL proceeds)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let totalParticipatingShares = 0;
     const nonParticipating: typeof investorPools = [];
     const participating: typeof investorPools = [];
@@ -271,7 +275,7 @@ export function calculateVCCapTable(state: VCInputState): VCData {
       0,
     );
     const totalPrefsPaid = nonParticipatingPrefsUsed + participatingPrefsPaid;
-    let leftover = Math.max(0, exitVal - totalPrefsPaid);
+    const leftover = Math.max(0, exitVal - totalPrefsPaid);
 
     // Shares participating in the remainder:
     const sharesInRemainder =

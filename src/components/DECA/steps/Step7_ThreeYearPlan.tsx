@@ -101,11 +101,6 @@ const TABLE_ROWS: {
   { key: "netMarginPct", label: "Net Margin %", format: "percent" },
 ];
 
-function useProjections() {
-  const { computed } = useDECA();
-  return computed.threeYearProjections;
-}
-
 export function Step7_ThreeYearPlan() {
   const { state, dispatch, computed } = useDECA();
   const { threeYearPlan: plan } = state;

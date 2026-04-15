@@ -375,8 +375,10 @@ export interface DECAContextValue {
   };
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DECAContext = React.createContext<DECAContextValue | null>(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useDECA(): DECAContextValue {
   const ctx = React.useContext(DECAContext);
   if (!ctx) throw new Error("useDECA must be used within DECAFinanceSuite");

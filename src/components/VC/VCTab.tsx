@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Info, Plus, Minus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Info, ToggleLeft, ToggleRight } from "lucide-react";
 import { Slider } from "../Slider";
 import { MetricCard } from "../MetricCard";
 import { Tooltip } from "../Tooltip";
@@ -40,26 +40,6 @@ export function VCTab() {
 
   const enabledRounds = rounds.filter((r) => r.enabled);
   const snapshots = result.rounds;
-
-  // Build ownership stack per round for the chart
-  // Columns: [Founders, ESOP, ...each investor round]
-  const ownershipChart = snapshots.map((snap, idx) => {
-    const investorBars = enabledRounds.slice(0, idx + 1).map((r, ri) => ({
-      label: r.name,
-      pct:
-        snap.prevInvestorsPct * (ri === idx ? 0 : 1) +
-        (ri === idx ? snap.newInvestorPct : 0),
-    }));
-
-    // More accurate: rebuild from snapshot data
-    return {
-      label: snap.roundName,
-      founder: snap.founderOwnershipPct,
-      esop: snap.esopPct,
-      newInvestor: snap.newInvestorPct,
-      prevInvestors: snap.prevInvestorsPct,
-    };
-  });
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
@@ -672,7 +652,7 @@ export function VCTab() {
                         </td>
                       );
                     })}
-                    {snapshots.map((snap, idx) => {
+                    {snapshots.map((snap) => {
                       const inv = scenario.investorsByRound.find(
                         (r) => r.round === snap.roundName,
                       );

@@ -38,13 +38,6 @@ const LABEL: React.CSSProperties = {
   marginBottom: 4,
 };
 
-const VALUE: React.CSSProperties = {
-  color: "#f9fafb",
-  fontFamily: "'Courier New', monospace",
-  fontSize: 15,
-  fontWeight: 700,
-};
-
 const TH: React.CSSProperties = {
   background: "#1f2937",
   color: "#9ca3af",

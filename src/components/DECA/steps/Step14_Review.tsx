@@ -41,7 +41,8 @@ const CHECKLIST_ITEMS = [
 
 function estimateScore(
   validations: ValidationResult[],
-  eventCode: string | null,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _eventCode: string | null,
 ): { low: number; high: number; label: string } {
   const errors = validations.filter(
     (v) => !v.passed && v.severity === "error",
@@ -73,7 +74,8 @@ interface CheckStatus {
 
 function buildScoreChecks(
   validations: ValidationResult[],
-  eventCode: string | null,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _eventCode: string | null,
 ): CheckStatus[] {
   const hasPassedId = (id: string) =>
     validations.find((v) => v.id === id)?.passed ?? false;

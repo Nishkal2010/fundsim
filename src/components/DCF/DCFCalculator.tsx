@@ -3,14 +3,12 @@ import {
   blank,
   colHeaders,
   downloadCSV as triggerDownload,
-  fmtUSD,
   grandTotal,
   item,
   meta,
   note,
   rule,
   section,
-  subtotal,
   type CsvRow,
 } from "../../utils/csvExport";
 
@@ -304,10 +302,8 @@ const D = {
   purple: "#A855F7",
 };
 
-const fmt = (n: number, dec = 1) => (isFinite(n) ? n.toFixed(dec) : "—");
 const fmtM = (n: number) => (isFinite(n) ? `$${(n / 1).toFixed(1)}M` : "—");
 const fmtPct = (n: number) => (isFinite(n) ? `${n.toFixed(1)}%` : "—");
-const fmtX = (n: number) => (isFinite(n) ? `${n.toFixed(2)}x` : "—");
 
 function Card({
   title,
@@ -556,7 +552,6 @@ export function DCFCalculator({
       baseRevenue,
       baseEBITDA,
       baseEBIT,
-      baseNetIncome,
       baseDPS,
       projectionYears,
       revenueGrowthMode,
@@ -575,14 +570,12 @@ export function DCFCalculator({
       nwcMethod,
       sbcRate,
       taxRate,
-      taxMethod,
       nolBalance,
       waccMethod,
       riskFreeRate,
       equityRiskPremium,
       beta,
       betaType,
-      debtBeta,
       sizePreium,
       specificRisk,
       preTaxCostOfDebt,
@@ -917,7 +910,6 @@ export function DCFCalculator({
         const nopat = ebit - scenTaxableIncome * effectiveTax;
         const capex = revenue * (capexRate / 100);
         const deltaNWC = revenue * (nwcRate / 100) - prevRev * (nwcRate / 100);
-        const sbc = revenue * (sbcRate / 100);
         // SBC excluded to match main FCFF loop (EBIT margin already reflects it)
         const fcff = nopat + da - capex - deltaNWC;
 
@@ -3157,7 +3149,7 @@ export function DCFCalculator({
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {/* Presets */}
             <div style={{ display: "flex", gap: 6 }}>
-              {Object.entries(PRESETS).map(([key, _]) => (
+              {Object.entries(PRESETS).map(([key]) => (
                 <button
                   key={key}
                   onClick={() => applyPreset(key)}
@@ -3213,7 +3205,7 @@ export function DCFCalculator({
           }}
         >
           <div style={{ display: "flex", gap: 6 }}>
-            {Object.entries(PRESETS).map(([key, _]) => (
+            {Object.entries(PRESETS).map(([key]) => (
               <button
                 key={key}
                 onClick={() => applyPreset(key)}

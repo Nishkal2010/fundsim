@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { YISLanding } from "./YISLanding";
 import { DCFCalculator } from "../DCF/DCFCalculator";
@@ -732,7 +732,11 @@ function ChecklistTab() {
   const toggle = (id: string) =>
     setChecked((prev) => {
       const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        n.add(id);
+      }
       return n;
     });
 

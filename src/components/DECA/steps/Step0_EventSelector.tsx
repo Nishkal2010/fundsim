@@ -4,21 +4,6 @@ import { useDECA } from "../DECAFinanceSuite";
 import { EVENT_CONFIG } from "../config/eventConfig";
 import type { EventCode } from "../types/decaTypes";
 
-const MONTH_LABELS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 export function Step0_EventSelector() {
   const { state, dispatch } = useDECA();
 

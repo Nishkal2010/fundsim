@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useDECA } from "../DECAFinanceSuite";
-import { formatCurrency, formatPercentRaw } from "../utils/decaUtils";
+import { formatCurrency } from "../utils/decaUtils";
 import type { ImplementationBudgetRow } from "../types/decaTypes";
 import {
   blank,
