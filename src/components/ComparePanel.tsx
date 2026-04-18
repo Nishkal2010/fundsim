@@ -5,7 +5,7 @@ import { FundModelContext } from "../hooks/useFundModel";
 import type { FundModel } from "../types/fund";
 import { GlobalInputs } from "./GlobalInputs";
 import { TabBar } from "./TabBar";
-import type { TabId } from "./TabBar";
+import type { PETabId } from "./TabBar";
 import { FundLifecycleTab } from "./FundLifecycle/FundLifecycleTab";
 import { JCurveTab } from "./JCurve/JCurveTab";
 import { WaterfallTab } from "./Waterfall/WaterfallTab";
@@ -15,8 +15,8 @@ interface ComparePanelProps {
   model: FundModel;
   label: "Fund A" | "Fund B";
   accentColor: string; // e.g. '#6366F1' for A, '#10B981' for B
-  activeTab: TabId;
-  onTabChange: (tab: TabId) => void;
+  activeTab: PETabId;
+  onTabChange: (tab: PETabId) => void;
 }
 
 export function ComparePanel({
@@ -28,14 +28,16 @@ export function ComparePanel({
 }: ComparePanelProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const tabContent: Record<TabId, React.ReactNode> = {
+  const tabContent: Record<PETabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
     jcurve: <JCurveTab />,
     waterfall: <WaterfallTab />,
     performance: <PerformanceTab />,
     portfolio: null,
     lbo: null,
-    vc: null,
+    gplp: null,
+    debt: null,
+    sector: null,
   };
 
   return (
@@ -113,7 +115,12 @@ export function ComparePanel({
           </div>
 
           {/* Tab bar */}
-          <TabBar active={activeTab} onChange={onTabChange} />
+          <TabBar
+            simulator="pe"
+            active={activeTab}
+            onChange={(t) => onTabChange(t as PETabId)}
+            onBack={() => {}}
+          />
 
           {/* Tab content */}
           <div className="flex-1 overflow-auto">

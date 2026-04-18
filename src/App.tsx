@@ -3,13 +3,14 @@ import { Analytics } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
-import { Hero } from "./components/Hero";
 import { GlobalInputs } from "./components/GlobalInputs";
 import { TabBar } from "./components/TabBar";
-import type { TabId } from "./components/TabBar";
+import type { TabId, PETabId, VCTabId } from "./components/TabBar";
 import { Glossary } from "./components/Glossary";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
+import { SimulatorSelector } from "./components/SimulatorSelector";
+import type { SimulatorId } from "./components/SimulatorSelector";
 import { FundLifecycleTab } from "./components/FundLifecycle/FundLifecycleTab";
 import { JCurveTab } from "./components/JCurve/JCurveTab";
 import { WaterfallTab } from "./components/Waterfall/WaterfallTab";
@@ -21,6 +22,12 @@ import { ComparePage } from "./components/ComparePage";
 import { PortfolioTab } from "./components/Portfolio/PortfolioTab";
 import { LBOTab } from "./components/LBO/LBOTab";
 import { VCTab } from "./components/VC/VCTab";
+import { GPLPEconomicsTab } from "./components/PE/GPLPEconomicsTab";
+import { DebtStructureTab } from "./components/PE/DebtStructureTab";
+import { SectorBenchmarksTab } from "./components/PE/SectorBenchmarksTab";
+import { SAFENotesTab } from "./components/VC/SAFENotesTab";
+import { PortfolioConstructionTab } from "./components/VC/PortfolioConstructionTab";
+import { TermSheetTab } from "./components/VC/TermSheetTab";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -50,8 +57,11 @@ interface AppContentProps {
 }
 
 function AppContent({ user, onLogout }: AppContentProps) {
-  const [showHero, setShowHero] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>("lifecycle");
+  const [activeSimulator, setActiveSimulator] = useState<SimulatorId | null>(
+    null,
+  );
+  const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
+  const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
@@ -61,30 +71,27 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  if (hash === "compare") {
-    return <ComparePage />;
-  }
+  if (hash === "compare") return <ComparePage />;
+  if (hash === "deca") return <DECAFinanceSuite />;
+  if (hash === "yis") return <YISFinanceSuite />;
 
-  if (hash === "deca") {
-    return <DECAFinanceSuite />;
-  }
-
-  if (hash === "yis") {
-    return <YISFinanceSuite />;
-  }
-
-  if (hash === "ib") {
-    return <IBSimulator />;
-  }
-
-  const tabContent: Record<TabId, React.ReactNode> = {
+  const peTabContent: Record<PETabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
     jcurve: <JCurveTab />,
     waterfall: <WaterfallTab />,
     performance: <PerformanceTab />,
     portfolio: <PortfolioTab />,
     lbo: <LBOTab />,
-    vc: <VCTab />,
+    gplp: <GPLPEconomicsTab />,
+    debt: <DebtStructureTab />,
+    sector: <SectorBenchmarksTab />,
+  };
+
+  const vcTabContent: Record<VCTabId, React.ReactNode> = {
+    captable: <VCTab />,
+    safe: <SAFENotesTab />,
+    portfolioconstruction: <PortfolioConstructionTab />,
+    termsheet: <TermSheetTab />,
   };
 
   return (
@@ -99,107 +106,133 @@ function AppContent({ user, onLogout }: AppContentProps) {
         onLogout={onLogout}
       />
 
-      {/* Suite buttons */}
-      <div className="px-6 pt-3 flex justify-end gap-2">
-        <button
-          onClick={() => {
-            window.location.hash = "ib";
-          }}
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(180,83,9,0.15), rgba(245,158,11,0.1))",
-            border: "1px solid rgba(245,158,11,0.4)",
-            color: "#F59E0B",
-            borderRadius: "8px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            letterSpacing: "0.05em",
-            fontFamily: "monospace",
-          }}
-        >
-          ◆ IB Sim
-        </button>
-        <button
-          onClick={() => {
-            window.location.hash = "yis";
-          }}
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(22,163,74,0.15), rgba(34,197,94,0.1))",
-            border: "1px solid rgba(34,197,94,0.4)",
-            color: "#4ADE80",
-            borderRadius: "8px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            letterSpacing: "0.05em",
-            fontFamily: "monospace",
-          }}
-        >
-          ◆ YIS Suite
-        </button>
-        <button
-          onClick={() => {
-            window.location.hash = "deca";
-          }}
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(37,99,235,0.15), rgba(212,175,55,0.1))",
-            border: "1px solid rgba(37,99,235,0.4)",
-            color: "#60a5fa",
-            borderRadius: "8px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            letterSpacing: "0.05em",
-            fontFamily: "monospace",
-          }}
-        >
-          ◆ DECA Finance Suite
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {showHero && (
+      <AnimatePresence mode="wait">
+        {activeSimulator === null && (
           <motion.div
-            initial={{ opacity: 1 }}
+            key="selector"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.35 }}
+            className="flex-1"
           >
-            <Hero onStart={() => setShowHero(false)} />
+            <SimulatorSelector onSelect={setActiveSimulator} />
+          </motion.div>
+        )}
+
+        {activeSimulator === "ib" && (
+          <motion.div
+            key="ib"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}
+            className="flex-1 flex flex-col"
+          >
+            {/* IB back bar */}
+            <div
+              className="px-6 py-2 flex items-center gap-3"
+              style={{
+                background: "#111827",
+                borderBottom: "1px solid #374151",
+              }}
+            >
+              <button
+                onClick={() => setActiveSimulator(null)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium"
+                style={{
+                  background: "transparent",
+                  border: "1px solid #374151",
+                  color: "#6B7280",
+                  cursor: "pointer",
+                }}
+              >
+                ← Back
+              </button>
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded"
+                style={{
+                  background: "rgba(245,158,11,0.12)",
+                  color: "#F59E0B",
+                  border: "1px solid rgba(245,158,11,0.3)",
+                  fontFamily: "monospace",
+                }}
+              >
+                IB
+              </span>
+              <span className="text-xs" style={{ color: "#6B7280" }}>
+                Investment Banking · M&A Deal Simulator
+              </span>
+            </div>
+            <IBSimulator />
+          </motion.div>
+        )}
+
+        {activeSimulator === "pe" && (
+          <motion.div
+            key="pe"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}
+            className="flex flex-col flex-1"
+          >
+            <GlobalInputs />
+            <TabBar
+              simulator="pe"
+              active={activePETab}
+              onChange={(t) => setActivePETab(t as PETabId)}
+              onBack={() => setActiveSimulator(null)}
+            />
+            <div className="flex-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activePETab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {peTabContent[activePETab]}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <Footer />
+          </motion.div>
+        )}
+
+        {activeSimulator === "vc" && (
+          <motion.div
+            key="vc"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}
+            className="flex flex-col flex-1"
+          >
+            <TabBar
+              simulator="vc"
+              active={activeVCTab}
+              onChange={(t) => setActiveVCTab(t as VCTabId)}
+              onBack={() => setActiveSimulator(null)}
+            />
+            <div className="flex-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeVCTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {vcTabContent[activeVCTab]}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <Footer />
           </motion.div>
         )}
       </AnimatePresence>
-
-      {!showHero && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-col flex-1"
-        >
-          <GlobalInputs />
-          <TabBar active={activeTab} onChange={setActiveTab} />
-          <div className="flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {tabContent[activeTab]}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          <Footer />
-        </motion.div>
-      )}
 
       <Glossary open={glossaryOpen} onClose={() => setGlossaryOpen(false)} />
     </div>

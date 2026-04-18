@@ -8,44 +8,110 @@ import {
   Briefcase,
   Building2,
   GitBranch,
+  ArrowLeft,
+  DollarSign,
+  PieChart,
+  FileText,
+  Users,
+  Shield,
 } from "lucide-react";
 
-export type TabId =
+export type PETabId =
   | "lifecycle"
   | "jcurve"
   | "waterfall"
   | "performance"
   | "portfolio"
   | "lbo"
-  | "vc";
+  | "gplp"
+  | "debt"
+  | "sector";
 
-const tabs: {
-  id: TabId;
+export type VCTabId =
+  | "captable"
+  | "safe"
+  | "portfolioconstruction"
+  | "termsheet";
+
+export type TabId = PETabId | VCTabId;
+
+type SimulatorId = "pe" | "vc" | "ib";
+
+const peTabs: {
+  id: PETabId;
   label: string;
   icon: React.FC<{ size?: number }>;
-  group?: string;
+  group: string;
 }[] = [
   { id: "lifecycle", label: "Fund Lifecycle", icon: Layers, group: "fund" },
   { id: "jcurve", label: "J-Curve", icon: TrendingDown, group: "fund" },
   { id: "waterfall", label: "Waterfall", icon: BarChart3, group: "fund" },
   { id: "performance", label: "Performance", icon: Activity, group: "fund" },
-  { id: "portfolio", label: "Portfolio", icon: Briefcase, group: "advanced" },
-  { id: "lbo", label: "LBO Model", icon: Building2, group: "advanced" },
-  { id: "vc", label: "VC Cap Table", icon: GitBranch, group: "advanced" },
+  { id: "portfolio", label: "Portfolio", icon: Briefcase, group: "models" },
+  { id: "lbo", label: "LBO Model", icon: Building2, group: "models" },
+  { id: "gplp", label: "GP/LP Economics", icon: DollarSign, group: "advanced" },
+  { id: "debt", label: "Debt Structure", icon: PieChart, group: "advanced" },
+  {
+    id: "sector",
+    label: "Sector Benchmarks",
+    icon: BarChart3,
+    group: "advanced",
+  },
 ];
 
+const vcTabs: {
+  id: VCTabId;
+  label: string;
+  icon: React.FC<{ size?: number }>;
+  group: string;
+}[] = [
+  { id: "captable", label: "Cap Table", icon: GitBranch, group: "core" },
+  { id: "safe", label: "SAFE Notes", icon: FileText, group: "core" },
+  {
+    id: "portfolioconstruction",
+    label: "Portfolio Construction",
+    icon: PieChart,
+    group: "fund",
+  },
+  { id: "termsheet", label: "Term Sheet", icon: Shield, group: "fund" },
+];
+
+const peColor = "#818CF8";
+const vcColor = "#34D399";
+
 interface TabBarProps {
+  simulator: SimulatorId;
   active: TabId;
   onChange: (tab: TabId) => void;
+  onBack: () => void;
 }
 
-export function TabBar({ active, onChange }: TabBarProps) {
+export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
   const [hoveredTab, setHoveredTab] = useState<TabId | null>(null);
 
-  const fundTabs = tabs.filter((t) => t.group === "fund");
-  const advancedTabs = tabs.filter((t) => t.group === "advanced");
+  const accentColor = simulator === "pe" ? peColor : vcColor;
+  const accentDim =
+    simulator === "pe" ? "rgba(99,102,241,0.05)" : "rgba(52,211,153,0.05)";
+  const gradient =
+    simulator === "pe"
+      ? "linear-gradient(90deg, #6366F1, #818CF8)"
+      : "linear-gradient(90deg, #10B981, #34D399)";
 
-  const renderTab = (tab: (typeof tabs)[0]) => {
+  const tabs = simulator === "pe" ? peTabs : vcTabs;
+
+  const groups =
+    simulator === "pe"
+      ? [
+          { key: "fund", label: "Fund" },
+          { key: "models", label: "Models" },
+          { key: "advanced", label: "Advanced" },
+        ]
+      : [
+          { key: "core", label: "Core" },
+          { key: "fund", label: "Fund" },
+        ];
+
+  const renderTab = (tab: (typeof peTabs)[0] | (typeof vcTabs)[0]) => {
     const Icon = tab.icon;
     const isActive = tab.id === active;
     const isHovered = hoveredTab === tab.id;
@@ -53,14 +119,13 @@ export function TabBar({ active, onChange }: TabBarProps) {
     return (
       <button
         key={tab.id}
-        onClick={() => onChange(tab.id)}
-        onMouseEnter={() => setHoveredTab(tab.id)}
+        onClick={() => onChange(tab.id as TabId)}
+        onMouseEnter={() => setHoveredTab(tab.id as TabId)}
         onMouseLeave={() => setHoveredTab(null)}
         className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium"
         style={{
-          color: isActive ? "#818CF8" : isHovered ? "#D1D5DB" : "#6B7280",
-          background:
-            isHovered && !isActive ? "rgba(99,102,241,0.05)" : "transparent",
+          color: isActive ? accentColor : isHovered ? "#D1D5DB" : "#6B7280",
+          background: isHovered && !isActive ? accentDim : "transparent",
           transition: "color 0.18s ease, background 0.18s ease",
           borderRadius: "6px 6px 0 0",
           border: "none",
@@ -83,7 +148,7 @@ export function TabBar({ active, onChange }: TabBarProps) {
           <motion.div
             layoutId="tab-indicator"
             className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-            style={{ background: "linear-gradient(90deg, #6366F1, #818CF8)" }}
+            style={{ background: gradient }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
@@ -97,35 +162,78 @@ export function TabBar({ active, onChange }: TabBarProps) {
       style={{ background: "#111827", borderBottom: "1px solid #374151" }}
     >
       <div className="max-w-7xl mx-auto flex items-center gap-0 overflow-x-auto">
-        {fundTabs.map(renderTab)}
-
-        {/* Divider */}
-        <div
+        {/* Back button */}
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 mr-3 px-3 py-2 rounded text-xs font-medium flex-shrink-0"
           style={{
-            width: 1,
-            height: 20,
-            background: "#374151",
-            margin: "0 8px",
-            flexShrink: 0,
+            background: "transparent",
+            border: "1px solid #374151",
+            color: "#6B7280",
+            cursor: "pointer",
+            transition: "all 0.18s ease",
           }}
-        />
-
-        {/* Advanced label */}
-        <span
-          style={{
-            fontSize: 10,
-            color: "#4B5563",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            paddingRight: 4,
-            flexShrink: 0,
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "#D1D5DB";
+            (e.currentTarget as HTMLButtonElement).style.borderColor =
+              "#4B5563";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "#6B7280";
+            (e.currentTarget as HTMLButtonElement).style.borderColor =
+              "#374151";
           }}
         >
-          Models
+          <ArrowLeft size={13} />
+          Back
+        </button>
+
+        {/* Simulator badge */}
+        <span
+          className="text-xs font-bold px-2 py-0.5 rounded mr-4 flex-shrink-0"
+          style={{
+            background:
+              simulator === "pe"
+                ? "rgba(99,102,241,0.12)"
+                : "rgba(52,211,153,0.12)",
+            color: accentColor,
+            border: `1px solid ${simulator === "pe" ? "rgba(99,102,241,0.3)" : "rgba(52,211,153,0.3)"}`,
+            fontFamily: "monospace",
+          }}
+        >
+          {simulator.toUpperCase()}
         </span>
 
-        {advancedTabs.map(renderTab)}
+        {/* Tabs grouped */}
+        {groups.map((group, gi) => (
+          <React.Fragment key={group.key}>
+            {gi > 0 && (
+              <div
+                style={{
+                  width: 1,
+                  height: 20,
+                  background: "#374151",
+                  margin: "0 8px",
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <span
+              style={{
+                fontSize: 10,
+                color: "#4B5563",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                paddingRight: 4,
+                flexShrink: 0,
+              }}
+            >
+              {group.label}
+            </span>
+            {tabs.filter((t) => t.group === group.key).map(renderTab)}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );

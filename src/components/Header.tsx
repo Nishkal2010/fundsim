@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { BookOpen, Columns2, ExternalLink, LogOut, User } from "lucide-react";
+import {
+  BookOpen,
+  Columns2,
+  ExternalLink,
+  LogOut,
+  User,
+  GraduationCap,
+  Trophy,
+} from "lucide-react";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
@@ -56,6 +64,42 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* DECA */}
+        <button
+          onClick={() => {
+            window.location.hash = "deca";
+          }}
+          style={{
+            ...btnBase,
+            background: "rgba(96,165,250,0.08)",
+            color: "#60A5FA",
+            border: "1px solid rgba(96,165,250,0.25)",
+            fontSize: "12px",
+            padding: "5px 10px",
+          }}
+        >
+          <GraduationCap size={13} />
+          DECA
+        </button>
+
+        {/* YIS */}
+        <button
+          onClick={() => {
+            window.location.hash = "yis";
+          }}
+          style={{
+            ...btnBase,
+            background: "rgba(52,211,153,0.08)",
+            color: "#34D399",
+            border: "1px solid rgba(52,211,153,0.25)",
+            fontSize: "12px",
+            padding: "5px 10px",
+          }}
+        >
+          <Trophy size={13} />
+          YIS
+        </button>
+
         {/* Glossary */}
         <button
           onClick={onGlossaryOpen}

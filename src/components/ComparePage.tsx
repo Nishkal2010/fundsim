@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useFundModelState } from "../hooks/useFundModel";
-import type { TabId } from "./TabBar";
+import type { PETabId } from "./TabBar";
 import { ComparePanel } from "./ComparePanel";
 
 // Fund B defaults — meaningfully different from Fund A so comparison is interesting on load
@@ -16,7 +16,7 @@ const FUND_B_OVERRIDES = {
 export function ComparePage() {
   const modelA = useFundModelState(null);
   const modelB = useFundModelState(null);
-  const [activeTab, setActiveTab] = useState<TabId>("lifecycle");
+  const [activeTab, setActiveTab] = useState<PETabId>("lifecycle");
 
   // Apply Fund B overrides once on mount
   useEffect(() => {
