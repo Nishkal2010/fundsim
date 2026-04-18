@@ -972,7 +972,7 @@ function fmtPct(n: number, d = 1): string {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function IBSimulator() {
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [inputs, setInputs] = useState<DealInputs>(PRESETS.tech);
   const [glossarySearch, setGlossarySearch] = useState("");
