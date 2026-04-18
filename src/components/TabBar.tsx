@@ -165,23 +165,27 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
         {/* Back button */}
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 mr-3 px-3 py-2 rounded text-xs font-medium flex-shrink-0"
+          className="flex items-center gap-1.5 mr-4 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
           style={{
-            background: "transparent",
-            border: "1px solid #374151",
-            color: "#6B7280",
+            background: "rgba(255,255,255,0.07)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            color: "#D1D5DB",
             cursor: "pointer",
             transition: "all 0.18s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = "#D1D5DB";
+            (e.currentTarget as HTMLButtonElement).style.background =
+              "rgba(255,255,255,0.13)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#F9FAFB";
             (e.currentTarget as HTMLButtonElement).style.borderColor =
-              "#4B5563";
+              "rgba(255,255,255,0.3)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = "#6B7280";
+            (e.currentTarget as HTMLButtonElement).style.background =
+              "rgba(255,255,255,0.07)";
+            (e.currentTarget as HTMLButtonElement).style.color = "#D1D5DB";
             (e.currentTarget as HTMLButtonElement).style.borderColor =
-              "#374151";
+              "rgba(255,255,255,0.15)";
           }}
         >
           <ArrowLeft size={13} />
