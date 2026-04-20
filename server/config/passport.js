@@ -1,15 +1,11 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.warn("WARNING: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set");
-}
-
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID || "missing",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "missing",
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${(process.env.CLIENT_URL || "http://localhost:5200").trim()}/api/auth/google/callback`,
     },
     (accessToken, refreshToken, profile, done) => {

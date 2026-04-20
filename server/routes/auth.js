@@ -1,11 +1,19 @@
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5200').trim();
-const PORT = (process.env.PORT || '3002').toString().trim();
-const JWT_SECRET = process.env.SESSION_SECRET || 'fundsim-secret-change-me';
+const JWT_SECRET = process.env.SESSION_SECRET;
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many auth requests, please try again later.' },
+});
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -15,13 +23,14 @@ const COOKIE_OPTIONS = {
 };
 
 // Kick off Google OAuth
-router.get('/google', passport.authenticate('google', {
+router.get('/google', authLimiter, passport.authenticate('google', {
   scope: ['profile', 'email'],
   session: false,
 }));
 
 // Google callback
 router.get('/google/callback',
+  authLimiter,
   passport.authenticate('google', { failureRedirect: `${CLIENT_URL}/?error=auth_failed`, session: false }),
   (req, res) => {
     const token = jwt.sign(
