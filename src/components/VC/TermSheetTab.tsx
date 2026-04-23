@@ -158,7 +158,6 @@ export function TermSheetTab() {
 
       const investorMOIC =
         investmentAmount > 0 ? investorProceeds / investmentAmount : 0;
-      const founderMOIC = founderProceeds / (preMoney * founderOwnership); // relative to founder's stake
       const investorIRR =
         Math.pow(Math.max(0, investorMOIC), 1 / holdYears) - 1;
 
@@ -174,15 +173,6 @@ export function TermSheetTab() {
         prefBreakeven: totalPreference, // Exit val where pref vs convert is same
       };
     });
-
-    // Anti-dilution scenario: down-round
-    // Assume 50% down round from post-money
-    const downRoundPrice =
-      (postMoney * 0.5) / ((postMoney / investmentAmount) * investmentAmount); // simplified
-    const originalPPS =
-      postMoney /
-      ((preMoney / investmentAmount) * investmentAmount +
-        (investmentAmount / postMoney) * 1e7); // rough
 
     return {
       postMoney,

@@ -1,11 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  Info,
-  TrendingUp,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const C = {
   bg: "#0D1220",
@@ -163,7 +157,6 @@ export function SAFENotesTab() {
   const [seriesAAmount, setSeriesAAmount] = useState(5); // $M raised
   const [preIssueShares, setPreIssueShares] = useState(10000000); // founder shares
   const [esop, setEsop] = useState(10); // % option pool created at Series A
-  const [showConversion, setShowConversion] = useState(true);
   const [expandedSafe, setExpandedSafe] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<
     "pre_money_cap" | "post_money_cap" | "discount" | "mfn"
@@ -172,7 +165,6 @@ export function SAFENotesTab() {
   const results = useMemo(() => {
     const priceRoundPre = priceRound * 1e6;
     const totalShares = preIssueShares;
-    const pricePerSharePre = priceRoundPre / totalShares;
 
     // Option pool top-up (shuffle)
     const optionShares = Math.round(
@@ -190,7 +182,6 @@ export function SAFENotesTab() {
     const seriesAPostMoney = priceRoundPre + seriesAInvestment;
 
     // Convert each SAFE
-    let totalSafeShares = 0;
     const safeDetails = safes.map((s) => {
       let effectivePPS: number;
       let conversionValuation: number;
@@ -222,10 +213,6 @@ export function SAFENotesTab() {
       }
 
       const shares = Math.round(s.amount / effectivePPS);
-      totalSafeShares += shares;
-      const ownership = 0; // computed after
-      const impliedPostMoney =
-        pricedRoundPPSAfterPool * (postSeriesAPreSAFE + shares);
 
       return {
         ...s,
@@ -240,6 +227,7 @@ export function SAFENotesTab() {
           100,
       };
     });
+    const totalSafeShares = safeDetails.reduce((sum, s) => sum + s.shares, 0);
 
     const totalFullyDiluted = postSeriesAPreSAFE + totalSafeShares;
 
@@ -1054,7 +1042,6 @@ export function SAFENotesTab() {
                   s.valCap > 0 && s.type !== "mfn" && s.type !== "discount",
               )
               .map((s) => {
-                const breakeven = s.valCap; // valuation where cap PPS = round PPS
                 const currentPremium =
                   ((priceRound - s.valCap) / s.valCap) * 100;
                 return (

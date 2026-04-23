@@ -4,8 +4,10 @@ import {
   Building2,
   TrendingUp,
   Briefcase,
-  ChevronRight,
   ArrowRight,
+  CheckCircle,
+  XCircle,
+  Zap,
 } from "lucide-react";
 
 export type SimulatorId = "pe" | "vc" | "ib";
@@ -61,8 +63,16 @@ const simulators = [
       "Term Sheet Provisions — VC vs Founder Impact",
       "Pro-Rata Rights & Liquidation Waterfalls",
       "Exit Scenario Analysis by Stakeholder",
+      "Qualitative Scorecard — Payne + Berkus Method",
+      "Market Sizing — TAM/SAM/SOM Analysis",
+      "Founder DNA Score — Beyond the Numbers",
     ],
-    stats: ["8 modules", "Pre/Post SAFEs", "Power law model", "Full cap table"],
+    stats: [
+      "11 modules",
+      "Pre/Post SAFEs",
+      "Power law model",
+      "Qualitative+Quant",
+    ],
     tagline: "Sequoia · a16z · Benchmark",
   },
   {
@@ -92,6 +102,29 @@ const simulators = [
   },
 ];
 
+const comparisonCols = [
+  {
+    label: "vs Textbooks",
+    icon: "❌",
+    positive: false,
+    description: "Static examples that don't let you change assumptions",
+  },
+  {
+    label: "vs SimCap",
+    icon: "❌",
+    positive: false,
+    description:
+      "Interview prep for one track. No PE, no IB, no qualitative judgment.",
+  },
+  {
+    label: "FunSim",
+    icon: "✅",
+    positive: true,
+    description:
+      "Live models. Real mechanics. Qualitative + quantitative. Three career tracks.",
+  },
+];
+
 export function SimulatorSelector({ onSelect }: Props) {
   return (
     <div
@@ -100,10 +133,103 @@ export function SimulatorSelector({ onSelect }: Props) {
         background: "linear-gradient(180deg, #0A0F1C 0%, #0D1424 100%)",
       }}
     >
+      {/* Problem Statement Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-3xl mb-10 text-center"
+      >
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-5"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            color: "#F87171",
+            border: "1px solid rgba(239,68,68,0.2)",
+          }}
+        >
+          <Zap size={11} />
+          THE PROBLEM WITH FINANCE EDUCATION
+        </div>
+
+        <h2
+          className="font-serif text-3xl md:text-4xl mb-4 leading-tight"
+          style={{ color: "#F9FAFB" }}
+        >
+          Most finance students graduate{" "}
+          <span style={{ color: "#F87171", fontStyle: "italic" }}>
+            unable to do a deal.
+          </span>
+        </h2>
+
+        <p className="text-base leading-relaxed" style={{ color: "#6B7280" }}>
+          They know the vocabulary. They don&apos;t know the math.{" "}
+          <span style={{ color: "#9CA3AF" }}>
+            FunSim fixes that — quantitatively <em>and</em> qualitatively.
+          </span>
+        </p>
+
+        <p
+          className="mt-4 text-sm italic leading-relaxed max-w-2xl mx-auto"
+          style={{ color: "#4B5563" }}
+        >
+          &ldquo;Finance is one of the most lucrative careers in the world — yet
+          there&apos;s no serious way to learn it hands-on before you&apos;re in
+          the room. Textbooks teach concepts. Professors describe deals. But
+          nothing makes you <em style={{ color: "#818CF8" }}>do</em> the math,
+          feel the leverage, and understand what separates winners from losers —
+          until now.&rdquo;
+        </p>
+      </motion.div>
+
+      {/* Differentiation Strip */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="w-full max-w-3xl mb-10 grid grid-cols-1 md:grid-cols-3 gap-3"
+      >
+        {comparisonCols.map((col) => (
+          <div
+            key={col.label}
+            style={{
+              background: col.positive
+                ? "rgba(99,102,241,0.08)"
+                : "rgba(239,68,68,0.06)",
+              border: `1px solid ${
+                col.positive ? "rgba(99,102,241,0.25)" : "rgba(239,68,68,0.15)"
+              }`,
+              borderRadius: "10px",
+              padding: "16px",
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">{col.icon}</span>
+              <span
+                className="text-xs font-bold uppercase tracking-wide"
+                style={{
+                  color: col.positive ? "#818CF8" : "#6B7280",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {col.label}
+              </span>
+            </div>
+            <p
+              className="text-xs leading-relaxed"
+              style={{ color: col.positive ? "#F9FAFB" : "#9CA3AF" }}
+            >
+              {col.description}
+            </p>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Section headline */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.18 }}
         className="text-center mb-10 max-w-2xl"
       >
         <div
@@ -129,11 +255,12 @@ export function SimulatorSelector({ onSelect }: Props) {
           mechanics, real formulas, and real depth — the kind that makes
           professionals say{" "}
           <em style={{ color: "#9CA3AF" }}>
-            "I wish I had this starting out."
+            &ldquo;I wish I had this starting out.&rdquo;
           </em>
         </p>
       </motion.div>
 
+      {/* Simulator Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full max-w-6xl">
         {simulators.map((sim, i) => {
           const Icon = sim.icon;
@@ -142,7 +269,7 @@ export function SimulatorSelector({ onSelect }: Props) {
               key={sim.id}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
+              transition={{ duration: 0.5, delay: 0.22 + i * 0.08 }}
               className="h-full"
             >
               <SimCard sim={sim} onSelect={onSelect} Icon={Icon} />
@@ -151,15 +278,22 @@ export function SimulatorSelector({ onSelect }: Props) {
         })}
       </div>
 
+      {/* Social Proof Strip */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.55 }}
         className="flex flex-col items-center gap-2 mt-10"
       >
+        <div className="flex items-center gap-2 mb-1">
+          <CheckCircle size={13} color="#34D399" />
+          <p className="text-xs font-medium" style={{ color: "#6B7280" }}>
+            Qualitative + Quantitative — the only simulator that scores both
+          </p>
+        </div>
         <p className="text-xs" style={{ color: "#374151" }}>
-          All calculations run client-side · Switch simulators anytime · No data
-          stored
+          Used by students at finance programs worldwide &middot; Covers PE
+          &middot; VC &middot; IB &middot; DECA &middot; YIS competitions
         </p>
       </motion.div>
     </div>

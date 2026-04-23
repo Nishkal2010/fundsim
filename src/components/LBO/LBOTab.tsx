@@ -1,5 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { Info } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartTooltip,
+  Cell,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 import { Slider } from "../Slider";
 import { MetricCard } from "../MetricCard";
 import { Tooltip } from "../Tooltip";
@@ -34,6 +45,20 @@ function moicColor(moic: number): string {
   return "#F87171";
 }
 
+function irrColor(irr: number | null): string {
+  if (irr === null) return "#6B7280";
+  if (irr >= 0.25) return "#34D399";
+  if (irr >= 0.2) return "#818CF8";
+  if (irr >= 0.15) return "#FCD34D";
+  if (irr >= 0.1) return "#9CA3AF";
+  return "#F87171";
+}
+
+function fmtIRR(irr: number | null): string {
+  if (irr === null || !isFinite(irr)) return "N/A";
+  return `${(irr * 100).toFixed(1)}%`;
+}
+
 export function LBOTab() {
   const [lbo, setLBO] = useState<LBOInputs>(DEFAULT_LBO);
 
@@ -47,6 +72,47 @@ export function LBOTab() {
     Math.abs(vc.ebitdaGrowth) +
     Math.abs(vc.multipleExpansion) +
     Math.abs(vc.debtPaydown);
+
+  // Equity bridge waterfall data for BarChart
+  const bridgeData = [
+    {
+      name: "Entry\nEquity",
+      value: result.entryEquity,
+      fill: "#6B7280",
+      base: 0,
+    },
+    {
+      name: "EBITDA\nGrowth",
+      value: Math.abs(vc.ebitdaGrowth),
+      fill: vc.ebitdaGrowth >= 0 ? "#34D399" : "#F87171",
+      base: result.entryEquity,
+    },
+    {
+      name: "Multiple\nExpansion",
+      value: Math.abs(vc.multipleExpansion),
+      fill: vc.multipleExpansion >= 0 ? "#818CF8" : "#F87171",
+      base:
+        result.entryEquity +
+        (vc.ebitdaGrowth >= 0 ? vc.ebitdaGrowth : -Math.abs(vc.ebitdaGrowth)),
+    },
+    {
+      name: "Debt\nPaydown",
+      value: Math.abs(vc.debtPaydown),
+      fill: vc.debtPaydown >= 0 ? "#6EE7B7" : "#F87171",
+      base:
+        result.entryEquity +
+        (vc.ebitdaGrowth >= 0 ? vc.ebitdaGrowth : -Math.abs(vc.ebitdaGrowth)) +
+        (vc.multipleExpansion >= 0
+          ? vc.multipleExpansion
+          : -Math.abs(vc.multipleExpansion)),
+    },
+    {
+      name: "Exit\nEquity",
+      value: result.exitEquity,
+      fill: "#F59E0B",
+      base: 0,
+    },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
@@ -246,6 +312,64 @@ export function LBOTab() {
         </div>
       </div>
 
+      {/* Key Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          {
+            label: "Entry EV",
+            value: formatMillions(result.entryEV),
+            sub: `${lbo.entryMultiple.toFixed(1)}x EBITDA`,
+            color: "#9CA3AF",
+          },
+          {
+            label: "Exit EV",
+            value: formatMillions(result.exitEV),
+            sub: `${lbo.exitMultiple.toFixed(1)}x EBITDA`,
+            color: "#34D399",
+          },
+          {
+            label: "Entry Equity",
+            value: formatMillions(result.entryEquity),
+            sub: `${((1 - lbo.debtPercent) * 100).toFixed(0)}% of EV`,
+            color: "#818CF8",
+          },
+          {
+            label: "Exit Equity",
+            value: formatMillions(result.exitEquity),
+            sub: "After debt repayment",
+            color: "#6EE7B7",
+          },
+          {
+            label: "Gross MOIC",
+            value: formatMultiple(result.grossMOIC),
+            sub: `${lbo.holdYears}-yr hold`,
+            color: moicColor(result.grossMOIC),
+          },
+          {
+            label: "Gross IRR",
+            value: formatIRR(result.grossIRR),
+            sub: "Annualized return",
+            color: irrColor(result.grossIRR),
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-xl p-4"
+            style={{ background: "#111827", border: "1px solid #374151" }}
+          >
+            <div className="text-xs mb-1" style={{ color: "#6B7280" }}>
+              {item.label}
+            </div>
+            <div className="text-lg font-bold" style={{ color: item.color }}>
+              {item.value}
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: "#4B5563" }}>
+              {item.sub}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard
@@ -290,6 +414,175 @@ export function LBOTab() {
           status="positive"
           description="Leverage at exit"
         />
+      </div>
+
+      {/* Scenario Analysis — Bull / Base / Bear */}
+      <div
+        className="rounded-xl p-5"
+        style={{ background: "#111827", border: "1px solid #374151" }}
+      >
+        <h3 className="text-sm font-semibold text-[#F9FAFB] mb-1">
+          EBITDA Growth Scenarios
+        </h3>
+        <p className="text-xs text-[#6B7280] mb-4">
+          Bull (+5%), Base, Bear (-5%) EBITDA growth — debt sweep runs
+          independently for each
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(
+            [
+              {
+                key: "bear" as const,
+                label: "Bear Case",
+                icon: "▼",
+                color: "#F87171",
+                bg: "rgba(248,113,113,0.07)",
+              },
+              {
+                key: "base" as const,
+                label: "Base Case",
+                icon: "●",
+                color: "#F59E0B",
+                bg: "rgba(245,158,11,0.07)",
+              },
+              {
+                key: "bull" as const,
+                label: "Bull Case",
+                icon: "▲",
+                color: "#34D399",
+                bg: "rgba(52,211,153,0.07)",
+              },
+            ] as const
+          ).map(({ key, label, icon, color, bg }) => {
+            const s = result.scenarios[key];
+            return (
+              <div
+                key={key}
+                className="rounded-lg p-4"
+                style={{ background: bg, border: `1px solid ${color}30` }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="font-bold text-sm" style={{ color }}>
+                    {icon} {label}
+                  </span>
+                  <span
+                    className="text-xs font-mono"
+                    style={{ color: "#6B7280" }}
+                  >
+                    {(s.growthRate * 100).toFixed(0)}% EBITDA/yr
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { l: "Exit EBITDA", v: formatMillions(s.exitEBITDA) },
+                    { l: "Exit EV", v: formatMillions(s.exitEV) },
+                    { l: "Exit Equity", v: formatMillions(s.exitEquity) },
+                    { l: "MOIC", v: formatMultiple(s.moic) },
+                    { l: "IRR", v: fmtIRR(s.irr) },
+                  ].map(({ l, v }) => (
+                    <div key={l}>
+                      <div className="text-xs" style={{ color: "#6B7280" }}>
+                        {l}
+                      </div>
+                      <div className="text-sm font-semibold" style={{ color }}>
+                        {v}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Equity Bridge Waterfall Chart */}
+      <div
+        className="rounded-xl p-5"
+        style={{ background: "#111827", border: "1px solid #374151" }}
+      >
+        <h3 className="text-sm font-semibold text-[#F9FAFB] mb-1">
+          Equity Value Bridge — Waterfall
+        </h3>
+        <p className="text-xs text-[#6B7280] mb-4">
+          From entry equity to exit equity: EBITDA growth, multiple expansion,
+          and debt paydown contributions
+        </p>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart
+            data={bridgeData}
+            margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#1F2937"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: "#9CA3AF", fontSize: 11 }}
+              axisLine={{ stroke: "#374151" }}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: "#6B7280", fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => formatMillions(v)}
+            />
+            <RechartTooltip
+              contentStyle={{
+                background: "#1F2937",
+                border: "1px solid #374151",
+                borderRadius: 8,
+                color: "#F9FAFB",
+                fontSize: 12,
+              }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any, _name: any, props: any) => [
+                formatMillions(typeof value === "number" ? value : 0),
+                props.payload?.fill === "#6B7280" ||
+                props.payload?.fill === "#F59E0B"
+                  ? "Equity Value"
+                  : "Contribution",
+              ]}
+            />
+            {/* Invisible base bar for waterfall offset */}
+            <Bar dataKey="base" stackId="w" fill="transparent" />
+            <Bar dataKey="value" stackId="w" radius={[4, 4, 0, 0]}>
+              {bridgeData.map((entry, idx) => (
+                <Cell key={idx} fill={entry.fill} />
+              ))}
+            </Bar>
+            <ReferenceLine y={0} stroke="#374151" />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="flex gap-4 mt-2 text-xs flex-wrap">
+          {[
+            { color: "#6B7280", label: "Entry/Exit Equity" },
+            { color: "#34D399", label: "EBITDA Growth" },
+            { color: "#818CF8", label: "Multiple Expansion" },
+            { color: "#6EE7B7", label: "Debt Paydown" },
+            { color: "#F87171", label: "Negative contribution" },
+          ].map((item) => (
+            <span
+              key={item.label}
+              className="flex items-center gap-1"
+              style={{ color: "#6B7280" }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 2,
+                  background: item.color,
+                  display: "inline-block",
+                }}
+              />
+              {item.label}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Value Creation Bridge */}
@@ -407,10 +700,12 @@ export function LBOTab() {
                   "Year",
                   "Beg. Debt",
                   "EBITDA",
+                  "FCF",
                   "Interest",
                   "Amortization",
                   "End Debt",
                   "D/EBITDA",
+                  "DSCR",
                   "Equity",
                   "MOIC",
                 ].map((h) => (
@@ -438,6 +733,7 @@ export function LBOTab() {
                     { v: `Year ${row.year}`, left: true },
                     { v: formatMillions(row.beginningDebt) },
                     { v: formatMillions(row.ebitda) },
+                    { v: formatMillions(row.fcf), color: "#60A5FA" },
                     {
                       v: `(${formatMillions(row.interest)})`,
                       color: "#F87171",
@@ -453,6 +749,15 @@ export function LBOTab() {
                         row.debtToEBITDA <= 5
                           ? "#34D399"
                           : row.debtToEBITDA <= 7
+                            ? "#FCD34D"
+                            : "#F87171",
+                    },
+                    {
+                      v: row.dscr >= 99 ? "—" : `${row.dscr.toFixed(2)}x`,
+                      color:
+                        row.dscr >= 1.5
+                          ? "#34D399"
+                          : row.dscr >= 1.2
                             ? "#FCD34D"
                             : "#F87171",
                     },
@@ -563,6 +868,105 @@ export function LBOTab() {
             { color: "#FCD34D", label: "1.5–2x" },
             { color: "#9CA3AF", label: "1–1.5x" },
             { color: "#F87171", label: "<1x (loss)" },
+          ].map((item) => (
+            <span
+              key={item.label}
+              className="flex items-center gap-1"
+              style={{ color: item.color }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 2,
+                  background: item.color,
+                  display: "inline-block",
+                }}
+              />
+              {item.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Entry Multiple × Exit Multiple → IRR Sensitivity Heatmap */}
+      <div
+        className="rounded-xl p-5"
+        style={{ background: "#111827", border: "1px solid #374151" }}
+      >
+        <h3 className="text-sm font-semibold text-[#F9FAFB] mb-1">
+          IRR Sensitivity: Entry Multiple × Exit Multiple
+        </h3>
+        <p className="text-xs text-[#6B7280] mb-4">
+          Gross IRR (%) across entry and exit EV/EBITDA multiples — hold period:{" "}
+          {lbo.holdYears} years, EBITDA growth:{" "}
+          {(lbo.ebitdaGrowthRate * 100).toFixed(0)}%/yr
+        </p>
+        <div className="overflow-x-auto">
+          <table className="text-xs">
+            <thead>
+              <tr>
+                <th
+                  className="pb-2 pr-4 text-left"
+                  style={{ color: "#6B7280", minWidth: 80 }}
+                >
+                  Entry × \ Exit ×
+                </th>
+                {result.exitMultiples.map((xm) => (
+                  <th
+                    key={xm}
+                    className="pb-2 px-3 text-center"
+                    style={{ color: "#6B7280", minWidth: 64 }}
+                  >
+                    {xm.toFixed(1)}x
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {result.entryExitSensitivity.map((row) => (
+                <tr key={row.entryMult}>
+                  <td
+                    className="py-1.5 pr-4 font-semibold"
+                    style={{ color: "#9CA3AF" }}
+                  >
+                    {row.entryMult.toFixed(1)}x
+                  </td>
+                  {row.irrs.map(({ exitMult, irr }) => {
+                    const isBase =
+                      Math.abs(row.entryMult - lbo.entryMultiple) < 0.01 &&
+                      Math.abs(exitMult - lbo.exitMultiple) < 0.01;
+                    return (
+                      <td
+                        key={exitMult}
+                        className="py-1.5 px-3 text-center rounded"
+                        style={{
+                          color: irrColor(irr),
+                          fontWeight: isBase ? 800 : 500,
+                          background: isBase
+                            ? "rgba(99,102,241,0.15)"
+                            : "transparent",
+                          border: isBase
+                            ? "1px solid rgba(99,102,241,0.4)"
+                            : "1px solid transparent",
+                        }}
+                      >
+                        {fmtIRR(irr)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 flex gap-4 text-xs">
+          {[
+            { color: "#34D399", label: "≥25% IRR" },
+            { color: "#818CF8", label: "20–25%" },
+            { color: "#FCD34D", label: "15–20%" },
+            { color: "#9CA3AF", label: "10–15%" },
+            { color: "#F87171", label: "<10%" },
           ].map((item) => (
             <span
               key={item.label}

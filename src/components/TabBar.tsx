@@ -12,8 +12,10 @@ import {
   DollarSign,
   PieChart,
   FileText,
-  Users,
   Shield,
+  Star,
+  Globe,
+  ClipboardList,
 } from "lucide-react";
 
 export type PETabId =
@@ -31,7 +33,10 @@ export type VCTabId =
   | "captable"
   | "safe"
   | "portfolioconstruction"
-  | "termsheet";
+  | "termsheet"
+  | "qualitative"
+  | "marketsizing"
+  | "dealmemo";
 
 export type TabId = PETabId | VCTabId;
 
@@ -74,6 +79,9 @@ const vcTabs: {
     group: "fund",
   },
   { id: "termsheet", label: "Term Sheet", icon: Shield, group: "fund" },
+  { id: "qualitative", label: "Qualitative Score", icon: Star, group: "edge" },
+  { id: "marketsizing", label: "Market Sizing", icon: Globe, group: "edge" },
+  { id: "dealmemo", label: "Deal Memo", icon: ClipboardList, group: "edge" },
 ];
 
 const peColor = "#818CF8";
@@ -109,6 +117,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
       : [
           { key: "core", label: "Core" },
           { key: "fund", label: "Fund" },
+          { key: "edge", label: "Edge" },
         ];
 
   const renderTab = (tab: (typeof peTabs)[0] | (typeof vcTabs)[0]) => {
@@ -119,6 +128,9 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
     return (
       <button
         key={tab.id}
+        role="tab"
+        aria-selected={isActive}
+        aria-controls={`panel-${tab.id}`}
         onClick={() => onChange(tab.id as TabId)}
         onMouseEnter={() => setHoveredTab(tab.id as TabId)}
         onMouseLeave={() => setHoveredTab(null)}
@@ -165,6 +177,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
         {/* Back button */}
         <button
           onClick={onBack}
+          aria-label="Back to simulator selection"
           className="flex items-center gap-1.5 mr-4 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0"
           style={{
             background: "rgba(255,255,255,0.07)",
@@ -209,35 +222,41 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
         </span>
 
         {/* Tabs grouped */}
-        {groups.map((group, gi) => (
-          <React.Fragment key={group.key}>
-            {gi > 0 && (
-              <div
+        <div
+          role="tablist"
+          aria-label={`${simulator.toUpperCase()} simulator tabs`}
+          className="flex items-center gap-0"
+        >
+          {groups.map((group, gi) => (
+            <React.Fragment key={group.key}>
+              {gi > 0 && (
+                <div
+                  style={{
+                    width: 1,
+                    height: 20,
+                    background: "#374151",
+                    margin: "0 8px",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <span
                 style={{
-                  width: 1,
-                  height: 20,
-                  background: "#374151",
-                  margin: "0 8px",
+                  fontSize: 10,
+                  color: "#4B5563",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  paddingRight: 4,
                   flexShrink: 0,
                 }}
-              />
-            )}
-            <span
-              style={{
-                fontSize: 10,
-                color: "#4B5563",
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                paddingRight: 4,
-                flexShrink: 0,
-              }}
-            >
-              {group.label}
-            </span>
-            {tabs.filter((t) => t.group === group.key).map(renderTab)}
-          </React.Fragment>
-        ))}
+              >
+                {group.label}
+              </span>
+              {tabs.filter((t) => t.group === group.key).map(renderTab)}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );

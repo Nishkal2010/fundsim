@@ -156,6 +156,22 @@ export interface LBODebtYear {
   equity: number;
   moic: number;
   debtToEBITDA: number;
+  dscr: number;
+  fcf: number;
+}
+
+export interface LBOScenario {
+  exitEBITDA: number;
+  exitEV: number;
+  exitEquity: number;
+  moic: number;
+  irr: number | null;
+  growthRate: number;
+}
+
+export interface LBOEntryExitRow {
+  entryMult: number;
+  irrs: Array<{ exitMult: number; moic: number; irr: number | null }>;
 }
 
 export interface LBOData {
@@ -180,6 +196,14 @@ export interface LBOData {
     moic: number;
     irr: number | null;
   }>;
+  scenarios: {
+    bull: LBOScenario;
+    base: LBOScenario;
+    bear: LBOScenario;
+  };
+  entryExitSensitivity: LBOEntryExitRow[];
+  entryMultiples: number[];
+  exitMultiples: number[];
 }
 
 // ── VC Cap Table ────────────────────────────────────────────────────────────

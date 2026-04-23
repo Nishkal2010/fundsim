@@ -230,11 +230,6 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     const esopSharesFinal = totalESOPShares;
     const totalFDShares = totalShares; // founderShares + esopShares + all investor shares
 
-    const founderProRata =
-      totalFDShares > 0 ? founderShares / totalFDShares : 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const esopProRata = totalFDShares > 0 ? esopSharesFinal / totalFDShares : 0;
-
     // Participating preferred: investor gets pref + pro-rata remainder
     // Non-participating: investor gets max(pref, pro-rata of TOTAL proceeds)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -284,22 +279,21 @@ export function calculateVCCapTable(state: VCInputState): VCData {
       participating.reduce((s, p) => s + p.shares, 0) +
       nonParticipatingProRataSharesOut;
 
-    // Recalculate non-participating that chose pro-rata
+    // Non-participating who convert receive their pro-rata share of the leftover
+    // pool (same pool as founders, ESOP, and participating preferred).
+    // Using (shares/sharesInRemainder)*leftover — NOT (shares/totalFDShares)*exitVal —
+    // ensures all proceeds sum exactly to exitVal regardless of who took their pref.
     const npFinal = npResults.map((r) => {
-      if (!r.usedPref) {
-        // They share in total proceeds pro-rata
-        return {
-          round: r.round,
-          cost: r.cost,
-          proceeds: r.proceeds,
-          moic: r.cost > 0 ? r.proceeds / r.cost : 0,
-        };
-      }
+      const proceeds = r.usedPref
+        ? r.proceeds // liq pref amount already capped
+        : sharesInRemainder > 0
+          ? (r.shares / sharesInRemainder) * leftover
+          : 0;
       return {
         round: r.round,
         cost: r.cost,
-        proceeds: r.proceeds,
-        moic: r.cost > 0 ? r.proceeds / r.cost : 0,
+        proceeds: parseFloat(proceeds.toFixed(2)),
+        moic: r.cost > 0 ? parseFloat((proceeds / r.cost).toFixed(2)) : 0,
       };
     });
 
@@ -336,13 +330,7 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     return {
       exitValuation: exitVal,
       label,
-      founderProceeds: parseFloat(
-        (founderProRata * exitVal > 0
-          ? founderShareOfRemainder +
-            (npResults.some((r) => !r.usedPref) ? 0 : 0)
-          : founderShareOfRemainder
-        ).toFixed(2),
-      ),
+      founderProceeds: parseFloat(founderShareOfRemainder.toFixed(2)),
       esopProceeds: parseFloat(esopShareOfRemainder.toFixed(2)),
       investorsByRound: allInvestorResults,
       totalInvestorProceeds: parseFloat(totalInvestorProceeds.toFixed(2)),

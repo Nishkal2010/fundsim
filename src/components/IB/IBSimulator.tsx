@@ -1,5 +1,20 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartTooltip,
+  Cell,
+  Legend,
+} from "recharts";
 import { IBLanding } from "./IBLanding";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -971,11 +986,26 @@ function fmtPct(n: number, d = 1): string {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+interface ScoreSnapshot {
+  label: string;
+  totalScore: number;
+  accrScore: number;
+  premScore: number;
+  levScore: number;
+  synScore: number;
+  strScore: number;
+  dealValue: number;
+  isAccretive: boolean;
+  dealType: string;
+  timestamp: number;
+}
+
 export function IBSimulator() {
   const [showLanding, setShowLanding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [inputs, setInputs] = useState<DealInputs>(PRESETS.tech);
   const [glossarySearch, setGlossarySearch] = useState("");
+  const [scoreHistory, setScoreHistory] = useState<ScoreSnapshot[]>([]);
 
   function setIn<K extends keyof DealInputs>(key: K, val: DealInputs[K]) {
     setInputs((prev) => ({ ...prev, [key]: val }));
@@ -1478,6 +1508,33 @@ export function IBSimulator() {
       mgmtRolloverValue,
     };
   }, [inputs]);
+
+  const saveSnapshot = useCallback(() => {
+    setScoreHistory((prev) => {
+      const snap: ScoreSnapshot = {
+        label: `${inputs.acqName} / ${inputs.tgtName}`,
+        totalScore: C.totalScore,
+        accrScore: C.accrScore,
+        premScore: C.premScore,
+        levScore: C.levScore,
+        synScore: C.synScore,
+        strScore: C.strScore,
+        dealValue: C.dealValue,
+        isAccretive: C.isAccretive,
+        dealType: inputs.dealType,
+        timestamp: Date.now(),
+      };
+      // Keep last 5 snapshots, avoid duplicate consecutive saves
+      const last = prev[prev.length - 1];
+      if (
+        last &&
+        last.totalScore === snap.totalScore &&
+        last.label === snap.label
+      )
+        return prev;
+      return [...prev.slice(-4), snap];
+    });
+  }, [C, inputs.acqName, inputs.tgtName, inputs.dealType]);
 
   if (showLanding) {
     return <IBLanding onStart={() => setShowLanding(false)} />;

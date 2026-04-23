@@ -97,10 +97,6 @@ export function DebtStructureTab() {
   const [entryMultiple, setEntryMultiple] = useState(12);
   const [equityPct, setEquityPct] = useState(40);
   const [tranches, setTranches] = useState<Tranche[]>(DEFAULT_TRANCHES);
-  const [activeTab, setActiveTab] = useState<"stack" | "schedule" | "capacity">(
-    "stack",
-  );
-
   const setTranche = <K extends keyof Tranche>(
     id: string,
     key: K,
@@ -117,11 +113,6 @@ export function DebtStructureTab() {
 
   const result = useMemo(() => {
     const activeTranches = tranches.filter((t) => t.id !== "rcf");
-    const totalMult = activeTranches.reduce((sum, t) => sum + t.sizeMult, 0);
-    const scaleFactor =
-      totalDebt / (ebitda * totalMult) > 1
-        ? totalDebt / (ebitda * totalMult)
-        : 1;
 
     const sized = activeTranches.map((t) => ({
       ...t,
@@ -305,7 +296,7 @@ export function DebtStructureTab() {
                 <span
                   style={{
                     color: row.color,
-                    fontWeight: (row as any).bold ? 700 : 500,
+                    fontWeight: (row as { bold?: boolean }).bold ? 700 : 500,
                   }}
                 >
                   {formatMillions(row.value)}

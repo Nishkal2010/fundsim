@@ -4,7 +4,7 @@
 
 ## Overview
 
-FundSim is a private equity / VC fund simulator built as a React + TypeScript SPA with a minimal Express.js backend. Users can model a fund's full lifecycle — capital deployment, J-curve, distribution waterfall (European or American), and performance metrics (IRR, TVPI, DPI, PME) — entirely in the browser. Authentication is handled server-side via Google OAuth 2.0 and stateless JWTs; all financial computation is client-side.
+FundSim is a private equity / VC / IB finance simulator built as a React + TypeScript SPA. Users can model fund lifecycles, cap tables, SAFE notes, LBOs, and M&A deals entirely in the browser. Authentication is handled by Supabase (Google OAuth + email/password demo mode). Fund model inputs are persisted to Supabase per user. All financial computation is client-side.
 
 ## Architecture
 
@@ -19,6 +19,7 @@ FundSim is a private equity / VC fund simulator built as a React + TypeScript SP
 │  ┌──────────────────▼────────────────────────────────┐  │
 │  │  useFundModelState() — useState + useMemo         │  │
 │  │  inputs → lifecycle, jCurve, waterfall, perf      │  │
+│  │  inputs persisted to Supabase (logged-in users)   │  │
 │  └──────────────────┬────────────────────────────────┘  │
 │                     │ pure functions                     │
 │  ┌──────────────────▼────────────────────────────────┐  │
@@ -26,21 +27,13 @@ FundSim is a private equity / VC fund simulator built as a React + TypeScript SP
 │  │  fundLifecycle · jCurve · waterfall · performance  │  │
 │  │  irr · formatting                                  │  │
 │  └───────────────────────────────────────────────────┘  │
-│                                                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │
-│  │Lifecycle │  │ J-Curve  │  │Waterfall │  │  Perf  │  │
-│  │   Tab    │  │   Tab    │  │   Tab    │  │  Tab   │  │
-│  └──────────┘  └──────────┘  └──────────┘  └────────┘  │
 └──────────────────────┬──────────────────────────────────┘
-                       │ fetch /api/* (credentials: include)
+                       │ Supabase JS SDK
 ┌──────────────────────▼──────────────────────────────────┐
-│              Express.js (server/index.js)                │
-│  Passport.js · Google OAuth 2.0 · JWT cookie            │
-│  /api/health · /api/auth/google · /api/auth/me          │
-│  /api/auth/google/callback · /api/auth/logout            │
+│                    Supabase                              │
+│  Auth: Google OAuth + email/password demo mode          │
+│  DB: fund_models table (user_id, inputs JSONB)          │
 └─────────────────────────────────────────────────────────┘
-                       │ Vercel rewrite
-                  /api → api/index.js (serverless)
 ```
 
 ### Architectural Style
@@ -182,7 +175,9 @@ fundsim/
 
 ## Data Layer
 
-**No persistent data storage.** All domain state is in-memory React state for the duration of the browser session.
+**Auth:** Supabase handles authentication. Google OAuth and email/password demo mode are both supported. Demo users are stored in `localStorage` only; full accounts use Supabase Auth.
+
+**Persistence:** Fund model inputs are persisted to the `fund_models` table in Supabase (columns: `user_id`, `inputs` JSONB). Saves are debounced 1.5s after each input change. Anonymous/demo users get in-memory state only.
 
 ### State Flow
 

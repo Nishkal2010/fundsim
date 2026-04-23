@@ -2446,8 +2446,11 @@ export function DCFCalculator({
       waccRange2,
       exitRange,
       exitSensMatrix,
+      rows,
     } = calc;
     const basePrice = calc.impliedSharePriceFCFF;
+    const lastFCFF = rows[rows.length - 1]?.fcff ?? 0;
+    const projYears = inputs.projectionYears;
 
     function heatColor(val: number) {
       const diff = val - basePrice;
@@ -2457,8 +2460,119 @@ export function DCFCalculator({
       return D.red;
     }
 
+    function tvHeatColor(val: number) {
+      const base =
+        calc.wacc - inputs.terminalGrowthRate / 100 > 1e-6
+          ? (lastFCFF * (1 + inputs.terminalGrowthRate / 100)) /
+            (calc.wacc - inputs.terminalGrowthRate / 100)
+          : lastFCFF * 25;
+      const diff = val - base;
+      if (diff > base * 0.2) return D.green;
+      if (diff > 0) return "#86EFAC";
+      if (diff > -base * 0.2) return D.yellow;
+      return D.red;
+    }
+
+    // Terminal value sensitivity: WACC × TGR → TV ($M) then PV
+    // Shows how sensitively terminal value responds to these two key assumptions
+    const tvWaccRange = [-2, -1, 0, 1, 2].map((d) => calc.wacc + d / 100);
+    const tvTGRRange = [-1, -0.5, 0, 0.5, 1].map(
+      (d) => inputs.terminalGrowthRate / 100 + d / 100,
+    );
+    const tvSensMatrix = tvWaccRange.map((w) =>
+      tvTGRRange.map((g) => {
+        const tv =
+          w - g > 1e-6 ? (lastFCFF * (1 + g)) / (w - g) : lastFCFF * 25;
+        return tv / Math.pow(1 + w, projYears);
+      }),
+    );
+
     return (
       <div>
+        {/* Terminal Value Sensitivity */}
+        <Card title="WACC × Terminal Growth Rate → PV of Terminal Value ($M)">
+          <p
+            style={{
+              color: D.muted,
+              fontSize: 11,
+              marginBottom: 12,
+              marginTop: -4,
+            }}
+          >
+            TV typically represents 60–80% of total DCF value — this table shows
+            how sensitive it is to your key assumptions.
+          </p>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      color: D.sub,
+                      fontSize: 11,
+                      padding: "6px 10px",
+                      borderBottom: `1px solid ${D.border}`,
+                      textAlign: "left",
+                    }}
+                  >
+                    WACC \ TGR
+                  </th>
+                  {tvTGRRange.map((g) => (
+                    <th
+                      key={g}
+                      style={{
+                        color: D.sub,
+                        fontSize: 11,
+                        padding: "6px 10px",
+                        borderBottom: `1px solid ${D.border}`,
+                        textAlign: "right",
+                      }}
+                    >
+                      {(g * 100).toFixed(1)}%
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tvWaccRange.map((w, i) => (
+                  <tr key={w}>
+                    <td
+                      style={{
+                        color: D.sub,
+                        fontSize: 12,
+                        padding: "5px 10px",
+                        borderBottom: `1px solid rgba(30,58,95,0.4)`,
+                      }}
+                    >
+                      {(w * 100).toFixed(1)}%
+                    </td>
+                    {tvSensMatrix[i].map((pvTV, j) => (
+                      <td
+                        key={j}
+                        style={{
+                          textAlign: "right",
+                          padding: "5px 10px",
+                          fontSize: 12,
+                          fontWeight:
+                            Math.abs(i - 2) + Math.abs(j - 2) === 0 ? 700 : 400,
+                          color: tvHeatColor(pvTV),
+                          background:
+                            Math.abs(i - 2) + Math.abs(j - 2) === 0
+                              ? "rgba(37,99,235,0.15)"
+                              : "transparent",
+                          border: `1px solid rgba(30,58,95,0.4)`,
+                        }}
+                      >
+                        ${pvTV.toFixed(0)}M
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
         <Card title="WACC vs Terminal Growth Rate → Implied Share Price ($)">
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -3075,6 +3189,285 @@ export function DCFCalculator({
               />
             </tbody>
           </table>
+        </Card>
+
+        {/* WACC Builder Breakdown */}
+        <Card title="WACC Builder — Cost of Capital Decomposition">
+          <p
+            style={{
+              color: D.muted,
+              fontSize: 11,
+              marginBottom: 14,
+              marginTop: -4,
+            }}
+          >
+            CAPM: Ke = Rf + β × ERP + Size Premium + Specific Risk. WACC = Ke ×
+            (E/V) + Kd × (1−t) × (D/V)
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
+            {/* Cost of Equity */}
+            <div
+              style={{
+                background: "#0F172A",
+                border: `1px solid ${D.border}`,
+                borderRadius: 8,
+                padding: "12px 16px",
+              }}
+            >
+              <div
+                style={{
+                  color: D.light,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Cost of Equity (Ke)
+              </div>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <tbody>
+                  {[
+                    {
+                      label: "Risk-Free Rate (Rf)",
+                      value: `${inputs.riskFreeRate.toFixed(2)}%`,
+                    },
+                    {
+                      label: `Beta (${inputs.betaType})`,
+                      value: calc.adjustedBeta.toFixed(3),
+                    },
+                    {
+                      label: "× Equity Risk Premium",
+                      value: `${inputs.equityRiskPremium.toFixed(2)}%`,
+                    },
+                    {
+                      label: "= β × ERP",
+                      value: `${(calc.adjustedBeta * inputs.equityRiskPremium).toFixed(2)}%`,
+                    },
+                    ...(inputs.sizePreium > 0
+                      ? [
+                          {
+                            label: "+ Size Premium",
+                            value: `${inputs.sizePreium.toFixed(2)}%`,
+                          },
+                        ]
+                      : []),
+                    ...(inputs.specificRisk > 0
+                      ? [
+                          {
+                            label: "+ Specific Risk",
+                            value: `${inputs.specificRisk.toFixed(2)}%`,
+                          },
+                        ]
+                      : []),
+                  ].map(({ label, value }) => (
+                    <TR key={label} cells={[label, value]} />
+                  ))}
+                  <TR
+                    highlight
+                    cells={[
+                      "= Cost of Equity (Ke)",
+                      `${(calc.ke * 100).toFixed(2)}%`,
+                    ]}
+                  />
+                </tbody>
+              </table>
+            </div>
+
+            {/* Cost of Debt + WACC Blend */}
+            <div
+              style={{
+                background: "#0F172A",
+                border: `1px solid ${D.border}`,
+                borderRadius: 8,
+                padding: "12px 16px",
+              }}
+            >
+              <div
+                style={{
+                  color: D.light,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  marginBottom: 10,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                }}
+              >
+                WACC Blend
+              </div>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <tbody>
+                  <TR
+                    cells={[
+                      "Pre-Tax Cost of Debt (Kd)",
+                      `${inputs.preTaxCostOfDebt.toFixed(2)}%`,
+                    ]}
+                  />
+                  <TR cells={["Tax Rate", `${inputs.taxRate.toFixed(1)}%`]} />
+                  <TR
+                    cells={[
+                      "After-Tax Cost of Debt",
+                      `${(calc.kd * 100).toFixed(2)}%`,
+                    ]}
+                  />
+                  <TR
+                    cells={[
+                      "Equity Weight (E/V)",
+                      `${(100 - inputs.targetDebtRatio).toFixed(0)}%`,
+                    ]}
+                  />
+                  <TR
+                    cells={[
+                      "Debt Weight (D/V)",
+                      `${inputs.targetDebtRatio.toFixed(0)}%`,
+                    ]}
+                  />
+                  <TR
+                    cells={[
+                      "Ke × E/V",
+                      `${(calc.ke * (1 - inputs.targetDebtRatio / 100) * 100).toFixed(2)}%`,
+                    ]}
+                  />
+                  <TR
+                    cells={[
+                      "Kd × D/V",
+                      `${(calc.kd * (inputs.targetDebtRatio / 100) * 100).toFixed(2)}%`,
+                    ]}
+                  />
+                  <TR
+                    highlight
+                    cells={["= WACC", `${(calc.wacc * 100).toFixed(2)}%`]}
+                  />
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Card>
+
+        {/* EV → Equity Value Bridge */}
+        <Card title="Enterprise Value → Equity Value Bridge (FCFF Method)">
+          <p
+            style={{
+              color: D.muted,
+              fontSize: 11,
+              marginBottom: 14,
+              marginTop: -4,
+            }}
+          >
+            Equity Value = EV − Net Debt − Minority Interest − Preferred Stock.
+            Divide by shares for implied price per share.
+          </p>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <tbody>
+              <TR
+                cells={[
+                  "PV of FCFFs (Explicit Period)",
+                  `$${calc.pvFCFF.toFixed(1)}M`,
+                ]}
+              />
+              <TR
+                cells={[
+                  `+ PV of Terminal Value (${inputs.terminalMethod === "gordon" ? "Gordon Growth" : inputs.terminalMethod === "exit_multiple" ? "Exit Multiple" : "Average"})`,
+                  `$${calc.pvTV.toFixed(1)}M`,
+                ]}
+              />
+              <TR
+                highlight
+                cells={[
+                  "= Enterprise Value (EV)",
+                  `$${calc.enterpriseValueFCFF.toFixed(1)}M`,
+                ]}
+              />
+              <TR
+                cells={["(−) Net Debt", `($${inputs.netDebt.toFixed(1)}M)`]}
+              />
+              {inputs.minorityInterest > 0 && (
+                <TR
+                  cells={[
+                    "(−) Minority Interest",
+                    `($${inputs.minorityInterest.toFixed(1)}M)`,
+                  ]}
+                />
+              )}
+              {inputs.preferredStock > 0 && (
+                <TR
+                  cells={[
+                    "(−) Preferred Stock",
+                    `($${inputs.preferredStock.toFixed(1)}M)`,
+                  ]}
+                />
+              )}
+              <TR
+                highlight
+                cells={[
+                  "= Equity Value",
+                  `$${calc.equityValueFCFF.toFixed(1)}M`,
+                ]}
+              />
+              <TR
+                cells={[`÷ Shares Outstanding`, `${inputs.sharesOutstanding}M`]}
+              />
+              <TR
+                highlight
+                cells={[
+                  "= Implied Share Price",
+                  `$${calc.impliedSharePriceFCFF.toFixed(2)}`,
+                ]}
+              />
+            </tbody>
+          </table>
+          <div
+            style={{
+              marginTop: 16,
+              padding: "10px 14px",
+              background: "rgba(37,99,235,0.08)",
+              borderRadius: 8,
+              border: `1px solid ${D.border}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                flexWrap: "wrap",
+              }}
+            >
+              {[
+                {
+                  label: "TV as % of EV",
+                  value: `${calc.enterpriseValueFCFF > 0 ? ((calc.pvTV / calc.enterpriseValueFCFF) * 100).toFixed(1) : "—"}%`,
+                },
+                {
+                  label: "Net Debt / EV",
+                  value: `${calc.enterpriseValueFCFF > 0 ? ((inputs.netDebt / calc.enterpriseValueFCFF) * 100).toFixed(1) : "—"}%`,
+                },
+                {
+                  label: "EV / EBITDA (Implied)",
+                  value: `${inputs.baseEBITDA > 0 ? (calc.enterpriseValueFCFF / inputs.baseEBITDA).toFixed(1) : "—"}x`,
+                },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <div style={{ color: D.muted, fontSize: 10 }}>{label}</div>
+                  <div
+                    style={{
+                      color: D.light,
+                      fontSize: 15,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
       </div>
     );

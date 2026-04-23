@@ -3,11 +3,7 @@ import { Info, ToggleLeft, ToggleRight } from "lucide-react";
 import { Slider } from "../Slider";
 import { MetricCard } from "../MetricCard";
 import { Tooltip } from "../Tooltip";
-import {
-  formatMillions,
-  formatPercent,
-  formatIRR,
-} from "../../utils/formatting";
+import { formatMillions, formatIRR } from "../../utils/formatting";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function calcPreferredReturn(capital: number, rate: number, years: number) {
@@ -34,7 +30,6 @@ function calcNetIRR(
   lpNet: number;
 } {
   const totalFees = fundSize * mgmtFeePct * holdYears * 0.85; // step-down assumed at harvest
-  const netInvested = fundSize - totalFees;
   const grossProceeds = fundSize * grossMoic;
   const netProceeds = grossProceeds - totalFees; // fees already taken from investable cap
 
@@ -47,11 +42,6 @@ function calcNetIRR(
     // European: carry only after all capital + preferred returned
     if (netProceeds > fundSize + prefReturn) {
       const surplusAfterPref = netProceeds - fundSize - prefReturn;
-      // GP catch-up to 20% of total profits
-      const totalProfit = netProceeds - fundSize;
-      const gpCatchUpTarget =
-        (carryPct / (1 - carryPct)) *
-        (totalProfit * (1 - carryPct) - prefReturn + prefReturn);
       // Simplified: GP gets carryPct of profits above hurdle
       gpCarry = surplusAfterPref * carryPct;
     }

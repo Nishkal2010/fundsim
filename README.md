@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# FundSim
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A professional finance simulator for Private Equity, Venture Capital, and Investment Banking. Built for students, analysts, and anyone who wants to understand how institutional finance actually works — with real formulas, real mechanics, and real depth.
 
-Currently, two official plugins are available:
+## What It Does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Private Equity Simulator** — Model a buyout fund end-to-end: capital calls, J-curve, waterfall distributions (European & American), performance metrics (DPI/TVPI/IRR/PME), LBO modeling, GP/LP economics, and debt structure.
 
-## React Compiler
+**Venture Capital Simulator** — Simulate the full venture cycle: cap table dilution across rounds, SAFE note conversion mechanics, portfolio construction with power law returns, and term sheet provisions (liquidation preferences, anti-dilution, pro-rata rights).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Investment Banking Simulator** — Run an M&A deal from pitch to close: DCF, comps, precedents, football field valuation, offer structure, accretion/dilution with synergies, and a 100-point deal score rubric.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend:** React 19 + TypeScript, Vite, Tailwind CSS, Recharts, Framer Motion
+- **Auth:** Supabase (Google OAuth + email/password demo mode)
+- **Storage:** Supabase — fund model inputs are saved per user
+- **Deployment:** Vercel
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # starts Vite dev server on :5200
+npm run build    # tsc + vite build
+npm run lint     # eslint src/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+## Architecture
+
+All financial computation is client-side. The server is auth-only (Supabase). Simulation state flows through React Context via `useFundModelState` — four `useMemo` calls recalculate lifecycle, J-curve, waterfall, and performance on every input change.
+
+The math engine has 55 passing unit tests: `node src/utils/__tests__/engine.test.mjs`
+
+## Finance Modules
+
+| Module                 | Covers                                                  |
+| ---------------------- | ------------------------------------------------------- |
+| Fund Lifecycle         | Capital calls, management fee drag, deployment schedule |
+| J-Curve                | Year-by-year NAV, trough, breakeven, net IRR            |
+| Waterfall              | European & American distribution tiers                  |
+| Performance            | DPI, RVPI, TVPI, MOIC, PME vs S&P 500                   |
+| LBO Model              | Debt schedule, returns analysis                         |
+| GP/LP Economics        | Carried interest, fee structures                        |
+| Debt Structure         | Tranches, DSCR, covenants                               |
+| Sector Benchmarks      | Value creation bridge                                   |
+| Cap Table              | Dilution across all rounds                              |
+| SAFE Notes             | Pre/post-money cap, discount, MFN conversions           |
+| Portfolio Construction | Power law returns, reserve strategy                     |
+| Term Sheet             | Liquidation preferences, anti-dilution, pro-rata        |

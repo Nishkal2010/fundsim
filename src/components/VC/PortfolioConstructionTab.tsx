@@ -134,7 +134,7 @@ function generatePortfolioOutcomes(
   }));
 
   const companies = Array.from({ length: numCompanies }, (_, i) => {
-    let rand = (i + 0.5) / numCompanies; // deterministic spread
+    const rand = (i + 0.5) / numCompanies; // deterministic spread
     let cumProb = 0;
     let bucket = scaledBuckets[0];
     for (const b of scaledBuckets) {
@@ -250,7 +250,6 @@ export function PortfolioConstructionTab() {
     reserveRatio,
     avgCheckSize,
     targetOwnership,
-    followOnRounds,
     medianMOIC,
     stageFilter,
   ]);

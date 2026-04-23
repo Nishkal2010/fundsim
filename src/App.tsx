@@ -5,29 +5,108 @@ import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
 import { GlobalInputs } from "./components/GlobalInputs";
 import { TabBar } from "./components/TabBar";
-import type { TabId, PETabId, VCTabId } from "./components/TabBar";
+import type { PETabId, VCTabId } from "./components/TabBar";
 import { Glossary } from "./components/Glossary";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import { SimulatorSelector } from "./components/SimulatorSelector";
 import type { SimulatorId } from "./components/SimulatorSelector";
-import { FundLifecycleTab } from "./components/FundLifecycle/FundLifecycleTab";
-import { JCurveTab } from "./components/JCurve/JCurveTab";
-import { WaterfallTab } from "./components/Waterfall/WaterfallTab";
-import { PerformanceTab } from "./components/Performance/PerformanceTab";
-import { DECAFinanceSuite } from "./components/DECA/DECAFinanceSuite";
-import { YISFinanceSuite } from "./components/YIS/YISFinanceSuite";
-import { IBSimulator } from "./components/IB/IBSimulator";
-import { ComparePage } from "./components/ComparePage";
-import { PortfolioTab } from "./components/Portfolio/PortfolioTab";
-import { LBOTab } from "./components/LBO/LBOTab";
-import { VCTab } from "./components/VC/VCTab";
-import { GPLPEconomicsTab } from "./components/PE/GPLPEconomicsTab";
-import { DebtStructureTab } from "./components/PE/DebtStructureTab";
-import { SectorBenchmarksTab } from "./components/PE/SectorBenchmarksTab";
-import { SAFENotesTab } from "./components/VC/SAFENotesTab";
-import { PortfolioConstructionTab } from "./components/VC/PortfolioConstructionTab";
-import { TermSheetTab } from "./components/VC/TermSheetTab";
+import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+const FundLifecycleTab = React.lazy(() =>
+  import("./components/FundLifecycle/FundLifecycleTab").then((m) => ({
+    default: m.FundLifecycleTab,
+  })),
+);
+const JCurveTab = React.lazy(() =>
+  import("./components/JCurve/JCurveTab").then((m) => ({
+    default: m.JCurveTab,
+  })),
+);
+const WaterfallTab = React.lazy(() =>
+  import("./components/Waterfall/WaterfallTab").then((m) => ({
+    default: m.WaterfallTab,
+  })),
+);
+const PerformanceTab = React.lazy(() =>
+  import("./components/Performance/PerformanceTab").then((m) => ({
+    default: m.PerformanceTab,
+  })),
+);
+const PortfolioTab = React.lazy(() =>
+  import("./components/Portfolio/PortfolioTab").then((m) => ({
+    default: m.PortfolioTab,
+  })),
+);
+const LBOTab = React.lazy(() =>
+  import("./components/LBO/LBOTab").then((m) => ({ default: m.LBOTab })),
+);
+const GPLPEconomicsTab = React.lazy(() =>
+  import("./components/PE/GPLPEconomicsTab").then((m) => ({
+    default: m.GPLPEconomicsTab,
+  })),
+);
+const DebtStructureTab = React.lazy(() =>
+  import("./components/PE/DebtStructureTab").then((m) => ({
+    default: m.DebtStructureTab,
+  })),
+);
+const SectorBenchmarksTab = React.lazy(() =>
+  import("./components/PE/SectorBenchmarksTab").then((m) => ({
+    default: m.SectorBenchmarksTab,
+  })),
+);
+const VCTab = React.lazy(() =>
+  import("./components/VC/VCTab").then((m) => ({ default: m.VCTab })),
+);
+const SAFENotesTab = React.lazy(() =>
+  import("./components/VC/SAFENotesTab").then((m) => ({
+    default: m.SAFENotesTab,
+  })),
+);
+const PortfolioConstructionTab = React.lazy(() =>
+  import("./components/VC/PortfolioConstructionTab").then((m) => ({
+    default: m.PortfolioConstructionTab,
+  })),
+);
+const TermSheetTab = React.lazy(() =>
+  import("./components/VC/TermSheetTab").then((m) => ({
+    default: m.TermSheetTab,
+  })),
+);
+const QualitativeTab = React.lazy(() =>
+  import("./components/VC/QualitativeTab").then((m) => ({
+    default: m.QualitativeTab,
+  })),
+);
+const MarketSizingTab = React.lazy(() =>
+  import("./components/VC/MarketSizingTab").then((m) => ({
+    default: m.MarketSizingTab,
+  })),
+);
+const DealMemoTab = React.lazy(() =>
+  import("./components/VC/DealMemoTab").then((m) => ({
+    default: m.DealMemoTab,
+  })),
+);
+const IBSimulator = React.lazy(() =>
+  import("./components/IB/IBSimulator").then((m) => ({
+    default: m.IBSimulator,
+  })),
+);
+const DECAFinanceSuite = React.lazy(() =>
+  import("./components/DECA/DECAFinanceSuite").then((m) => ({
+    default: m.DECAFinanceSuite,
+  })),
+);
+const YISFinanceSuite = React.lazy(() =>
+  import("./components/YIS/YISFinanceSuite").then((m) => ({
+    default: m.YISFinanceSuite,
+  })),
+);
+const ComparePage = React.lazy(() =>
+  import("./components/ComparePage").then((m) => ({ default: m.ComparePage })),
+);
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -63,6 +142,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
   const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
   const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
   const [glossaryOpen, setGlossaryOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
@@ -71,9 +151,104 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  if (hash === "compare") return <ComparePage />;
-  if (hash === "deca") return <DECAFinanceSuite />;
-  if (hash === "yis") return <YISFinanceSuite />;
+  const peTabOrder: PETabId[] = [
+    "lifecycle",
+    "jcurve",
+    "waterfall",
+    "performance",
+  ];
+
+  useKeyboardShortcuts([
+    {
+      key: "1",
+      description: "Fund Lifecycle",
+      action: () => {
+        setActiveSimulator("pe");
+        setActivePETab("lifecycle");
+      },
+    },
+    {
+      key: "2",
+      description: "J-Curve",
+      action: () => {
+        setActiveSimulator("pe");
+        setActivePETab("jcurve");
+      },
+    },
+    {
+      key: "3",
+      description: "Waterfall",
+      action: () => {
+        setActiveSimulator("pe");
+        setActivePETab("waterfall");
+      },
+    },
+    {
+      key: "4",
+      description: "Performance",
+      action: () => {
+        setActiveSimulator("pe");
+        setActivePETab("performance");
+      },
+    },
+    {
+      key: "?",
+      description: "Show shortcuts",
+      action: () => setShortcutsOpen((v) => !v),
+    },
+    {
+      key: "g",
+      description: "Toggle glossary",
+      action: () => setGlossaryOpen((v) => !v),
+    },
+    {
+      key: "Escape",
+      description: "Close modals",
+      action: () => {
+        setShortcutsOpen(false);
+        setGlossaryOpen(false);
+      },
+    },
+  ]);
+
+  void peTabOrder;
+
+  const lazyFallback = (
+    <div
+      className="flex-1 flex items-center justify-center"
+      style={{ background: "#0D1220", minHeight: "60vh" }}
+    >
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          border: "2px solid #374151",
+          borderTopColor: "#6366F1",
+          borderRadius: "50%",
+          animation: "spin 0.8s linear infinite",
+        }}
+      />
+    </div>
+  );
+
+  if (hash === "compare")
+    return (
+      <React.Suspense fallback={lazyFallback}>
+        <ComparePage />
+      </React.Suspense>
+    );
+  if (hash === "deca")
+    return (
+      <React.Suspense fallback={lazyFallback}>
+        <DECAFinanceSuite />
+      </React.Suspense>
+    );
+  if (hash === "yis")
+    return (
+      <React.Suspense fallback={lazyFallback}>
+        <YISFinanceSuite />
+      </React.Suspense>
+    );
 
   const peTabContent: Record<PETabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
@@ -92,6 +267,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
     safe: <SAFENotesTab />,
     portfolioconstruction: <PortfolioConstructionTab />,
     termsheet: <TermSheetTab />,
+    qualitative: <QualitativeTab />,
+    marketsizing: <MarketSizingTab />,
+    dealmemo: <DealMemoTab />,
   };
 
   return (
@@ -106,135 +284,140 @@ function AppContent({ user, onLogout }: AppContentProps) {
         onLogout={onLogout}
       />
 
-      <AnimatePresence mode="wait">
-        {activeSimulator === null && (
-          <motion.div
-            key="selector"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="flex-1"
-          >
-            <SimulatorSelector onSelect={setActiveSimulator} />
-          </motion.div>
-        )}
-
-        {activeSimulator === "ib" && (
-          <motion.div
-            key="ib"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="flex-1 flex flex-col"
-          >
-            {/* IB back bar */}
-            <div
-              className="px-6 py-2 flex items-center gap-3"
-              style={{
-                background: "#111827",
-                borderBottom: "1px solid #374151",
-              }}
+      <React.Suspense fallback={lazyFallback}>
+        <AnimatePresence mode="wait">
+          {activeSimulator === null && (
+            <motion.div
+              key="selector"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.35 }}
+              className="flex-1"
             >
-              <button
-                onClick={() => setActiveSimulator(null)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium"
+              <SimulatorSelector onSelect={setActiveSimulator} />
+            </motion.div>
+          )}
+
+          {activeSimulator === "ib" && (
+            <motion.div
+              key="ib"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.35 }}
+              className="flex-1 flex flex-col"
+            >
+              {/* IB back bar */}
+              <div
+                className="px-6 py-2 flex items-center gap-3"
                 style={{
-                  background: "transparent",
-                  border: "1px solid #374151",
-                  color: "#6B7280",
-                  cursor: "pointer",
+                  background: "#111827",
+                  borderBottom: "1px solid #374151",
                 }}
               >
-                ← Back
-              </button>
-              <span
-                className="text-xs font-bold px-2 py-0.5 rounded"
-                style={{
-                  background: "rgba(245,158,11,0.12)",
-                  color: "#F59E0B",
-                  border: "1px solid rgba(245,158,11,0.3)",
-                  fontFamily: "monospace",
-                }}
-              >
-                IB
-              </span>
-              <span className="text-xs" style={{ color: "#6B7280" }}>
-                Investment Banking · M&A Deal Simulator
-              </span>
-            </div>
-            <IBSimulator />
-          </motion.div>
-        )}
-
-        {activeSimulator === "pe" && (
-          <motion.div
-            key="pe"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="flex flex-col flex-1"
-          >
-            <GlobalInputs />
-            <TabBar
-              simulator="pe"
-              active={activePETab}
-              onChange={(t) => setActivePETab(t as PETabId)}
-              onBack={() => setActiveSimulator(null)}
-            />
-            <div className="flex-1">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activePETab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
+                <button
+                  onClick={() => setActiveSimulator(null)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #374151",
+                    color: "#6B7280",
+                    cursor: "pointer",
+                  }}
                 >
-                  {peTabContent[activePETab]}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <Footer />
-          </motion.div>
-        )}
-
-        {activeSimulator === "vc" && (
-          <motion.div
-            key="vc"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="flex flex-col flex-1"
-          >
-            <TabBar
-              simulator="vc"
-              active={activeVCTab}
-              onChange={(t) => setActiveVCTab(t as VCTabId)}
-              onBack={() => setActiveSimulator(null)}
-            />
-            <div className="flex-1">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeVCTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
+                  ← Back
+                </button>
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded"
+                  style={{
+                    background: "rgba(245,158,11,0.12)",
+                    color: "#F59E0B",
+                    border: "1px solid rgba(245,158,11,0.3)",
+                    fontFamily: "monospace",
+                  }}
                 >
-                  {vcTabContent[activeVCTab]}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <Footer />
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  IB
+                </span>
+                <span className="text-xs" style={{ color: "#6B7280" }}>
+                  Investment Banking · M&A Deal Simulator
+                </span>
+              </div>
+              <IBSimulator />
+            </motion.div>
+          )}
+
+          {activeSimulator === "pe" && (
+            <motion.div
+              key="pe"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.35 }}
+              className="flex flex-col flex-1"
+            >
+              <GlobalInputs />
+              <TabBar
+                simulator="pe"
+                active={activePETab}
+                onChange={(t) => setActivePETab(t as PETabId)}
+                onBack={() => setActiveSimulator(null)}
+              />
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activePETab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {peTabContent[activePETab]}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <Footer />
+            </motion.div>
+          )}
+
+          {activeSimulator === "vc" && (
+            <motion.div
+              key="vc"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.35 }}
+              className="flex flex-col flex-1"
+            >
+              <TabBar
+                simulator="vc"
+                active={activeVCTab}
+                onChange={(t) => setActiveVCTab(t as VCTabId)}
+                onBack={() => setActiveSimulator(null)}
+              />
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeVCTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {vcTabContent[activeVCTab]}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <Footer />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </React.Suspense>
 
       <Glossary open={glossaryOpen} onClose={() => setGlossaryOpen(false)} />
+      {shortcutsOpen && (
+        <KeyboardShortcutsModal onClose={() => setShortcutsOpen(false)} />
+      )}
     </div>
   );
 }
