@@ -108,6 +108,25 @@ export function GuidedTour() {
 
   const step = TOUR_STEPS[tourStep];
 
+  // Dispatch navigation event when step requires a different tab
+  useEffect(() => {
+    if (!tourActive || !step) return;
+    // Steps 5-7 (terms/negotiation/outcome) need Term Sheet tab
+    if (tourStep >= 5) {
+      window.dispatchEvent(
+        new CustomEvent("finfox:navigate", {
+          detail: { sim: "vc", tab: "termsheet" },
+        }),
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("finfox:navigate", {
+          detail: { sim: "vc", tab: "captable" },
+        }),
+      );
+    }
+  }, [tourActive, tourStep]);
+
   // Poll for the target element (handles lazy tabs / navigation)
   useEffect(() => {
     if (!tourActive || !step) return;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   BookOpen,
   Columns2,
@@ -7,9 +7,10 @@ import {
   User,
   GraduationCap,
   Trophy,
-  Bot,
-  EyeOff,
+  ChevronDown,
   Eye,
+  EyeOff,
+  Bot,
   RotateCcw,
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
@@ -30,8 +31,10 @@ const btnBase: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 500,
   cursor: "pointer",
-  transition: "all 0.18s cubic-bezier(0.4,0,0.2,1)",
-  border: "none",
+  border: "1px solid #374151",
+  background: "#1F2937",
+  color: "rgba(255,255,255,0.6)",
+  transition: "color 0.15s ease",
 };
 
 export function Header({
@@ -40,19 +43,29 @@ export function Header({
   userPicture,
   onLogout,
 }: HeaderProps) {
-  const [glossHover, setGlossHover] = useState(false);
-  const [compareHover, setCompareHover] = useState(false);
-  const [ghHover, setGhHover] = useState(false);
-  const [logoutHover, setLogoutHover] = useState(false);
+  const [finfoxMenuOpen, setFinfoxMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { disabled, toggleDisabled, resetOnboarding, resetTour, startTour } =
     useFinFox();
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    if (!finfoxMenuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setFinfoxMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [finfoxMenuOpen]);
 
   return (
     <header
       className="w-full px-6 py-4 flex items-center justify-between"
       style={{
         background: "#111827",
-        borderBottom: "1px solid #374151",
+        borderBottom: "1px solid #1F2937",
         position: "sticky",
         top: 0,
         zIndex: 100,
@@ -80,13 +93,16 @@ export function Header({
           >
             FundSim
           </span>
-          <span className="text-xs mt-0.5" style={{ color: "#6B7280" }}>
+          <span
+            className="text-xs mt-0.5"
+            style={{ color: "rgba(255,255,255,0.35)" }}
+          >
             PE · VC · IB Simulator
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* DECA */}
         <button
           onClick={() => {
@@ -94,9 +110,6 @@ export function Header({
           }}
           style={{
             ...btnBase,
-            background: "rgba(96,165,250,0.08)",
-            color: "#60A5FA",
-            border: "1px solid rgba(96,165,250,0.25)",
             fontSize: "12px",
             padding: "5px 10px",
           }}
@@ -112,9 +125,6 @@ export function Header({
           }}
           style={{
             ...btnBase,
-            background: "rgba(52,211,153,0.08)",
-            color: "#34D399",
-            border: "1px solid rgba(52,211,153,0.25)",
             fontSize: "12px",
             padding: "5px 10px",
           }}
@@ -123,76 +133,119 @@ export function Header({
           YIS
         </button>
 
-        {/* FinFox controls */}
-        <button
-          onClick={toggleDisabled}
-          title={disabled ? "Show FinFox" : "Hide FinFox"}
-          style={{
-            ...btnBase,
-            background: disabled
-              ? "rgba(107,114,128,0.1)"
-              : "rgba(251,191,36,0.1)",
-            color: disabled ? "#6B7280" : "#FBB724",
-            border: `1px solid ${disabled ? "rgba(107,114,128,0.3)" : "rgba(251,191,36,0.3)"}`,
-            fontSize: "12px",
-            padding: "5px 10px",
-          }}
-        >
-          {disabled ? <EyeOff size={13} /> : <Eye size={13} />}
-          {disabled ? "Show FinFox" : "Hide FinFox"}
-        </button>
-        <button
-          onClick={() => {
-            resetOnboarding();
-          }}
-          title="Replay intro"
-          style={{
-            ...btnBase,
-            background: "rgba(251,191,36,0.06)",
-            color: "#FBB724",
-            border: "1px solid rgba(251,191,36,0.2)",
-            fontSize: "12px",
-            padding: "5px 10px",
-          }}
-        >
-          <Bot size={13} />
-          Intro
-        </button>
-        <button
-          onClick={() => {
-            resetTour();
-            startTour();
-          }}
-          title="Replay VC tour"
-          style={{
-            ...btnBase,
-            background: "rgba(251,191,36,0.06)",
-            color: "#FBB724",
-            border: "1px solid rgba(251,191,36,0.2)",
-            fontSize: "12px",
-            padding: "5px 10px",
-          }}
-        >
-          <RotateCcw size={13} />
-          VC Tour
-        </button>
+        {/* FinFox dropdown */}
+        <div ref={menuRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setFinfoxMenuOpen((v) => !v)}
+            style={{
+              ...btnBase,
+              fontSize: "12px",
+              padding: "5px 10px",
+              color: disabled ? "rgba(255,255,255,0.35)" : "#10B981",
+              borderColor: disabled ? "#374151" : "#374151",
+            }}
+          >
+            {disabled ? <EyeOff size={13} /> : <Eye size={13} />}
+            FinFox
+            <ChevronDown
+              size={11}
+              style={{
+                opacity: 0.5,
+                transform: finfoxMenuOpen ? "rotate(180deg)" : "none",
+                transition: "transform 0.15s ease",
+              }}
+            />
+          </button>
+
+          {finfoxMenuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                right: 0,
+                background: "#111827",
+                border: "1px solid #1F2937",
+                borderRadius: 8,
+                minWidth: 160,
+                zIndex: 200,
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => {
+                  toggleDisabled();
+                  setFinfoxMenuOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "9px 14px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: 13,
+                  textAlign: "left",
+                }}
+              >
+                {disabled ? <Eye size={13} /> : <EyeOff size={13} />}
+                {disabled ? "Show FinFox" : "Hide FinFox"}
+              </button>
+              <div style={{ height: 1, background: "#1F2937" }} />
+              <button
+                onClick={() => {
+                  resetOnboarding();
+                  setFinfoxMenuOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "9px 14px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: 13,
+                  textAlign: "left",
+                }}
+              >
+                <Bot size={13} />
+                Replay intro
+              </button>
+              <div style={{ height: 1, background: "#1F2937" }} />
+              <button
+                onClick={() => {
+                  resetTour();
+                  startTour();
+                  setFinfoxMenuOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "9px 14px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: 13,
+                  textAlign: "left",
+                }}
+              >
+                <RotateCcw size={13} />
+                Replay VC tour
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Glossary */}
-        <button
-          onClick={onGlossaryOpen}
-          onMouseEnter={() => setGlossHover(true)}
-          onMouseLeave={() => setGlossHover(false)}
-          style={{
-            ...btnBase,
-            background: glossHover
-              ? "rgba(99,102,241,0.2)"
-              : "rgba(99,102,241,0.1)",
-            color: glossHover ? "#A5B4FC" : "#818CF8",
-            border: `1px solid ${glossHover ? "rgba(99,102,241,0.5)" : "rgba(99,102,241,0.3)"}`,
-            transform: glossHover ? "translateY(-1px)" : "none",
-            boxShadow: glossHover ? "0 4px 12px rgba(99,102,241,0.2)" : "none",
-          }}
-        >
+        <button onClick={onGlossaryOpen} style={btnBase}>
           <BookOpen size={14} />
           Glossary
         </button>
@@ -202,20 +255,7 @@ export function Header({
           onClick={() => {
             window.location.hash = "#compare";
           }}
-          onMouseEnter={() => setCompareHover(true)}
-          onMouseLeave={() => setCompareHover(false)}
-          style={{
-            ...btnBase,
-            background: compareHover
-              ? "rgba(99,102,241,0.2)"
-              : "rgba(99,102,241,0.1)",
-            color: compareHover ? "#A5B4FC" : "#818CF8",
-            border: `1px solid ${compareHover ? "rgba(99,102,241,0.5)" : "rgba(99,102,241,0.3)"}`,
-            transform: compareHover ? "translateY(-1px)" : "none",
-            boxShadow: compareHover
-              ? "0 4px 12px rgba(99,102,241,0.2)"
-              : "none",
-          }}
+          style={btnBase}
         >
           <Columns2 size={14} />
           Compare
@@ -226,16 +266,9 @@ export function Header({
           href="https://github.com"
           target="_blank"
           rel="noreferrer"
-          onMouseEnter={() => setGhHover(true)}
-          onMouseLeave={() => setGhHover(false)}
           style={{
             ...btnBase,
             textDecoration: "none",
-            background: ghHover ? "#374151" : "rgba(55,65,81,0.5)",
-            color: ghHover ? "#F9FAFB" : "#9CA3AF",
-            border: `1px solid ${ghHover ? "#4B5563" : "#374151"}`,
-            transform: ghHover ? "translateY(-1px)" : "none",
-            boxShadow: ghHover ? "0 4px 12px rgba(0,0,0,0.3)" : "none",
           }}
         >
           <ExternalLink size={14} />
@@ -246,14 +279,13 @@ export function Header({
         {userName && (
           <div
             className="flex items-center gap-2 pl-3"
-            style={{ borderLeft: "1px solid #374151" }}
+            style={{ borderLeft: "1px solid #1F2937" }}
           >
             <div
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
               style={{
-                background: "rgba(31,41,55,0.8)",
+                background: "#1F2937",
                 border: "1px solid #374151",
-                transition: "background 0.18s",
               }}
             >
               {userPicture ? (
@@ -266,17 +298,15 @@ export function Header({
               ) : (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
-                  }}
+                  style={{ background: "#374151" }}
                 >
-                  <User size={12} color="white" />
+                  <User size={12} color="rgba(255,255,255,0.5)" />
                 </div>
               )}
               <span
                 style={{
                   fontSize: "13px",
-                  color: "#D1D5DB",
+                  color: "rgba(255,255,255,0.6)",
                   maxWidth: "120px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -291,17 +321,14 @@ export function Header({
             <button
               onClick={onLogout}
               title="Sign out"
-              onMouseEnter={() => setLogoutHover(true)}
-              onMouseLeave={() => setLogoutHover(false)}
               style={{
-                background: logoutHover ? "rgba(239,68,68,0.1)" : "transparent",
-                border: `1px solid ${logoutHover ? "rgba(239,68,68,0.3)" : "transparent"}`,
+                background: "none",
+                border: "none",
                 borderRadius: "8px",
                 padding: "6px",
                 cursor: "pointer",
-                color: logoutHover ? "#EF4444" : "#6B7280",
-                transition: "all 0.18s ease",
-                transform: logoutHover ? "scale(1.1)" : "scale(1)",
+                color: "rgba(255,255,255,0.35)",
+                transition: "color 0.15s ease",
               }}
             >
               <LogOut size={15} />

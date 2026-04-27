@@ -126,6 +126,12 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     setTourStep(0);
     setTourActive(true);
     setChatOpen(false);
+    // Auto-navigate to VC simulator cap table
+    window.dispatchEvent(
+      new CustomEvent("finfox:navigate", {
+        detail: { sim: "vc", tab: "captable" },
+      }),
+    );
   }, []);
 
   const nextTourStep = useCallback(() => {

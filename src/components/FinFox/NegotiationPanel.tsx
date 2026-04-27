@@ -28,7 +28,7 @@ interface Props {
 function renderBoldText(text: string): React.ReactNode[] {
   return text.split(/(\*\*.*?\*\*)/).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={i} style={{ color: "#F9FAFB" }}>
+      <strong key={i} style={{ color: "#F9FAFB", fontWeight: 600 }}>
         {part.slice(2, -2)}
       </strong>
     ) : (
@@ -157,50 +157,48 @@ export function NegotiationPanel({ config }: Props) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "rgba(10,15,28,0.85)",
+          background: "rgba(10,15,28,0.88)",
           padding: 24,
         }}
       >
         <div
           style={{
             background: "#111827",
-            border: "1px solid rgba(245,158,11,0.3)",
-            borderRadius: 20,
+            border: "1px solid #1F2937",
+            borderRadius: 14,
             width: "100%",
             maxWidth: 560,
             maxHeight: "90vh",
             display: "flex",
             flexDirection: "column",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
             overflow: "hidden",
           }}
         >
           {/* Header */}
           <div
             style={{
-              padding: "14px 20px",
+              padding: "16px 20px",
               borderBottom: "1px solid #1F2937",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              background: "#0D1220",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <FoxSvg expression={loading ? "thinking" : "neutral"} size={36} />
+              <FoxSvg expression={loading ? "thinking" : "neutral"} size={34} />
               <div>
                 <div
-                  style={{ color: "#F9FAFB", fontWeight: 700, fontSize: 13 }}
+                  style={{ color: "#F9FAFB", fontWeight: 500, fontSize: 13 }}
                 >
                   {config.character.name}
                 </div>
-                <div style={{ color: "#6B7280", fontSize: 11 }}>
+                <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>
                   {config.character.title}
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ color: "#4B5563", fontSize: 11 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>
                 {exchangeCount}/{MAX_EXCHANGES} exchanges
               </span>
               <button
@@ -209,11 +207,13 @@ export function NegotiationPanel({ config }: Props) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#6B7280",
+                  color: "rgba(255,255,255,0.35)",
                   padding: 4,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                <X size={16} />
+                <X size={15} />
               </button>
             </div>
           </div>
@@ -221,18 +221,24 @@ export function NegotiationPanel({ config }: Props) {
           {/* Scenario context bar */}
           <div
             style={{
-              padding: "8px 20px",
-              background: "rgba(245,158,11,0.05)",
-              borderBottom: "1px solid rgba(245,158,11,0.15)",
+              padding: "10px 20px",
+              borderBottom: "1px solid #1F2937",
               display: "flex",
               flexWrap: "wrap",
-              gap: "4px 14px",
+              gap: "4px 16px",
             }}
           >
             {Object.entries(config.scenario).map(([k, v]) => (
-              <span key={k} style={{ fontSize: 11, color: "#9CA3AF" }}>
-                <span style={{ color: "#6B7280" }}>{k}: </span>
-                <span style={{ color: "#F59E0B", fontWeight: 600 }}>{v}</span>
+              <span
+                key={k}
+                style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}
+              >
+                <span>{k}: </span>
+                <span
+                  style={{ color: "rgba(255,255,255,0.7)", fontWeight: 500 }}
+                >
+                  {v}
+                </span>
               </span>
             ))}
           </div>
@@ -260,7 +266,7 @@ export function NegotiationPanel({ config }: Props) {
               >
                 {msg.role === "assistant" && (
                   <div style={{ flexShrink: 0, marginTop: 4 }}>
-                    <FoxSvg expression="neutral" size={28} />
+                    <FoxSvg expression="neutral" size={26} />
                   </div>
                 )}
                 <div
@@ -269,15 +275,13 @@ export function NegotiationPanel({ config }: Props) {
                     padding: "10px 14px",
                     borderRadius:
                       msg.role === "user"
-                        ? "14px 14px 2px 14px"
-                        : "14px 14px 14px 2px",
-                    background:
-                      msg.role === "user" ? "rgba(245,158,11,0.12)" : "#1F2937",
-                    border:
+                        ? "12px 12px 2px 12px"
+                        : "12px 12px 12px 2px",
+                    background: msg.role === "user" ? "#1a2332" : "#111827",
+                    color:
                       msg.role === "user"
-                        ? "1px solid rgba(245,158,11,0.3)"
-                        : "1px solid #374151",
-                    color: "#D1D5DB",
+                        ? "#F9FAFB"
+                        : "rgba(255,255,255,0.75)",
                     fontSize: 13,
                     lineHeight: 1.65,
                   }}
@@ -292,30 +296,36 @@ export function NegotiationPanel({ config }: Props) {
                 style={{ display: "flex", gap: 8, alignItems: "flex-start" }}
               >
                 <div style={{ flexShrink: 0, marginTop: 4 }}>
-                  <FoxSvg expression="thinking" size={28} />
+                  <FoxSvg expression="thinking" size={26} />
                 </div>
                 <div
                   style={{
                     padding: "10px 14px",
-                    borderRadius: "14px 14px 14px 2px",
-                    background: "#1F2937",
-                    border: "1px solid #374151",
+                    borderRadius: "12px 12px 12px 2px",
+                    background: "#111827",
                     display: "flex",
-                    gap: 4,
+                    gap: 5,
+                    alignItems: "center",
                   }}
                 >
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
                       style={{
-                        width: 6,
-                        height: 6,
+                        width: 5,
+                        height: 5,
                         borderRadius: "50%",
-                        background: "#F59E0B",
-                        animation: `finfox-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                        background: "rgba(255,255,255,0.35)",
+                        animation: `finfox-dot-fade 1.2s ease-in-out ${i * 0.2}s infinite`,
                       }}
                     />
                   ))}
+                  <style>{`
+                    @keyframes finfox-dot-fade {
+                      0%, 80%, 100% { opacity: 0.25; }
+                      40% { opacity: 0.8; }
+                    }
+                  `}</style>
                 </div>
               </div>
             )}
@@ -324,40 +334,43 @@ export function NegotiationPanel({ config }: Props) {
               <div
                 style={{
                   padding: "14px 16px",
-                  borderRadius: 12,
-                  background: "rgba(99,102,241,0.08)",
-                  border: "1px solid rgba(99,102,241,0.25)",
-                  color: "#818CF8",
+                  borderRadius: 8,
+                  border: "1px solid #374151",
+                  color: "rgba(255,255,255,0.4)",
                   fontSize: 13,
                 }}
               >
-                FinFox is stepping out of character to review your
-                performance...
+                FinFox is reviewing your performance...
               </div>
             )}
 
             {breakdown && (
               <div
                 style={{
-                  padding: "16px 18px",
-                  borderRadius: 14,
-                  background: "rgba(99,102,241,0.06)",
-                  border: "1px solid rgba(99,102,241,0.3)",
+                  padding: "18px 20px",
+                  borderRadius: 10,
+                  border: "1px solid #374151",
+                  marginTop: 4,
                 }}
               >
                 <div
                   style={{
-                    color: "#818CF8",
-                    fontWeight: 700,
-                    fontSize: 12,
-                    marginBottom: 10,
-                    letterSpacing: "0.06em",
+                    color: "rgba(255,255,255,0.35)",
+                    fontWeight: 500,
+                    fontSize: 11,
+                    marginBottom: 12,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
                   }}
                 >
-                  FINFOX — OUT OF CHARACTER
+                  Debrief
                 </div>
                 <div
-                  style={{ color: "#D1D5DB", fontSize: 13, lineHeight: 1.7 }}
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 13,
+                    lineHeight: 1.7,
+                  }}
                 >
                   {renderBoldText(breakdown)}
                 </div>
@@ -375,7 +388,6 @@ export function NegotiationPanel({ config }: Props) {
                 borderTop: "1px solid #1F2937",
                 display: "flex",
                 gap: 8,
-                background: "#0D1220",
               }}
             >
               <input
@@ -405,13 +417,16 @@ export function NegotiationPanel({ config }: Props) {
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || loading}
                 style={{
-                  background: input.trim() && !loading ? "#F59E0B" : "#374151",
-                  border: "none",
+                  background: input.trim() && !loading ? "#10B981" : "#1F2937",
+                  border: "1px solid #374151",
                   borderRadius: 8,
                   padding: "8px 12px",
                   cursor: input.trim() && !loading ? "pointer" : "default",
-                  color: input.trim() && !loading ? "#111827" : "#6B7280",
-                  transition: "all 0.18s ease",
+                  color:
+                    input.trim() && !loading ? "#fff" : "rgba(255,255,255,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <Send size={15} />

@@ -173,6 +173,21 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  // FinFox guided tour navigation — responds to finfox:navigate custom events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { sim, tab } = (e as CustomEvent<{ sim: string; tab?: string }>)
+        .detail;
+      if (sim === "vc" || sim === "pe" || sim === "ib") {
+        setActiveSimulator(sim as SimulatorId);
+        if (sim === "vc" && tab) setActiveVCTab(tab as VCTabId);
+        if (sim === "pe" && tab) setActivePETab(tab as PETabId);
+      }
+    };
+    window.addEventListener("finfox:navigate", handler);
+    return () => window.removeEventListener("finfox:navigate", handler);
+  }, []);
+
   const peTabOrder: PETabId[] = [
     "lifecycle",
     "jcurve",

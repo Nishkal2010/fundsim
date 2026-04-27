@@ -180,9 +180,8 @@ export function ChatPanel() {
             width: 360,
             height: 480,
             background: "#111827",
-            border: "1px solid rgba(245,158,11,0.3)",
-            borderRadius: 16,
-            boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+            border: "1px solid #1F2937",
+            borderRadius: 12,
             display: "flex",
             flexDirection: "column",
             zIndex: 300,
@@ -192,28 +191,26 @@ export function ChatPanel() {
           {/* Header */}
           <div
             style={{
-              padding: "12px 16px",
+              padding: "14px 16px",
               borderBottom: "1px solid #1F2937",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              background: "#0D1220",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div
                 style={{
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   borderRadius: "50%",
-                  background: "#F59E0B",
-                  boxShadow: "0 0 6px #F59E0B",
+                  background: "#10B981",
                 }}
               />
-              <span style={{ color: "#F9FAFB", fontWeight: 700, fontSize: 13 }}>
+              <span style={{ color: "#F9FAFB", fontWeight: 500, fontSize: 13 }}>
                 FinFox
               </span>
-              <span style={{ color: "#4B5563", fontSize: 11 }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>
                 {getRemainingQueries()} questions left today
               </span>
             </div>
@@ -223,11 +220,13 @@ export function ChatPanel() {
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#6B7280",
+                color: "rgba(255,255,255,0.4)",
                 padding: 4,
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
 
@@ -236,7 +235,7 @@ export function ChatPanel() {
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "12px 16px",
+              padding: "16px",
               display: "flex",
               flexDirection: "column",
               gap: 10,
@@ -245,7 +244,7 @@ export function ChatPanel() {
             {messages.length === 0 && (
               <div
                 style={{
-                  color: "#6B7280",
+                  color: "rgba(255,255,255,0.3)",
                   fontSize: 12,
                   textAlign: "center",
                   marginTop: 24,
@@ -267,18 +266,16 @@ export function ChatPanel() {
                 <div
                   style={{
                     maxWidth: "82%",
-                    padding: "8px 12px",
+                    padding: "9px 13px",
                     borderRadius:
                       msg.role === "user"
                         ? "12px 12px 2px 12px"
                         : "12px 12px 12px 2px",
-                    background:
-                      msg.role === "user" ? "rgba(245,158,11,0.15)" : "#1F2937",
-                    border:
+                    background: msg.role === "user" ? "#1a2332" : "#111827",
+                    color:
                       msg.role === "user"
-                        ? "1px solid rgba(245,158,11,0.3)"
-                        : "1px solid #374151",
-                    color: "#D1D5DB",
+                        ? "#F9FAFB"
+                        : "rgba(255,255,255,0.75)",
                     fontSize: 13,
                     lineHeight: 1.6,
                   }}
@@ -292,12 +289,11 @@ export function ChatPanel() {
               <div style={{ display: "flex", justifyContent: "flex-start" }}>
                 <div
                   style={{
-                    padding: "8px 14px",
+                    padding: "10px 14px",
                     borderRadius: "12px 12px 12px 2px",
-                    background: "#1F2937",
-                    border: "1px solid #374151",
+                    background: "#111827",
                     display: "flex",
-                    gap: 4,
+                    gap: 5,
                     alignItems: "center",
                   }}
                 >
@@ -305,18 +301,18 @@ export function ChatPanel() {
                     <div
                       key={i}
                       style={{
-                        width: 6,
-                        height: 6,
+                        width: 5,
+                        height: 5,
                         borderRadius: "50%",
-                        background: "#F59E0B",
-                        animation: `finfox-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+                        background: "rgba(255,255,255,0.35)",
+                        animation: `finfox-dot-fade 1.2s ease-in-out ${i * 0.2}s infinite`,
                       }}
                     />
                   ))}
                   <style>{`
-                    @keyframes finfox-dot-bounce {
-                      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-                      40% { transform: scale(1.2); opacity: 1; }
+                    @keyframes finfox-dot-fade {
+                      0%, 80%, 100% { opacity: 0.25; }
+                      40% { opacity: 0.8; }
                     }
                   `}</style>
                 </div>
@@ -326,11 +322,11 @@ export function ChatPanel() {
             {rateLimited && (
               <div
                 style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: "rgba(239,68,68,0.1)",
-                  border: "1px solid rgba(239,68,68,0.3)",
-                  color: "#FCA5A5",
+                  padding: "10px 13px",
+                  borderRadius: 8,
+                  background: "transparent",
+                  border: "1px solid #374151",
+                  color: "rgba(255,255,255,0.5)",
                   fontSize: 12,
                 }}
               >
@@ -345,7 +341,7 @@ export function ChatPanel() {
           {messages.length === 0 && (
             <div
               style={{
-                padding: "0 12px 8px",
+                padding: "0 16px 10px",
                 display: "flex",
                 gap: 6,
                 flexWrap: "wrap",
@@ -356,12 +352,12 @@ export function ChatPanel() {
                   key={chip}
                   onClick={() => sendMessage(chip)}
                   style={{
-                    background: "rgba(245,158,11,0.08)",
-                    border: "1px solid rgba(245,158,11,0.25)",
+                    background: "transparent",
+                    border: "1px solid #2D3748",
                     borderRadius: 20,
                     padding: "4px 10px",
                     fontSize: 11,
-                    color: "#F59E0B",
+                    color: "rgba(255,255,255,0.5)",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                   }}
@@ -375,11 +371,10 @@ export function ChatPanel() {
           {/* Input */}
           <div
             style={{
-              padding: "10px 12px",
+              padding: "12px 16px",
               borderTop: "1px solid #1F2937",
               display: "flex",
               gap: 8,
-              background: "#0D1220",
             }}
           >
             <input
@@ -409,13 +404,16 @@ export function ChatPanel() {
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading || rateLimited}
               style={{
-                background: input.trim() && !loading ? "#F59E0B" : "#374151",
-                border: "none",
+                background: input.trim() && !loading ? "#10B981" : "#1F2937",
+                border: "1px solid #374151",
                 borderRadius: 8,
                 padding: "8px 12px",
                 cursor: input.trim() && !loading ? "pointer" : "default",
-                color: input.trim() && !loading ? "#111827" : "#6B7280",
-                transition: "all 0.18s ease",
+                color:
+                  input.trim() && !loading ? "#fff" : "rgba(255,255,255,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Send size={15} />

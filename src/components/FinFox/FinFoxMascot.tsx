@@ -14,57 +14,57 @@ interface FoxSvgProps {
   size?: number;
 }
 
-// Green flat-design fox — Mint Mobile inspired
+// Green fox — clean geometric flat design (Mint Mobile inspired)
 export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 64 64"
+      viewBox="0 0 80 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Tail */}
-      <path d="M44 46 Q58 38 54 54 Q50 62 38 56 Z" fill="#059669" />
-      <path d="M46 49 Q56 43 53 54 Q50 59 40 55 Z" fill="#6EE7B7" />
+      <path d="M52 56 Q70 44 65 62 Q61 72 46 66 Z" fill="#059669" />
+      <path d="M54 59 Q66 50 63 62 Q60 68 48 64 Z" fill="#A7F3D0" />
 
       {/* Body */}
-      <ellipse cx="32" cy="44" rx="15" ry="11" fill="#10B981" />
+      <ellipse cx="40" cy="56" rx="18" ry="13" fill="#10B981" />
 
-      {/* Left ear — sharp pointed */}
-      <polygon points="16,22 11,4 24,17" fill="#10B981" />
-      <polygon points="17,21 13,8 23,17" fill="#6EE7B7" />
+      {/* Left ear */}
+      <polygon points="20,30 14,6 30,24" fill="#10B981" />
+      <polygon points="21,29 16,11 28,24" fill="#6EE7B7" />
 
       {/* Right ear */}
-      <polygon points="48,22 53,4 40,17" fill="#10B981" />
-      <polygon points="47,21 51,8 41,17" fill="#6EE7B7" />
+      <polygon points="60,30 66,6 50,24" fill="#10B981" />
+      <polygon points="59,29 64,11 52,24" fill="#6EE7B7" />
 
-      {/* Head */}
-      <circle cx="32" cy="28" r="16" fill="#10B981" />
+      {/* Head — wide rounded rect */}
+      <rect x="18" y="18" width="44" height="40" rx="22" fill="#10B981" />
 
-      {/* Chest / inner fur */}
-      <ellipse cx="32" cy="44" rx="8" ry="6" fill="#ECFDF5" />
+      {/* White chest patch */}
+      <ellipse cx="40" cy="56" rx="10" ry="7" fill="#ECFDF5" />
 
       {/* Muzzle */}
-      <ellipse cx="32" cy="33" rx="7" ry="4.5" fill="#ECFDF5" />
+      <rect x="27" y="40" width="26" height="14" rx="10" fill="#ECFDF5" />
 
       {/* Nose */}
-      <ellipse cx="32" cy="31" rx="2" ry="1.5" fill="#065F46" />
+      <rect x="36" y="41" width="8" height="5" rx="2.5" fill="#065F46" />
 
       {/* Eyes */}
       {expression === "thinking" ? (
         <>
           <path
-            d="M24 25 Q26 22 28 25"
+            d="M27 34 Q31 31 35 34"
             stroke="#065F46"
-            strokeWidth="2"
+            strokeWidth="2.5"
             fill="none"
             strokeLinecap="round"
           />
           <path
-            d="M36 25 Q38 22 40 25"
+            d="M45 34 Q49 31 53 34"
             stroke="#065F46"
-            strokeWidth="2"
+            strokeWidth="2.5"
             fill="none"
             strokeLinecap="round"
           />
@@ -72,46 +72,43 @@ export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
       ) : expression === "approving" ? (
         <>
           <path
-            d="M23 26 Q26 21 29 26"
+            d="M26 35 Q31 29 36 35"
             stroke="#065F46"
-            strokeWidth="2.2"
+            strokeWidth="2.5"
             fill="none"
             strokeLinecap="round"
           />
           <path
-            d="M35 26 Q38 21 41 26"
+            d="M44 35 Q49 29 54 35"
             stroke="#065F46"
-            strokeWidth="2.2"
+            strokeWidth="2.5"
             fill="none"
             strokeLinecap="round"
           />
-          {/* Rosy cheeks */}
-          <circle cx="22" cy="30" r="3" fill="rgba(16,185,129,0.3)" />
-          <circle cx="42" cy="30" r="3" fill="rgba(16,185,129,0.3)" />
         </>
       ) : (
         <>
-          <circle cx="26" cy="25" r="4" fill="#065F46" />
-          <circle cx="38" cy="25" r="4" fill="#065F46" />
-          <circle cx="27.5" cy="23.5" r="1.4" fill="white" />
-          <circle cx="39.5" cy="23.5" r="1.4" fill="white" />
+          <circle cx="31" cy="33" r="5" fill="#065F46" />
+          <circle cx="49" cy="33" r="5" fill="#065F46" />
+          <circle cx="33" cy="31" r="1.8" fill="white" />
+          <circle cx="51" cy="31" r="1.8" fill="white" />
         </>
       )}
 
       {/* Mouth */}
       {expression === "approving" ? (
         <path
-          d="M28 35 Q32 38.5 36 35"
+          d="M34 48 Q40 53 46 48"
           stroke="#065F46"
-          strokeWidth="1.5"
+          strokeWidth="2"
           fill="none"
           strokeLinecap="round"
         />
       ) : (
         <path
-          d="M29 35 Q32 37 35 35"
+          d="M35 48 Q40 51 45 48"
           stroke="#6EE7B7"
-          strokeWidth="1.2"
+          strokeWidth="1.5"
           fill="none"
           strokeLinecap="round"
         />
