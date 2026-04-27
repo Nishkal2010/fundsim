@@ -175,8 +175,8 @@ export function GuidedTour() {
     <>
       <style>{`
         @keyframes finfox-tour-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5), 0 0 0 4px rgba(16,185,129,0.15); }
-          50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.0), 0 0 0 10px rgba(16,185,129,0.0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.12); }
+          50% { box-shadow: 0 0 0 6px rgba(255,255,255,0.0); }
         }
         @keyframes finfox-arrow-bounce {
           0%, 100% { transform: translateY(0); }
@@ -249,7 +249,7 @@ export function GuidedTour() {
               height: targetRect.height + 8,
               cursor: "pointer",
               borderRadius: 10,
-              border: "2px solid #10B981",
+              border: "1.5px solid rgba(255,255,255,0.2)",
               animation: "finfox-tour-pulse 2s ease-in-out infinite",
             }}
           />
@@ -259,15 +259,22 @@ export function GuidedTour() {
             style={{
               position: "fixed",
               zIndex: 395,
-              left: targetRect.left + targetRect.width / 2 - 12,
-              top: targetRect.top - 36,
-              fontSize: 20,
+              left: targetRect.left + targetRect.width / 2 - 10,
+              top: targetRect.top - 32,
               animation: "finfox-arrow-bounce 1s ease-in-out infinite",
               pointerEvents: "none",
               display: targetRect.top > 60 ? "block" : "none",
             }}
           >
-            👆
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M10 3v11M5 10l5 5 5-5"
+                stroke="rgba(255,255,255,0.5)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </>
       ) : (

@@ -92,13 +92,13 @@ export function OnboardingModal() {
             <button
               onClick={() => setStep("choice")}
               style={{
-                background: "linear-gradient(135deg, #10B981, #059669)",
+                background: "#10B981",
                 color: "white",
                 border: "none",
-                borderRadius: 50,
-                padding: "14px 40px",
-                fontSize: 15,
-                fontWeight: 700,
+                borderRadius: 8,
+                padding: "13px 40px",
+                fontSize: 14,
+                fontWeight: 500,
                 cursor: "pointer",
                 letterSpacing: "0.01em",
               }}
@@ -165,13 +165,13 @@ export function OnboardingModal() {
             <button
               onClick={() => setStep("simPicker")}
               style={{
-                background: "linear-gradient(135deg, #10B981, #059669)",
+                background: "#10B981",
                 color: "white",
                 border: "none",
-                borderRadius: 50,
-                padding: "14px 36px",
-                fontSize: 15,
-                fontWeight: 700,
+                borderRadius: 8,
+                padding: "13px 36px",
+                fontSize: 14,
+                fontWeight: 500,
                 cursor: "pointer",
                 display: "block",
                 width: "100%",
