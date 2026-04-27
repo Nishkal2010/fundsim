@@ -16,6 +16,7 @@ import {
   Star,
   Globe,
   ClipboardList,
+  Swords,
 } from "lucide-react";
 
 export type PETabId =
@@ -27,7 +28,8 @@ export type PETabId =
   | "lbo"
   | "gplp"
   | "debt"
-  | "sector";
+  | "sector"
+  | "roleplay";
 
 export type VCTabId =
   | "captable"
@@ -36,7 +38,8 @@ export type VCTabId =
   | "termsheet"
   | "qualitative"
   | "marketsizing"
-  | "dealmemo";
+  | "dealmemo"
+  | "roleplay";
 
 export type TabId = PETabId | VCTabId;
 
@@ -62,6 +65,7 @@ const peTabs: {
     icon: BarChart3,
     group: "advanced",
   },
+  { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
 ];
 
 const vcTabs: {
@@ -82,6 +86,7 @@ const vcTabs: {
   { id: "qualitative", label: "Qualitative Score", icon: Star, group: "edge" },
   { id: "marketsizing", label: "Market Sizing", icon: Globe, group: "edge" },
   { id: "dealmemo", label: "Deal Memo", icon: ClipboardList, group: "edge" },
+  { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
 ];
 
 const peColor = "#818CF8";
@@ -113,11 +118,13 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
           { key: "fund", label: "Fund" },
           { key: "models", label: "Models" },
           { key: "advanced", label: "Advanced" },
+          { key: "roleplay", label: "FinFox" },
         ]
       : [
           { key: "core", label: "Core" },
           { key: "fund", label: "Fund" },
           { key: "edge", label: "Edge" },
+          { key: "roleplay", label: "FinFox" },
         ];
 
   const renderTab = (tab: (typeof peTabs)[0] | (typeof vcTabs)[0]) => {

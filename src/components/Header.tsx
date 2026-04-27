@@ -7,7 +7,12 @@ import {
   User,
   GraduationCap,
   Trophy,
+  Bot,
+  EyeOff,
+  Eye,
+  RotateCcw,
 } from "lucide-react";
+import { useFinFox } from "../hooks/useFinFox";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
@@ -39,6 +44,8 @@ export function Header({
   const [compareHover, setCompareHover] = useState(false);
   const [ghHover, setGhHover] = useState(false);
   const [logoutHover, setLogoutHover] = useState(false);
+  const { disabled, toggleDisabled, resetOnboarding, resetTour, startTour } =
+    useFinFox();
 
   return (
     <header
@@ -114,6 +121,60 @@ export function Header({
         >
           <Trophy size={13} />
           YIS
+        </button>
+
+        {/* FinFox controls */}
+        <button
+          onClick={toggleDisabled}
+          title={disabled ? "Show FinFox" : "Hide FinFox"}
+          style={{
+            ...btnBase,
+            background: disabled
+              ? "rgba(107,114,128,0.1)"
+              : "rgba(251,191,36,0.1)",
+            color: disabled ? "#6B7280" : "#FBB724",
+            border: `1px solid ${disabled ? "rgba(107,114,128,0.3)" : "rgba(251,191,36,0.3)"}`,
+            fontSize: "12px",
+            padding: "5px 10px",
+          }}
+        >
+          {disabled ? <EyeOff size={13} /> : <Eye size={13} />}
+          {disabled ? "Show FinFox" : "Hide FinFox"}
+        </button>
+        <button
+          onClick={() => {
+            resetOnboarding();
+          }}
+          title="Replay intro"
+          style={{
+            ...btnBase,
+            background: "rgba(251,191,36,0.06)",
+            color: "#FBB724",
+            border: "1px solid rgba(251,191,36,0.2)",
+            fontSize: "12px",
+            padding: "5px 10px",
+          }}
+        >
+          <Bot size={13} />
+          Intro
+        </button>
+        <button
+          onClick={() => {
+            resetTour();
+            startTour();
+          }}
+          title="Replay VC tour"
+          style={{
+            ...btnBase,
+            background: "rgba(251,191,36,0.06)",
+            color: "#FBB724",
+            border: "1px solid rgba(251,191,36,0.2)",
+            fontSize: "12px",
+            padding: "5px 10px",
+          }}
+        >
+          <RotateCcw size={13} />
+          VC Tour
         </button>
 
         {/* Glossary */}

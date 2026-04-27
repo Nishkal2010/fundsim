@@ -42,10 +42,14 @@ export function VCTab() {
   const snapshots = result.rounds;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+    <div
+      className="max-w-7xl mx-auto px-6 py-8 space-y-6"
+      data-finfox="sim-overview"
+    >
       {/* Educational callout */}
       <div
         className="flex gap-3 p-4 rounded-xl"
+        data-finfox="pitch-panel"
         style={{
           background: "rgba(167,139,250,0.08)",
           border: "1px solid rgba(167,139,250,0.2)",
@@ -88,6 +92,7 @@ export function VCTab() {
       {/* Founding Parameters */}
       <div
         className="rounded-xl p-5"
+        data-finfox="valuation"
         style={{ background: "#111827", border: "1px solid #374151" }}
       >
         <h3 className="text-sm font-semibold text-[#F9FAFB] mb-4">
@@ -118,6 +123,7 @@ export function VCTab() {
       {/* Round Configuration */}
       <div
         className="rounded-xl p-5"
+        data-finfox="check-size"
         style={{ background: "#111827", border: "1px solid #374151" }}
       >
         <h3 className="text-sm font-semibold text-[#F9FAFB] mb-4">
@@ -245,7 +251,10 @@ export function VCTab() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        data-finfox="cap-table"
+      >
         <MetricCard
           label="Founder Ownership"
           value={formatPercent(result.currentFounderOwnershipPct)}

@@ -38,6 +38,7 @@ export function ComparePanel({
     gplp: null,
     debt: null,
     sector: null,
+    roleplay: null,
   };
 
   return (

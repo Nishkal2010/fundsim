@@ -11,8 +11,14 @@ import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import { SimulatorSelector } from "./components/SimulatorSelector";
 import type { SimulatorId } from "./components/SimulatorSelector";
+import { Hero } from "./components/Hero";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
+import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
+import { ChatPanel } from "./components/FinFox/ChatPanel";
+import { OnboardingModal } from "./components/FinFox/OnboardingModal";
+import { GuidedTour } from "./components/FinFox/GuidedTour";
 const FundLifecycleTab = React.lazy(() =>
   import("./components/FundLifecycle/FundLifecycleTab").then((m) => ({
     default: m.FundLifecycleTab,
@@ -94,6 +100,21 @@ const IBSimulator = React.lazy(() =>
     default: m.IBSimulator,
   })),
 );
+const VCRoleplayTab = React.lazy(() =>
+  import("./components/VC/VCRoleplayTab").then((m) => ({
+    default: m.VCRoleplayTab,
+  })),
+);
+const PERoleplayTab = React.lazy(() =>
+  import("./components/PE/PERoleplayTab").then((m) => ({
+    default: m.PERoleplayTab,
+  })),
+);
+const IBRoleplayTab = React.lazy(() =>
+  import("./components/IB/IBRoleplayTab").then((m) => ({
+    default: m.IBRoleplayTab,
+  })),
+);
 const DECAFinanceSuite = React.lazy(() =>
   import("./components/DECA/DECAFinanceSuite").then((m) => ({
     default: m.DECAFinanceSuite,
@@ -141,6 +162,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
   );
   const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
   const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
+  const [ibView, setIbView] = useState<"simulator" | "roleplay">("simulator");
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
@@ -260,6 +282,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
     gplp: <GPLPEconomicsTab />,
     debt: <DebtStructureTab />,
     sector: <SectorBenchmarksTab />,
+    roleplay: <PERoleplayTab />,
   };
 
   const vcTabContent: Record<VCTabId, React.ReactNode> = {
@@ -270,6 +293,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
     qualitative: <QualitativeTab />,
     marketsizing: <MarketSizingTab />,
     dealmemo: <DealMemoTab />,
+    roleplay: <VCRoleplayTab />,
   };
 
   return (
@@ -295,7 +319,16 @@ function AppContent({ user, onLogout }: AppContentProps) {
               transition={{ duration: 0.35 }}
               className="flex-1"
             >
-              <SimulatorSelector onSelect={setActiveSimulator} />
+              <Hero
+                onStart={() => {
+                  document
+                    .getElementById("simulator-selector")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+              />
+              <div id="simulator-selector">
+                <SimulatorSelector onSelect={setActiveSimulator} />
+              </div>
             </motion.div>
           )}
 
@@ -342,8 +375,32 @@ function AppContent({ user, onLogout }: AppContentProps) {
                 <span className="text-xs" style={{ color: "#6B7280" }}>
                   Investment Banking · M&A Deal Simulator
                 </span>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                  {(["simulator", "roleplay"] as const).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setIbView(v)}
+                      style={{
+                        background:
+                          ibView === v
+                            ? "rgba(245,158,11,0.15)"
+                            : "transparent",
+                        border: `1px solid ${ibView === v ? "rgba(245,158,11,0.4)" : "#374151"}`,
+                        borderRadius: 6,
+                        padding: "3px 10px",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: ibView === v ? "#F59E0B" : "#6B7280",
+                        cursor: "pointer",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {v === "roleplay" ? "FinFox Role-Play" : "Simulator"}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <IBSimulator />
+              {ibView === "simulator" ? <IBSimulator /> : <IBRoleplayTab />}
             </motion.div>
           )}
 
@@ -418,6 +475,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
       {shortcutsOpen && (
         <KeyboardShortcutsModal onClose={() => setShortcutsOpen(false)} />
       )}
+
+      {/* FinFox AI Tutor */}
+      <OnboardingModal />
+      <GuidedTour />
+      <ChatPanel />
+      <FinFoxMascot />
     </div>
   );
 }
@@ -510,10 +573,12 @@ function App() {
   }
 
   return (
-    <FundModelContext.Provider value={model}>
-      <AppContent user={user} onLogout={handleLogout} />
-      <Analytics />
-    </FundModelContext.Provider>
+    <FinFoxProvider>
+      <FundModelContext.Provider value={model}>
+        <AppContent user={user} onLogout={handleLogout} />
+        <Analytics />
+      </FundModelContext.Provider>
+    </FinFoxProvider>
   );
 }
 

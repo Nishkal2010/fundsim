@@ -246,6 +246,7 @@ export function TermSheetTab() {
         {/* Left: Deal Parameters */}
         <div>
           <div
+            data-finfox="terms"
             style={{
               background: C.card,
               border: `1px solid ${C.border}`,
@@ -1368,7 +1369,7 @@ export function TermSheetTab() {
         </div>
 
         {/* Right: Term Sheet Glossary + Negotiation Tips */}
-        <div>
+        <div data-finfox="negotiation">
           <div
             style={{
               background: C.card,
@@ -1472,6 +1473,7 @@ export function TermSheetTab() {
 
           {/* Founder vs Investor Score */}
           <div
+            data-finfox="outcome"
             style={{
               background: C.card,
               border: `1px solid ${C.border}`,
