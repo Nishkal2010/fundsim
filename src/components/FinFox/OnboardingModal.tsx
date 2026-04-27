@@ -17,12 +17,15 @@ export function OnboardingModal() {
   if (!showOnboarding) return null;
 
   return (
+    // Full-screen blur overlay — no box, options float on screen
     <div
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 500,
-        background: "rgba(10,15,28,0.88)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        background: "rgba(5,10,20,0.65)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -33,155 +36,167 @@ export function OnboardingModal() {
         {step === "mission" && (
           <motion.div
             key="mission"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              background: "#111827",
-              border: "1px solid rgba(245,158,11,0.35)",
-              borderRadius: 20,
-              padding: 40,
-              maxWidth: 460,
+              maxWidth: 440,
               width: "100%",
               textAlign: "center",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
             }}
           >
-            <div style={{ marginBottom: 20 }}>
-              <FoxSvg expression="approving" size={80} />
+            {/* Fox — no card behind it */}
+            <div style={{ marginBottom: 24 }}>
+              <FoxSvg expression="approving" size={88} />
             </div>
-            <h2
+
+            {/* Mission statement */}
+            <h1
               style={{
                 color: "#F9FAFB",
-                fontSize: 22,
-                fontWeight: 700,
-                marginBottom: 12,
+                fontSize: 28,
+                fontWeight: 800,
+                marginBottom: 16,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
               }}
             >
-              Meet FinFox
-            </h2>
+              Learn finance by doing, not memorizing.
+            </h1>
             <p
               style={{
-                color: "#9CA3AF",
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 8,
+                color: "rgba(255,255,255,0.55)",
+                fontSize: 15,
+                lineHeight: 1.75,
+                marginBottom: 10,
               }}
             >
-              Finance is full of jargon — IRR, LBO, waterfall, carry — and most
-              people learn it the hard way.
+              FundSim puts you in the seat of a VC, PE fund manager, or
+              investment banker — and lets you run real deals with real math.
             </p>
             <p
               style={{
-                color: "#9CA3AF",
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 8,
+                color: "rgba(255,255,255,0.7)",
+                fontSize: 15,
+                lineHeight: 1.75,
+                marginBottom: 36,
               }}
             >
-              FinFox is your AI finance tutor. Ask anything, hover over terms
-              for quick definitions, and role-play real deal negotiations.
+              I'm <strong style={{ color: "#34D399" }}>FinFox</strong> — your AI
+              tutor. I'll explain every term, walk you through deals step by
+              step, and role-play negotiations with you. Zero finance background
+              needed.
             </p>
-            <p
-              style={{
-                color: "#D1D5DB",
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 28,
-              }}
-            >
-              Zero finance background needed. No judgment. Just click the fox
-              whenever you need help.
-            </p>
+
             <button
               onClick={() => setStep("choice")}
               style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                color: "#111827",
+                background: "linear-gradient(135deg, #10B981, #059669)",
+                color: "white",
                 border: "none",
-                borderRadius: 10,
-                padding: "12px 32px",
-                fontSize: 14,
+                borderRadius: 50,
+                padding: "14px 40px",
+                fontSize: 15,
                 fontWeight: 700,
                 cursor: "pointer",
-                width: "100%",
+                letterSpacing: "0.01em",
               }}
             >
-              Continue
+              Let's go →
             </button>
+            <div style={{ marginTop: 16 }}>
+              <button
+                onClick={dismissOnboarding}
+                style={{
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.3)",
+                  border: "none",
+                  fontSize: 12,
+                  cursor: "pointer",
+                  padding: "6px",
+                }}
+              >
+                Skip intro
+              </button>
+            </div>
           </motion.div>
         )}
 
         {step === "choice" && (
           <motion.div
             key="choice"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              background: "#111827",
-              border: "1px solid rgba(245,158,11,0.35)",
-              borderRadius: 20,
-              padding: 40,
-              maxWidth: 460,
+              maxWidth: 400,
               width: "100%",
               textAlign: "center",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
             }}
           >
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20 }}>
               <FoxSvg expression="neutral" size={64} />
             </div>
             <h2
               style={{
                 color: "#F9FAFB",
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 700,
                 marginBottom: 8,
+                letterSpacing: "-0.01em",
               }}
             >
-              How do you want to start?
+              Want a guided tour?
             </h2>
-            <p style={{ color: "#6B7280", fontSize: 13, marginBottom: 28 }}>
-              FinFox can walk you through your first simulation step by step, or
-              you can dive in on your own.
+            <p
+              style={{
+                color: "rgba(255,255,255,0.45)",
+                fontSize: 14,
+                marginBottom: 36,
+                lineHeight: 1.6,
+              }}
+            >
+              I'll walk you through your first simulation step by step — you'll
+              need to click each part of the interface to proceed.
             </p>
 
             <button
               onClick={() => setStep("simPicker")}
               style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                color: "#111827",
+                background: "linear-gradient(135deg, #10B981, #059669)",
+                color: "white",
                 border: "none",
-                borderRadius: 10,
-                padding: "14px 24px",
-                fontSize: 14,
+                borderRadius: 50,
+                padding: "14px 36px",
+                fontSize: 15,
                 fontWeight: 700,
                 cursor: "pointer",
+                display: "block",
                 width: "100%",
                 marginBottom: 12,
               }}
             >
-              Walk me through it
+              Yes, show me around
             </button>
 
             <button
               onClick={dismissOnboarding}
               style={{
-                background: "transparent",
-                color: "#6B7280",
-                border: "1px solid #374151",
-                borderRadius: 10,
-                padding: "12px 24px",
+                background: "rgba(255,255,255,0.06)",
+                color: "rgba(255,255,255,0.5)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 50,
+                padding: "13px 36px",
                 fontSize: 14,
                 fontWeight: 500,
                 cursor: "pointer",
+                display: "block",
                 width: "100%",
               }}
             >
-              I'll explore on my own
+              I'll figure it out
             </button>
           </motion.div>
         )}
@@ -189,58 +204,60 @@ export function OnboardingModal() {
         {step === "simPicker" && (
           <motion.div
             key="simPicker"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              background: "#111827",
-              border: "1px solid rgba(245,158,11,0.35)",
-              borderRadius: 20,
-              padding: 40,
-              maxWidth: 480,
+              maxWidth: 460,
               width: "100%",
               textAlign: "center",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
             }}
           >
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20 }}>
               <FoxSvg expression="approving" size={64} />
             </div>
             <h2
               style={{
                 color: "#F9FAFB",
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 700,
                 marginBottom: 8,
+                letterSpacing: "-0.01em",
               }}
             >
-              Which simulator first?
+              Pick your simulator
             </h2>
-            <p style={{ color: "#6B7280", fontSize: 13, marginBottom: 28 }}>
-              FinFox will guide you through it step by step.
+            <p
+              style={{
+                color: "rgba(255,255,255,0.4)",
+                fontSize: 13,
+                marginBottom: 28,
+              }}
+            >
+              I'll guide you through it — you'll click each section yourself.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 {
                   sim: "vc" as const,
                   label: "Venture Capital",
-                  desc: "Cap tables, term sheets, dilution, and founder negotiations",
+                  desc: "Cap tables, term sheets, dilution, founder negotiations",
                   color: "#34D399",
-                  badge: "Recommended for beginners",
+                  badge: "Best for beginners",
                 },
                 {
                   sim: "pe" as const,
                   label: "Private Equity",
-                  desc: "LBO models, fund economics, and PE deal simulations",
+                  desc: "LBO models, fund economics, PE deal simulations",
                   color: "#818CF8",
                   badge: null,
                 },
                 {
                   sim: "ib" as const,
                   label: "Investment Banking",
-                  desc: "M&A advisory, deal structuring, and client negotiations",
+                  desc: "M&A advisory, deal structuring, client negotiations",
                   color: "#F59E0B",
                   badge: null,
                 },
@@ -252,9 +269,9 @@ export function OnboardingModal() {
                     completeOnboardingWalkthrough(sim);
                   }}
                   style={{
-                    background: "rgba(255,255,255,0.03)",
-                    border: `1px solid ${color}40`,
-                    borderRadius: 12,
+                    background: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${color}30`,
+                    borderRadius: 14,
                     padding: "16px 20px",
                     textAlign: "left",
                     cursor: "pointer",
@@ -262,15 +279,15 @@ export function OnboardingModal() {
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.background =
-                      `${color}10`;
+                      `${color}12`;
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      `${color}80`;
+                      `${color}70`;
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.background =
-                      "rgba(255,255,255,0.03)";
+                      "rgba(255,255,255,0.04)";
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      `${color}40`;
+                      `${color}30`;
                   }}
                 >
                   <div
@@ -291,8 +308,8 @@ export function OnboardingModal() {
                           fontWeight: 700,
                           color: "#34D399",
                           background: "rgba(52,211,153,0.1)",
-                          border: "1px solid rgba(52,211,153,0.3)",
-                          borderRadius: 6,
+                          border: "1px solid rgba(52,211,153,0.25)",
+                          borderRadius: 20,
                           padding: "2px 8px",
                         }}
                       >
@@ -300,7 +317,11 @@ export function OnboardingModal() {
                       </span>
                     )}
                   </div>
-                  <div style={{ color: "#6B7280", fontSize: 12 }}>{desc}</div>
+                  <div
+                    style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}
+                  >
+                    {desc}
+                  </div>
                 </button>
               ))}
             </div>
@@ -310,14 +331,14 @@ export function OnboardingModal() {
               style={{
                 marginTop: 16,
                 background: "transparent",
-                color: "#4B5563",
+                color: "rgba(255,255,255,0.25)",
                 border: "none",
                 fontSize: 12,
                 cursor: "pointer",
                 padding: "8px",
               }}
             >
-              Back
+              ← Back
             </button>
           </motion.div>
         )}
