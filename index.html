@@ -4,15 +4,99 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FundSim — Free PE, VC & IB Finance Simulator</title>
-    <meta name="description" content="The free alternative to Wall Street Prep. Interactive PE, VC, and IB simulators — LBO modeling, cap tables, J-curves, waterfall distributions, SAFE notes, and qualitative scoring. No signup required." />
-    <meta name="keywords" content="PE simulator, VC simulator, investment banking simulator, LBO model, J-curve, waterfall distribution, cap table, SAFE notes, fund economics, DECA finance, YIS finance, free finance education" />
-    <meta property="og:title" content="FundSim — The $0 Alternative to $1,499 Finance Courses" />
-    <meta property="og:description" content="Interactive PE, VC, and IB simulators. LBO models, cap tables, waterfall distributions, J-curves. Free forever. No Excel required." />
+
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="GjvtyqvlfBNe3UsRCaO3nv-gruTXQsiYtlLK6zUHJTQ" />
+
+    <!-- Primary SEO -->
+    <title>FundSim — Free Finance Simulator | LBO, DCF, PE, VC & IB Models</title>
+    <meta name="description" content="The free finance simulator used by students breaking into PE, VC, and IB. Run interactive LBO models, DCF valuations, M&A accretion/dilution, PE waterfall distributions, and VC cap tables — no Excel, no signup, no cost." />
+    <meta name="keywords" content="finance simulator, investment banking simulator, LBO simulator, LBO model practice, DCF calculator, PE waterfall calculator, VC cap table simulator, free financial modeling, accretion dilution calculator, paper LBO practice, financial modeling practice, free LBO model, merger model practice, private equity simulator, walk me through an LBO, WACC calculator, carried interest calculator, M&A model, free finance education, Wall Street Prep alternative" />
+    <link rel="canonical" href="https://fundsimulate.com/" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://fundsimulate.com/" />
+    <meta property="og:site_name" content="FundSim" />
+    <meta property="og:title" content="FundSim — Free Finance Simulator | LBO, DCF, PE, VC & IB" />
+    <meta property="og:description" content="Interactive LBO models, DCF calculators, M&A accretion/dilution, PE waterfall distributions, and VC cap tables. Free forever. No Excel. No signup. Built for students breaking into finance." />
+    <meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FundSim — Free PE, VC & IB Finance Simulator" />
-    <meta name="twitter:description" content="The finance simulator Wall Street Prep can't sell you. Interactive models for PE, VC, and IB. Free forever." />
+    <meta name="twitter:site" content="@fundsim" />
+    <meta name="twitter:title" content="FundSim — Free Finance Simulator" />
+    <meta name="twitter:description" content="Run LBO models, DCF valuations, M&A deals, PE waterfalls, and VC cap tables free in your browser. The finance simulator Wall Street Prep can't sell you." />
+    <meta name="twitter:image" content="https://fundsimulate.com/og-image.png" />
+
+    <!-- Structured Data — WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FundSim — Finance Simulator",
+      "url": "https://fundsimulate.com",
+      "description": "Free interactive finance simulator for LBO modeling, DCF valuation, M&A accretion/dilution, PE waterfall distributions, and VC cap tables. No signup required.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "LBO model simulator",
+        "DCF calculator",
+        "M&A accretion dilution model",
+        "PE waterfall distribution calculator",
+        "VC cap table simulator",
+        "Investment banking deal simulator",
+        "Carried interest calculator",
+        "Paper LBO practice mode"
+      ],
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Finance students, investment banking analysts, private equity professionals"
+      }
+    }
+    </script>
+
+    <!-- Structured Data — FAQPage for rich results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a finance simulator?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A finance simulator is an interactive tool that lets you build and test financial models — like LBO models, DCF valuations, and M&A deal structures — in real time without Excel. FundSim provides free browser-based simulators for PE, VC, and IB."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I practice LBO modeling for free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "FundSim's free LBO simulator lets you model leveraged buyouts interactively — adjust entry multiples, debt tranches, hold period, and exit assumptions to see IRR and MOIC in real time. No signup or Excel required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best free alternative to Wall Street Prep?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "FundSim is the leading free alternative to Wall Street Prep. It offers interactive LBO, DCF, M&A, PE waterfall, and VC cap table simulators with live financial calculations — all free, no subscription required."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -20,5 +104,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Fazier badge -->
+    <a href="https://fazier.com" target="_blank" rel="noopener noreferrer" style="position:absolute;bottom:0;right:0;opacity:0;pointer-events:none;" aria-hidden="true">
+      <img src="https://fazier.com/api/v1/public/badges/launch_badges.svg?badge_type=launched&theme=light" width="105" alt="Launched on Fazier" />
+    </a>
   </body>
 </html>
