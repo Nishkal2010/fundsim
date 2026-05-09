@@ -444,7 +444,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {peTabContent[activePETab]}
+                    <React.Suspense fallback={lazyFallback}>
+                      {peTabContent[activePETab]}
+                    </React.Suspense>
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -476,7 +478,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {vcTabContent[activeVCTab]}
+                    <React.Suspense fallback={lazyFallback}>
+                      {vcTabContent[activeVCTab]}
+                    </React.Suspense>
                   </motion.div>
                 </AnimatePresence>
               </div>
