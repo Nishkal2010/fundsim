@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinFox } from "../../hooks/useFinFox";
 import { FoxSvg } from "./FinFoxMascot";
@@ -7,199 +7,204 @@ interface TourStep {
   target: string;
   title: string;
   body: string;
-  clickInstruction: string;
-  // Tab hint shown when element isn't found (user needs to navigate)
   tabHint?: string;
+  // Which tab to navigate to for this step
+  navigateTo?: { sim: string; tab: string };
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     target: "sim-overview",
     title: "Welcome to the VC Simulator",
-    body: "You're about to run a real venture capital deal. You'll decide how much to invest, at what valuation, and on what terms — just like a real investor.",
-    clickInstruction: "Click anywhere on the simulator panel to start",
+    body: "You're about to run a real venture capital deal. You decide the valuation, check size, and terms — just like a real investor.",
+    navigateTo: { sim: "vc", tab: "captable" },
   },
   {
     target: "pitch-panel",
     title: "Read the Startup Pitch",
-    body: "Every deal starts here. The startup shows you its revenue, growth rate, burn rate, and runway. These numbers tell you how urgently they need money and how much leverage you have.",
-    clickInstruction: "Click the pitch section to continue",
+    body: "Every deal starts here. Revenue, burn, runway — these tell you how urgently the founder needs money and how much leverage you have.",
+    navigateTo: { sim: "vc", tab: "captable" },
   },
   {
     target: "valuation",
     title: "Set the Pre-Money Valuation",
-    body: "This is what you're agreeing the company is worth before your money goes in. Too high = small ownership. Too low = founder walks. Try adjusting the slider.",
-    clickInstruction: "Click on the Valuation section to explore it",
+    body: "This is what you're agreeing the company is worth before your check. Too high = small ownership. Too low = the founder walks.",
+    navigateTo: { sim: "vc", tab: "captable" },
   },
   {
     target: "check-size",
     title: "Choose Your Check Size",
-    body: "How much are you investing? This — combined with valuation — determines your ownership. Ownership % = Investment ÷ (Pre-money + Investment). Try moving the slider.",
-    clickInstruction: "Click on the Check Size section",
+    body: "Investment ÷ (Pre-money + Investment) = your ownership. A $2M check at $8M pre-money gives you 20% of the company.",
+    navigateTo: { sim: "vc", tab: "captable" },
   },
   {
     target: "cap-table",
     title: "Watch the Cap Table Update",
-    body: "This table shows everyone's ownership after your round. Notice how founders get diluted as you increase your check or add an option pool. Every future round dilutes everyone further.",
-    clickInstruction: "Click on the Cap Table to continue",
+    body: "Every row is a shareholder. Founders dilute every round. Adding an option pool before your investment dilutes founders even more — that's the 'option pool shuffle.'",
+    navigateTo: { sim: "vc", tab: "captable" },
   },
   {
     target: "terms",
     title: "Negotiate Deal Terms",
-    body: "Liquidation preference, anti-dilution, pro-rata rights — these protect your downside. A 1x non-participating preference is founder-friendly. Anything above 1x or participating gets aggressive.",
-    clickInstruction: "Click on the Deal Terms section",
+    body: "1x non-participating liquidation preference is founder-friendly. Anything above 1x or participating is aggressive. Good investors don't need predatory terms.",
+    navigateTo: { sim: "vc", tab: "termsheet" },
     tabHint: "Term Sheet",
   },
   {
     target: "negotiation",
     title: "Role-Play the Negotiation",
-    body: "Once you've set terms, you can role-play the negotiation live. FinFox plays the founder and responds to your offer in real time. Try making an aggressive offer — see what happens.",
-    clickInstruction: "Click on the Negotiation Tips section",
+    body: "FinFox plays the founder and responds to your term sheet in real time. Try making an aggressive offer — see what the founder says.",
+    navigateTo: { sim: "vc", tab: "termsheet" },
     tabHint: "Term Sheet",
   },
   {
     target: "outcome",
-    title: "See the Deal Outcome",
-    body: "This score reflects how founder-friendly vs. investor-friendly your term sheet is. Balanced terms close deals. Predatory terms lose them. Good investors know the difference.",
-    clickInstruction: "Click the Term Sheet Score to finish the tour",
+    title: "See the Deal Score",
+    body: "This score shows how balanced your term sheet is. Balanced terms close deals. Predatory terms lose them. Real investors learn the difference.",
+    navigateTo: { sim: "vc", tab: "termsheet" },
     tabHint: "Term Sheet",
   },
 ];
+
+const TOOLTIP_WIDTH = 310;
+const TOOLTIP_PAD = 16;
 
 function getTargetEl(target: string): Element | null {
   return document.querySelector(`[data-finfox="${target}"]`);
 }
 
-function getTargetRect(target: string): DOMRect | null {
-  const el = getTargetEl(target);
-  return el ? el.getBoundingClientRect() : null;
-}
-
-function getTooltipPosition(
+function computeTooltipPos(
   rect: DOMRect,
   vw: number,
   vh: number,
 ): React.CSSProperties {
-  const W = 300;
-  const PAD = 16;
-  const TOOLTIP_H = 240;
+  const estimatedHeight = 260;
 
+  // Prefer below
   let top: number;
-  let left: number;
-
-  // Prefer below the element
-  if (rect.bottom + TOOLTIP_H + PAD + 16 < vh) {
-    top = rect.bottom + 16;
+  if (rect.bottom + estimatedHeight + 20 < vh) {
+    top = rect.bottom + 14;
+  } else if (rect.top - estimatedHeight - 14 > 0) {
+    top = rect.top - estimatedHeight - 14;
   } else {
-    top = Math.max(PAD, rect.top - TOOLTIP_H - 16);
+    // Centre vertically if neither fits
+    top = Math.max(TOOLTIP_PAD, vh / 2 - estimatedHeight / 2);
   }
 
-  left = rect.left + rect.width / 2 - W / 2;
-  left = Math.max(PAD, Math.min(vw - W - PAD, left));
+  let left = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+  left = Math.max(
+    TOOLTIP_PAD,
+    Math.min(vw - TOOLTIP_WIDTH - TOOLTIP_PAD, left),
+  );
 
-  return { top, left, width: W };
+  return { top, left, width: TOOLTIP_WIDTH };
 }
 
 export function GuidedTour() {
-  const { tourActive, tourStep, nextTourStep, skipTour } = useFinFox();
+  const { tourActive, tourStep, nextTourStep, prevTourStep, skipTour } =
+    useFinFox();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
+
+  const scrolledRef = useRef<Set<string>>(new Set());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   const step = TOUR_STEPS[tourStep];
 
-  // Dispatch navigation event when step requires a different tab
+  // Navigate to correct tab when step changes
   useEffect(() => {
-    if (!tourActive || !step) return;
-    // Steps 5-7 (terms/negotiation/outcome) need Term Sheet tab
-    if (tourStep >= 5) {
-      window.dispatchEvent(
-        new CustomEvent("finfox:navigate", {
-          detail: { sim: "vc", tab: "termsheet" },
-        }),
-      );
-    } else {
-      window.dispatchEvent(
-        new CustomEvent("finfox:navigate", {
-          detail: { sim: "vc", tab: "captable" },
-        }),
-      );
-    }
+    if (!tourActive || !step?.navigateTo) return;
+    window.dispatchEvent(
+      new CustomEvent("finfox:navigate", { detail: step.navigateTo }),
+    );
   }, [tourActive, tourStep]);
 
-  // Poll for the target element (handles lazy tabs / navigation)
+  // Poll for target element — but only scroll ONCE per step
   useEffect(() => {
     if (!tourActive || !step) return;
-
     if (pollRef.current) clearInterval(pollRef.current);
 
-    const check = () => {
+    // Reset scroll tracking for new step
+    scrolledRef.current.delete(step.target);
+
+    const measureAndUpdate = () => {
       const el = getTargetEl(step.target);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => setTargetRect(getTargetRect(step.target)), 300);
+        if (!scrolledRef.current.has(step.target)) {
+          scrolledRef.current.add(step.target);
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        // Measure after potential scroll settles
+        animFrameRef.current = requestAnimationFrame(() => {
+          const rect =
+            getTargetEl(step.target)?.getBoundingClientRect() ?? null;
+          setTargetRect(rect);
+        });
       } else {
         setTargetRect(null);
       }
     };
 
-    check();
-    pollRef.current = setInterval(check, 600);
+    measureAndUpdate();
+    pollRef.current = setInterval(measureAndUpdate, 800);
 
     const onResize = () => {
       setVp({ w: window.innerWidth, h: window.innerHeight });
-      setTargetRect(getTargetRect(step.target));
+      const rect = getTargetEl(step.target)?.getBoundingClientRect() ?? null;
+      setTargetRect(rect);
     };
     window.addEventListener("resize", onResize);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener("resize", onResize);
     };
   }, [tourActive, tourStep]);
 
-  if (!tourActive || !step) return null;
-
-  const elementFound = targetRect !== null;
-  const tooltipPos = elementFound
-    ? getTooltipPosition(targetRect, vp.w, vp.h)
-    : { top: vp.h / 2 - 120, left: vp.w / 2 - 150, width: 300 };
-
-  // When element is clicked → advance tour
-  const handleClickZone = () => {
+  const handleAdvance = useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     nextTourStep();
-  };
+  }, [nextTourStep]);
+
+  if (!tourActive || !step) return null;
+
+  const found = targetRect !== null;
+  const tooltipPos = found
+    ? computeTooltipPos(targetRect, vp.w, vp.h)
+    : {
+        top: vp.h / 2 - 130,
+        left: vp.w / 2 - TOOLTIP_WIDTH / 2,
+        width: TOOLTIP_WIDTH,
+      };
+
+  const isLast = tourStep === TOUR_STEPS.length - 1;
 
   return (
     <>
       <style>{`
-        @keyframes finfox-tour-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.12); }
-          50% { box-shadow: 0 0 0 6px rgba(255,255,255,0.0); }
-        }
-        @keyframes finfox-arrow-bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(6px); }
+        @keyframes finfox-spotlight-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.35); }
+          50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.6); }
         }
       `}</style>
 
-      {/* 4-strip overlay — creates a transparent "hole" over the target */}
-      {elementFound ? (
+      {/* Overlay — 4 strips creating a spotlight hole */}
+      {found ? (
         <>
-          {/* Top strip */}
+          {/* Top */}
           <div
             style={{
               position: "fixed",
               inset: 0,
-              zIndex: 390,
-              top: 0,
               bottom: vp.h - targetRect.top + 4,
-              background: "rgba(5,10,20,0.78)",
+              zIndex: 390,
+              background: "rgba(3,7,18,0.82)",
               pointerEvents: "all",
             }}
           />
-          {/* Left strip */}
+          {/* Left */}
           <div
             style={{
               position: "fixed",
@@ -208,11 +213,11 @@ export function GuidedTour() {
               bottom: vp.h - targetRect.bottom - 4,
               left: 0,
               right: vp.w - targetRect.left + 4,
-              background: "rgba(5,10,20,0.78)",
+              background: "rgba(3,7,18,0.82)",
               pointerEvents: "all",
             }}
           />
-          {/* Right strip */}
+          {/* Right */}
           <div
             style={{
               position: "fixed",
@@ -221,25 +226,25 @@ export function GuidedTour() {
               bottom: vp.h - targetRect.bottom - 4,
               left: targetRect.right + 4,
               right: 0,
-              background: "rgba(5,10,20,0.78)",
+              background: "rgba(3,7,18,0.82)",
               pointerEvents: "all",
             }}
           />
-          {/* Bottom strip */}
+          {/* Bottom */}
           <div
             style={{
               position: "fixed",
-              zIndex: 390,
               top: targetRect.bottom + 4,
               inset: 0,
-              background: "rgba(5,10,20,0.78)",
+              zIndex: 390,
+              background: "rgba(3,7,18,0.82)",
               pointerEvents: "all",
             }}
           />
 
-          {/* Transparent click zone over target */}
+          {/* Spotlight border — clickable to advance */}
           <div
-            onClick={handleClickZone}
+            onClick={handleAdvance}
             style={{
               position: "fixed",
               zIndex: 392,
@@ -249,48 +254,23 @@ export function GuidedTour() {
               height: targetRect.height + 8,
               cursor: "pointer",
               borderRadius: 10,
-              border: "1.5px solid rgba(255,255,255,0.2)",
-              animation: "finfox-tour-pulse 2s ease-in-out infinite",
+              animation: "finfox-spotlight-pulse 2.2s ease-in-out infinite",
             }}
           />
-
-          {/* Animated down-arrow above tooltip pointing at element */}
-          <div
-            style={{
-              position: "fixed",
-              zIndex: 395,
-              left: targetRect.left + targetRect.width / 2 - 10,
-              top: targetRect.top - 32,
-              animation: "finfox-arrow-bounce 1s ease-in-out infinite",
-              pointerEvents: "none",
-              display: targetRect.top > 60 ? "block" : "none",
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M10 3v11M5 10l5 5 5-5"
-                stroke="rgba(255,255,255,0.5)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
         </>
       ) : (
-        // Fallback: full overlay when element not on screen
         <div
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 390,
-            background: "rgba(5,10,20,0.82)",
+            background: "rgba(3,7,18,0.88)",
             pointerEvents: "all",
           }}
         />
       )}
 
-      {/* Fox — bottom right during tour */}
+      {/* Fox — always bottom right during tour */}
       <div
         style={{
           position: "fixed",
@@ -300,40 +280,36 @@ export function GuidedTour() {
           pointerEvents: "none",
         }}
       >
-        <FoxSvg
-          expression={elementFound ? "approving" : "thinking"}
-          size={44}
-        />
+        <FoxSvg expression={found ? "approving" : "thinking"} size={44} />
       </div>
 
-      {/* Tooltip — positioned near element or centered when not found */}
+      {/* Tooltip */}
       <AnimatePresence mode="wait">
         <motion.div
           key={tourStep}
-          initial={{ opacity: 0, y: 10, scale: 0.97 }}
+          initial={{ opacity: 0, y: 12, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -6, scale: 0.97 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          exit={{ opacity: 0, y: -8, scale: 0.97 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           style={{
             position: "fixed",
             zIndex: 400,
             ...tooltipPos,
             background: "#0D1117",
-            border: "1px solid rgba(16,185,129,0.35)",
+            border: "1px solid rgba(16,185,129,0.3)",
             borderRadius: 16,
-            padding: "18px 20px 14px",
+            padding: "18px 18px 14px",
             boxShadow:
-              "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.08)",
+              "0 24px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(16,185,129,0.07)",
           }}
         >
-          {/* Progress dots */}
+          {/* Progress */}
           <div
             style={{
               display: "flex",
-              gap: 4,
-              marginBottom: 14,
               alignItems: "center",
               justifyContent: "space-between",
+              marginBottom: 14,
             }}
           >
             <span
@@ -351,7 +327,7 @@ export function GuidedTour() {
                 <div
                   key={i}
                   style={{
-                    width: i === tourStep ? 14 : 5,
+                    width: i === tourStep ? 16 : 5,
                     height: 5,
                     borderRadius: 3,
                     background:
@@ -382,58 +358,94 @@ export function GuidedTour() {
             style={{
               color: "#9CA3AF",
               fontSize: 12,
-              lineHeight: 1.65,
+              lineHeight: 1.7,
               marginBottom: 14,
             }}
           >
             {step.body}
           </p>
 
-          {/* Click instruction or nav hint */}
-          {!elementFound && step.tabHint ? (
+          {/* Tab hint when element not yet visible */}
+          {!found && step.tabHint && (
             <div
               style={{
                 background: "rgba(16,185,129,0.08)",
-                border: "1px solid rgba(16,185,129,0.25)",
+                border: "1px solid rgba(16,185,129,0.2)",
                 borderRadius: 8,
-                padding: "10px 12px",
+                padding: "9px 12px",
                 marginBottom: 12,
                 fontSize: 12,
                 color: "#34D399",
                 textAlign: "center",
               }}
             >
-              ↑ Click the <strong>{step.tabHint}</strong> tab above to continue
+              Click the <strong>{step.tabHint}</strong> tab above to reveal this
+              section
             </div>
-          ) : elementFound ? (
+          )}
+
+          {/* Element found hint */}
+          {found && (
             <div
               style={{
                 fontSize: 11,
-                color: "#10B981",
+                color: "rgba(16,185,129,0.7)",
                 textAlign: "center",
                 marginBottom: 12,
-                fontWeight: 600,
                 letterSpacing: "0.02em",
               }}
             >
-              ↑ {step.clickInstruction}
+              Click the highlighted area to continue →
             </div>
-          ) : null}
+          )}
 
-          {/* Skip */}
-          <div style={{ textAlign: "center" }}>
+          {/* Nav buttons */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {tourStep > 0 && (
+              <button
+                onClick={prevTourStep}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.45)",
+                  cursor: "pointer",
+                }}
+              >
+                ← Back
+              </button>
+            )}
+            <button
+              onClick={isLast ? skipTour : handleAdvance}
+              style={{
+                flex: 1,
+                background: "#10B981",
+                border: "none",
+                borderRadius: 8,
+                padding: "9px 14px",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              {isLast ? "Finish tour" : "Next →"}
+            </button>
             <button
               onClick={skipTour}
               style={{
                 background: "transparent",
                 border: "none",
                 fontSize: 11,
-                color: "#374151",
+                color: "rgba(255,255,255,0.2)",
                 cursor: "pointer",
-                padding: "4px 8px",
+                padding: "8px",
+                whiteSpace: "nowrap",
               }}
             >
-              Skip tour
+              Skip
             </button>
           </div>
         </motion.div>

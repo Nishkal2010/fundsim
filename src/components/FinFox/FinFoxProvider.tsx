@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type FinFoxSim = "vc" | "pe" | "ib";
 export type FinFoxExpression = "neutral" | "thinking" | "approving";
@@ -9,33 +15,20 @@ export type FinFoxCorner =
   | "top-left";
 
 export interface FinFoxContextType {
-  // Visibility state
   seen: boolean;
   disabled: boolean;
   showOnboarding: boolean;
-
-  // Chat state
   chatOpen: boolean;
   preloadedQuestion: string | null;
-
-  // Active context
   activeSim: FinFoxSim | null;
   activeScreen: string;
-
-  // Tour state
   tourActive: boolean;
   tourStep: number;
   tourCompleted: boolean;
   foxCorner: FinFoxCorner;
-
-  // Negotiation state
   negotiationOpen: boolean;
   negotiationSim: FinFoxSim | null;
-
-  // Fox expression
   expression: FinFoxExpression;
-
-  // Actions
   openChat: (question?: string) => void;
   closeChat: () => void;
   setActiveSim: (sim: FinFoxSim | null) => void;
@@ -56,17 +49,7 @@ export interface FinFoxContextType {
 
 export const FinFoxContext = createContext<FinFoxContextType | null>(null);
 
-// Tour step → fox corner mapping (spec: steps 1,3,7 = top-right; 2,4 = bottom-right; 5 = top-left; 6 = bottom-left; 8 = bottom-right)
-const TOUR_CORNERS: FinFoxCorner[] = [
-  "top-right", // step 1
-  "bottom-right", // step 2
-  "top-right", // step 3
-  "bottom-right", // step 4
-  "top-left", // step 5
-  "bottom-left", // step 6
-  "top-right", // step 7
-  "bottom-right", // step 8
-];
+const TOUR_STEPS_COUNT = 8;
 
 export function FinFoxProvider({ children }: { children: React.ReactNode }) {
   const [seen, setSeen] = useState(
@@ -98,19 +81,11 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
 
   const [expression, setExpression] = useState<FinFoxExpression>("neutral");
 
-  const foxCorner: FinFoxCorner = tourActive
-    ? (TOUR_CORNERS[tourStep] ?? "bottom-right")
-    : "bottom-right";
+  const tourActiveRef = useRef(false);
+  const tourStepRef = useRef(0);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Listen for finfox:open-term custom events from Tooltip clicks
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const term = (e as CustomEvent<string>).detail;
-      openChat(term);
-    };
-    window.addEventListener("finfox:open-term", handler);
-    return () => window.removeEventListener("finfox:open-term", handler);
-  }, []);
+  const foxCorner: FinFoxCorner = "bottom-right";
 
   const openChat = useCallback((question?: string) => {
     setPreloadedQuestion(question ?? null);
@@ -122,11 +97,42 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     setPreloadedQuestion(null);
   }, []);
 
+  // Use ref to always have fresh openChat in event listener
+  const openChatRef = useRef(openChat);
+  openChatRef.current = openChat;
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const term = (e as CustomEvent<string>).detail;
+      openChatRef.current(term);
+    };
+    window.addEventListener("finfox:open-term", handler);
+    return () => window.removeEventListener("finfox:open-term", handler);
+  }, []);
+
+  // Keyboard shortcut: ? opens FinFox chat
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (
+        e.key === "?" &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        openChatRef.current();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const startTour = useCallback(() => {
     setTourStep(0);
+    tourStepRef.current = 0;
     setTourActive(true);
+    tourActiveRef.current = true;
     setChatOpen(false);
-    // Auto-navigate to VC simulator cap table
     window.dispatchEvent(
       new CustomEvent("finfox:navigate", {
         detail: { sim: "vc", tab: "captable" },
@@ -137,23 +143,29 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
   const nextTourStep = useCallback(() => {
     setTourStep((prev) => {
       const next = prev + 1;
-      if (next >= 8) {
-        // Tour complete
+      if (next >= TOUR_STEPS_COUNT) {
         setTourActive(false);
+        tourActiveRef.current = false;
         setTourCompleted(true);
         localStorage.setItem("vc_tour_completed", "true");
-        return 7;
+        return prev;
       }
+      tourStepRef.current = next;
       return next;
     });
   }, []);
 
   const prevTourStep = useCallback(() => {
-    setTourStep((prev) => Math.max(0, prev - 1));
+    setTourStep((prev) => {
+      const next = Math.max(0, prev - 1);
+      tourStepRef.current = next;
+      return next;
+    });
   }, []);
 
   const skipTour = useCallback(() => {
     setTourActive(false);
+    tourActiveRef.current = false;
     setTourCompleted(true);
     localStorage.setItem("vc_tour_completed", "true");
   }, []);
@@ -179,13 +191,22 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
       setSeen(true);
       setShowOnboarding(false);
       localStorage.setItem("finfox_seen", "true");
-      if (sim === "vc" && !tourCompleted) {
-        // Start tour after a short delay so the modal can fade
-        setTimeout(() => startTour(), 600);
+      if (
+        sim === "vc" &&
+        localStorage.getItem("vc_tour_completed") !== "true"
+      ) {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => startTour(), 600);
       }
     },
-    [tourCompleted, startTour],
+    [startTour],
   );
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const resetOnboarding = useCallback(() => {
     localStorage.removeItem("finfox_seen");

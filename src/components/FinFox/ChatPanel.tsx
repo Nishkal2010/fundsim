@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send } from "lucide-react";
+import { X, Send, RotateCcw } from "lucide-react";
 import { useFinFox } from "../../hooks/useFinFox";
 import { finfoxGlossary } from "../../data/finfoxGlossary";
 import {
@@ -12,14 +12,13 @@ import {
   seedCache,
 } from "../../utils/finfoxApi";
 
-// Seed cache on first load
 seedCache();
 
 const QUICK_CHIPS: Record<string, string[]> = {
   "vc-captable": [
     "What's pre-money?",
-    "How much equity should I give up?",
-    "Explain dilution",
+    "How does dilution work?",
+    "Explain the cap table",
   ],
   "vc-termsheet": [
     "What's a liq pref?",
@@ -41,6 +40,14 @@ const QUICK_CHIPS: Record<string, string[]> = {
   "ib-main": ["M&A vs IPO?", "What are comps?", "Explain accretion/dilution"],
 };
 
+const GREETINGS: Record<string, string> = {
+  vc: "You're in the VC simulator. Ask me anything — dilution, term sheets, cap tables, valuations.",
+  pe: "You're in the PE simulator. Ask about LBOs, carry, fund economics, or deal mechanics.",
+  ib: "You're in the IB simulator. Ask about M&A, DCF, accretion/dilution, or deal structuring.",
+  general:
+    "Ask me anything about finance. Pre-money, IRR, carry, accretion — I'll explain it plainly.",
+};
+
 function getChips(sim: string | null, screen: string): string[] {
   if (sim && screen) {
     const key = `${sim}-${screen}`;
@@ -54,16 +61,87 @@ function getChips(sim: string | null, screen: string): string[] {
 
 function buildSystemPrompt(sim: string | null, screen: string): string {
   return `You are FinFox, a finance tutor for users learning on FundSim.
-Current context: Sim: ${sim ?? "general"}, Screen: ${screen}.
-Rules: Max 3 sentences. Plain English. Zero finance background assumed.
-Define terms and give one concrete example using numbers when possible.
-If off-topic: redirect to 3 contextual finance topics.
-Never say "as an AI". You are FinFox. No emojis. Ever.`;
+Current context: Sim=${sim ?? "general"}, Screen=${screen}.
+Rules: Max 3 sentences. Plain English only — zero finance background assumed.
+Give one concrete numerical example when possible.
+If off-topic: redirect to 3 related finance topics.
+Never say "as an AI". You are FinFox. No emojis.`;
 }
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  streaming?: boolean;
+}
+
+// Simulates streaming by revealing text character by character
+function useStreamingText(
+  targetText: string,
+  active: boolean,
+  onDone: () => void,
+): string {
+  const [displayed, setDisplayed] = useState("");
+  const frameRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const indexRef = useRef(0);
+
+  useEffect(() => {
+    if (!active || !targetText) {
+      setDisplayed(targetText);
+      return;
+    }
+
+    indexRef.current = 0;
+    setDisplayed("");
+
+    const step = () => {
+      indexRef.current++;
+      const chunk = targetText.slice(0, indexRef.current);
+      setDisplayed(chunk);
+      if (indexRef.current < targetText.length) {
+        // Variable speed: faster for spaces, slower for end of sentences
+        const char = targetText[indexRef.current - 1];
+        const delay = char === "." || char === "?" ? 30 : char === " " ? 6 : 12;
+        frameRef.current = setTimeout(step, delay);
+      } else {
+        onDone();
+      }
+    };
+
+    frameRef.current = setTimeout(step, 16);
+    return () => {
+      if (frameRef.current) clearTimeout(frameRef.current);
+    };
+  }, [targetText, active]);
+
+  return displayed;
+}
+
+function StreamingMessage({
+  content,
+  onDone,
+}: {
+  content: string;
+  onDone: () => void;
+}) {
+  const text = useStreamingText(content, true, onDone);
+  return (
+    <span>
+      {text}
+      {text.length < content.length && (
+        <span
+          style={{
+            display: "inline-block",
+            width: 2,
+            height: "1em",
+            background: "#10B981",
+            marginLeft: 1,
+            verticalAlign: "middle",
+            animation: "finfox-cursor-blink 0.7s steps(1) infinite",
+          }}
+        />
+      )}
+    </span>
+  );
 }
 
 export function ChatPanel() {
@@ -78,55 +156,78 @@ export function ChatPanel() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
+  const [streamingIdx, setStreamingIdx] = useState<number | null>(null);
+  const [remainingQueries, setRemainingQueries] = useState(
+    getRemainingQueries(),
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sentRef = useRef<Set<string>>(new Set());
 
-  // Load preloaded question when panel opens
+  const scrollToBottom = useCallback(() => {
+    setTimeout(
+      () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
+      50,
+    );
+  }, []);
+
+  // Focus input when chat opens
   useEffect(() => {
     if (!chatOpen) return;
-    setTimeout(() => inputRef.current?.focus(), 100);
+    setTimeout(() => inputRef.current?.focus(), 120);
+  }, [chatOpen]);
 
-    if (preloadedQuestion) {
-      // Check if it's a glossary long-form request
-      const glossEntry = finfoxGlossary[preloadedQuestion];
-      if (glossEntry) {
-        setMessages([
-          { role: "user", content: `Explain: ${preloadedQuestion}` },
-          { role: "assistant", content: glossEntry.long },
-        ]);
-        setInput("");
-        return;
-      }
-      setInput(preloadedQuestion);
-    }
-  }, [chatOpen, preloadedQuestion]);
-
-  // Scroll to bottom on new messages
+  // Handle preloaded questions — auto-send them
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (!chatOpen || !preloadedQuestion) return;
+    // Deduplicate — don't auto-send the same question twice in a session
+    if (sentRef.current.has(preloadedQuestion)) return;
+    sentRef.current.add(preloadedQuestion);
 
-  async function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed || loading) return;
-
-    if (getRemainingQueries() <= 0) {
-      setRateLimited(true);
+    // Glossary hit: inject directly without API call
+    const glossEntry = finfoxGlossary[preloadedQuestion];
+    if (glossEntry) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: `Explain: ${preloadedQuestion}` },
+        { role: "assistant", content: glossEntry.long, streaming: true },
+      ]);
+      setStreamingIdx((prev) => (prev === null ? 1 : prev + 2));
+      scrollToBottom();
       return;
     }
 
-    setInput("");
+    // Auto-send to API
+    sendMessage(preloadedQuestion, true);
+  }, [chatOpen, preloadedQuestion]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  async function sendMessage(text: string, skipInputClear = false) {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+
+    if (remainingQueries <= 0) return;
+
+    if (!skipInputClear) setInput("");
+
     const userMsg: Message = { role: "user", content: trimmed };
-    const newMessages = [...messages, userMsg];
+    const newMessages: Message[] = [...messages, userMsg];
     setMessages(newMessages);
     setLoading(true);
     setExpression("thinking");
+    scrollToBottom();
 
-    // Check cache first
     const cached = getCachedAnswer(trimmed);
     if (cached) {
-      setMessages([...newMessages, { role: "assistant", content: cached }]);
+      const assistantIdx = newMessages.length;
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: cached, streaming: true },
+      ]);
+      setStreamingIdx(assistantIdx);
       setLoading(false);
       setExpression("approving");
       setTimeout(() => setExpression("neutral"), 3000);
@@ -135,6 +236,9 @@ export function ChatPanel() {
 
     try {
       incrementQueryCount();
+      const newCount = getRemainingQueries();
+      setRemainingQueries(newCount);
+
       const answer = await callFinFox({
         mode: "tutor",
         messages: newMessages.map((m) => ({
@@ -145,7 +249,12 @@ export function ChatPanel() {
       });
 
       setCachedAnswer(trimmed, answer);
-      setMessages([...newMessages, { role: "assistant", content: answer }]);
+      const assistantIdx = newMessages.length;
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: answer, streaming: true },
+      ]);
+      setStreamingIdx(assistantIdx);
       setExpression("approving");
       setTimeout(() => setExpression("neutral"), 3000);
     } catch {
@@ -153,7 +262,7 @@ export function ChatPanel() {
         ...newMessages,
         {
           role: "assistant",
-          content: "Something went wrong. Try again in a moment.",
+          content: "Network error — try again in a moment.",
         },
       ]);
       setExpression("neutral");
@@ -162,265 +271,412 @@ export function ChatPanel() {
     }
   }
 
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+    sentRef.current.clear();
+    setStreamingIdx(null);
+    setInput("");
+  }, []);
+
+  const greeting = GREETINGS[activeSim ?? "general"];
   const chips = getChips(activeSim, activeScreen);
+  const showChips = messages.length === 0;
+  const rateLimited = remainingQueries <= 0;
 
   return (
-    <AnimatePresence>
-      {chatOpen && (
-        <motion.div
-          key="chat-panel"
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-          style={{
-            position: "fixed",
-            bottom: 104,
-            right: 24,
-            width: 360,
-            height: 480,
-            background: "#111827",
-            border: "1px solid #1F2937",
-            borderRadius: 12,
-            display: "flex",
-            flexDirection: "column",
-            zIndex: 300,
-            overflow: "hidden",
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              padding: "14px 16px",
-              borderBottom: "1px solid #1F2937",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "#10B981",
-                }}
-              />
-              <span style={{ color: "#F9FAFB", fontWeight: 500, fontSize: 13 }}>
-                FinFox
-              </span>
-              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>
-                {getRemainingQueries()} questions left today
-              </span>
-            </div>
-            <button
-              onClick={closeChat}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "rgba(255,255,255,0.4)",
-                padding: 4,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <X size={15} />
-            </button>
-          </div>
+    <>
+      <style>{`
+        @keyframes finfox-dot-fade {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes finfox-cursor-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
 
-          {/* Messages */}
-          <div
+      <AnimatePresence>
+        {chatOpen && (
+          <motion.div
+            key="chat-panel"
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "16px",
+              position: "fixed",
+              bottom: 76,
+              right: 20,
+              width: 360,
+              maxHeight: 520,
+              background: "#0D1117",
+              border: "1px solid rgba(16,185,129,0.2)",
+              borderRadius: 16,
               display: "flex",
               flexDirection: "column",
-              gap: 10,
+              zIndex: 300,
+              overflow: "hidden",
+              boxShadow:
+                "0 24px 64px rgba(0,0,0,0.55), 0 0 0 1px rgba(16,185,129,0.06)",
             }}
           >
-            {messages.length === 0 && (
-              <div
-                style={{
-                  color: "rgba(255,255,255,0.3)",
-                  fontSize: 12,
-                  textAlign: "center",
-                  marginTop: 24,
-                }}
-              >
-                Ask anything about finance. No background needed.
-              </div>
-            )}
-
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    msg.role === "user" ? "flex-end" : "flex-start",
-                }}
-              >
+            {/* Header */}
+            <div
+              style={{
+                padding: "12px 14px",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(16,185,129,0.04)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div
                   style={{
-                    maxWidth: "82%",
-                    padding: "9px 13px",
-                    borderRadius:
-                      msg.role === "user"
-                        ? "12px 12px 2px 12px"
-                        : "12px 12px 12px 2px",
-                    background: msg.role === "user" ? "#1a2332" : "#111827",
-                    color:
-                      msg.role === "user"
-                        ? "#F9FAFB"
-                        : "rgba(255,255,255,0.75)",
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#10B981",
+                    boxShadow: "0 0 6px #10B981",
+                  }}
+                />
+                <span
+                  style={{ color: "#F9FAFB", fontWeight: 600, fontSize: 13 }}
+                >
+                  FinFox
+                </span>
+                <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 11 }}>
+                  {remainingQueries} left today
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                {messages.length > 0 && (
+                  <button
+                    onClick={clearMessages}
+                    title="Clear conversation"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "rgba(255,255,255,0.25)",
+                      padding: 4,
+                      display: "flex",
+                      borderRadius: 6,
+                    }}
+                    onMouseEnter={(e) =>
+                      ((e.currentTarget as HTMLButtonElement).style.color =
+                        "rgba(255,255,255,0.6)")
+                    }
+                    onMouseLeave={(e) =>
+                      ((e.currentTarget as HTMLButtonElement).style.color =
+                        "rgba(255,255,255,0.25)")
+                    }
+                  >
+                    <RotateCcw size={13} />
+                  </button>
+                )}
+                <button
+                  onClick={closeChat}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "rgba(255,255,255,0.3)",
+                    padding: 4,
+                    display: "flex",
+                    borderRadius: 6,
+                  }}
+                  onMouseEnter={(e) =>
+                    ((e.currentTarget as HTMLButtonElement).style.color =
+                      "rgba(255,255,255,0.7)")
+                  }
+                  onMouseLeave={(e) =>
+                    ((e.currentTarget as HTMLButtonElement).style.color =
+                      "rgba(255,255,255,0.3)")
+                  }
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "14px 14px 8px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                scrollbarWidth: "none",
+              }}
+            >
+              {/* Greeting when empty */}
+              {messages.length === 0 && (
+                <div
+                  style={{
+                    background: "rgba(16,185,129,0.06)",
+                    border: "1px solid rgba(16,185,129,0.12)",
+                    borderRadius: 12,
+                    padding: "12px 14px",
                     fontSize: 13,
+                    color: "rgba(255,255,255,0.55)",
                     lineHeight: 1.6,
                   }}
                 >
-                  {msg.content}
+                  {greeting}
                 </div>
-              </div>
-            ))}
+              )}
 
-            {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    justifyContent:
+                      msg.role === "user" ? "flex-end" : "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      maxWidth: "84%",
+                      padding: "9px 13px",
+                      borderRadius:
+                        msg.role === "user"
+                          ? "14px 14px 3px 14px"
+                          : "14px 14px 14px 3px",
+                      background:
+                        msg.role === "user"
+                          ? "rgba(16,185,129,0.15)"
+                          : "rgba(255,255,255,0.04)",
+                      border:
+                        msg.role === "user"
+                          ? "1px solid rgba(16,185,129,0.25)"
+                          : "1px solid rgba(255,255,255,0.07)",
+                      color:
+                        msg.role === "user"
+                          ? "#D1FAE5"
+                          : "rgba(255,255,255,0.8)",
+                      fontSize: 13,
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    {msg.role === "assistant" &&
+                    msg.streaming &&
+                    streamingIdx === i ? (
+                      <StreamingMessage
+                        content={msg.content}
+                        onDone={() => setStreamingIdx(null)}
+                      />
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {/* Loading dots */}
+              {loading && (
+                <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                  <div
+                    style={{
+                      padding: "11px 16px",
+                      borderRadius: "14px 14px 14px 3px",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      display: "flex",
+                      gap: 5,
+                      alignItems: "center",
+                    }}
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          background: "#10B981",
+                          animation: `finfox-dot-fade 1.2s ease-in-out ${i * 0.18}s infinite`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {rateLimited && !loading && (
                 <div
                   style={{
-                    padding: "10px 14px",
-                    borderRadius: "12px 12px 12px 2px",
-                    background: "#111827",
-                    display: "flex",
-                    gap: 5,
-                    alignItems: "center",
+                    padding: "10px 13px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(239,68,68,0.2)",
+                    background: "rgba(239,68,68,0.06)",
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: 12,
+                    textAlign: "center",
                   }}
                 >
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: "50%",
-                        background: "rgba(255,255,255,0.35)",
-                        animation: `finfox-dot-fade 1.2s ease-in-out ${i * 0.2}s infinite`,
-                      }}
-                    />
-                  ))}
-                  <style>{`
-                    @keyframes finfox-dot-fade {
-                      0%, 80%, 100% { opacity: 0.25; }
-                      40% { opacity: 0.8; }
-                    }
-                  `}</style>
+                  30-question daily limit reached. Resets at midnight.
                 </div>
-              </div>
-            )}
+              )}
 
-            {rateLimited && (
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Quick chips — only when no messages */}
+            {showChips && (
               <div
                 style={{
-                  padding: "10px 13px",
-                  borderRadius: 8,
-                  background: "transparent",
-                  border: "1px solid #374151",
-                  color: "rgba(255,255,255,0.5)",
-                  fontSize: 12,
+                  padding: "0 14px 8px",
+                  display: "flex",
+                  gap: 6,
+                  flexWrap: "wrap",
                 }}
               >
-                Daily limit of 30 questions reached. Resets at midnight.
+                {chips.map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => sendMessage(chip)}
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 20,
+                      padding: "4px 10px",
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.45)",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.color =
+                        "#D1FAE5";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor =
+                        "rgba(16,185,129,0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.color =
+                        "rgba(255,255,255,0.45)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor =
+                        "rgba(255,255,255,0.1)";
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
               </div>
             )}
 
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Quick chips */}
-          {messages.length === 0 && (
+            {/* Input */}
             <div
               style={{
-                padding: "0 16px 10px",
+                padding: "10px 14px",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
                 display: "flex",
-                gap: 6,
-                flexWrap: "wrap",
+                gap: 8,
+                alignItems: "center",
               }}
             >
-              {chips.map((chip) => (
-                <button
-                  key={chip}
-                  onClick={() => sendMessage(chip)}
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage(input);
+                  }
+                  if (e.key === "Escape") closeChat();
+                }}
+                placeholder={
+                  rateLimited ? "Daily limit reached" : "Ask FinFox..."
+                }
+                disabled={loading || rateLimited}
+                style={{
+                  flex: 1,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 10,
+                  padding: "8px 12px",
+                  color: "#F9FAFB",
+                  fontSize: 13,
+                  outline: "none",
+                  transition: "border-color 0.15s ease",
+                }}
+                onFocus={(e) => {
+                  (e.currentTarget as HTMLInputElement).style.borderColor =
+                    "rgba(16,185,129,0.4)";
+                }}
+                onBlur={(e) => {
+                  (e.currentTarget as HTMLInputElement).style.borderColor =
+                    "rgba(255,255,255,0.1)";
+                }}
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || loading || rateLimited}
+                style={{
+                  width: 34,
+                  height: 34,
+                  background:
+                    input.trim() && !loading && !rateLimited
+                      ? "#10B981"
+                      : "rgba(255,255,255,0.06)",
+                  border: "none",
+                  borderRadius: 10,
+                  cursor:
+                    input.trim() && !loading && !rateLimited
+                      ? "pointer"
+                      : "default",
+                  color:
+                    input.trim() && !loading && !rateLimited
+                      ? "#fff"
+                      : "rgba(255,255,255,0.2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Send size={14} />
+              </button>
+            </div>
+
+            {/* Keyboard hint */}
+            <div style={{ textAlign: "center", padding: "0 14px 10px" }}>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.15)" }}>
+                Press{" "}
+                <kbd
                   style={{
-                    background: "transparent",
-                    border: "1px solid #2D3748",
-                    borderRadius: 20,
-                    padding: "4px 10px",
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.5)",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
+                    fontFamily: "monospace",
+                    padding: "1px 4px",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: 3,
                   }}
                 >
-                  {chip}
-                </button>
-              ))}
+                  ?
+                </kbd>{" "}
+                anywhere to open ·{" "}
+                <kbd
+                  style={{
+                    fontFamily: "monospace",
+                    padding: "1px 4px",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: 3,
+                  }}
+                >
+                  Esc
+                </kbd>{" "}
+                to close
+              </span>
             </div>
-          )}
-
-          {/* Input */}
-          <div
-            style={{
-              padding: "12px 16px",
-              borderTop: "1px solid #1F2937",
-              display: "flex",
-              gap: 8,
-            }}
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage(input);
-                }
-              }}
-              placeholder="Ask FinFox anything..."
-              disabled={loading || rateLimited}
-              style={{
-                flex: 1,
-                background: "#1F2937",
-                border: "1px solid #374151",
-                borderRadius: 8,
-                padding: "8px 12px",
-                color: "#F9FAFB",
-                fontSize: 13,
-                outline: "none",
-              }}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || loading || rateLimited}
-              style={{
-                background: input.trim() && !loading ? "#10B981" : "#1F2937",
-                border: "1px solid #374151",
-                borderRadius: 8,
-                padding: "8px 12px",
-                cursor: input.trim() && !loading ? "pointer" : "default",
-                color:
-                  input.trim() && !loading ? "#fff" : "rgba(255,255,255,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Send size={15} />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

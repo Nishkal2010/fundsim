@@ -1,20 +1,12 @@
 import React from "react";
 import { useFinFox } from "../../hooks/useFinFox";
-import type { FinFoxCorner, FinFoxExpression } from "./FinFoxProvider";
-
-const CORNER_STYLE: Record<FinFoxCorner, React.CSSProperties> = {
-  "bottom-right": { bottom: 20, right: 20 },
-  "bottom-left": { bottom: 20, left: 20 },
-  "top-right": { top: 80, right: 20 },
-  "top-left": { top: 80, left: 20 },
-};
+import type { FinFoxExpression } from "./FinFoxProvider";
 
 interface FoxSvgProps {
   expression: FinFoxExpression;
   size?: number;
 }
 
-// Green fox — clean geometric flat design (Mint Mobile inspired)
 export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
   return (
     <svg
@@ -31,18 +23,16 @@ export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
       {/* Body */}
       <ellipse cx="40" cy="56" rx="18" ry="13" fill="#10B981" />
 
-      {/* Left ear */}
+      {/* Ears */}
       <polygon points="20,30 14,6 30,24" fill="#10B981" />
       <polygon points="21,29 16,11 28,24" fill="#6EE7B7" />
-
-      {/* Right ear */}
       <polygon points="60,30 66,6 50,24" fill="#10B981" />
       <polygon points="59,29 64,11 52,24" fill="#6EE7B7" />
 
-      {/* Head — wide rounded rect */}
+      {/* Head */}
       <rect x="18" y="18" width="44" height="40" rx="22" fill="#10B981" />
 
-      {/* White chest patch */}
+      {/* Chest patch */}
       <ellipse cx="40" cy="56" rx="10" ry="7" fill="#ECFDF5" />
 
       {/* Muzzle */}
@@ -118,41 +108,83 @@ export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
 }
 
 export function FinFoxMascot() {
-  const { disabled, chatOpen, expression, foxCorner, openChat, tourActive } =
-    useFinFox();
+  const { disabled, chatOpen, expression, tourActive, openChat } = useFinFox();
 
   if (disabled) return null;
-
-  // During tour, fox is shown inside GuidedTour at correct corner
   if (tourActive) return null;
 
-  const cornerStyle = CORNER_STYLE[foxCorner];
-
   return (
-    <div
-      style={{
-        position: "fixed",
-        zIndex: 200,
-        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-        ...cornerStyle,
-      }}
-    >
-      <button
-        onClick={() => !chatOpen && openChat()}
-        title="Ask FinFox"
+    <>
+      <style>{`
+        @keyframes finfox-idle-bob {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+        }
+        @keyframes finfox-idle-glow {
+          0%, 100% { filter: drop-shadow(0 2px 6px rgba(16,185,129,0.22)); }
+          50% { filter: drop-shadow(0 4px 12px rgba(16,185,129,0.45)); }
+        }
+        @keyframes finfox-hint-pulse {
+          0%, 100% { opacity: 0; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+
+      <div
         style={{
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: chatOpen ? "default" : "pointer",
-          display: "block",
-          opacity: chatOpen ? 0.5 : 1,
-          transition: "opacity 0.2s ease",
-          filter: "drop-shadow(0 2px 6px rgba(16,185,129,0.25))",
+          position: "fixed",
+          bottom: 20,
+          right: 20,
+          zIndex: 200,
         }}
       >
-        <FoxSvg expression={expression} size={36} />
-      </button>
-    </div>
+        {/* "?" hint badge when chat is closed */}
+        {!chatOpen && (
+          <div
+            style={{
+              position: "absolute",
+              top: -2,
+              right: -2,
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              background: "#10B981",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 9,
+              fontWeight: 700,
+              color: "#fff",
+              zIndex: 1,
+              animation: "finfox-hint-pulse 3s ease-in-out 2s infinite",
+              pointerEvents: "none",
+            }}
+          >
+            ?
+          </div>
+        )}
+
+        <button
+          onClick={() => !chatOpen && openChat()}
+          title="Ask FinFox (press ? anywhere)"
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: chatOpen ? "default" : "pointer",
+            display: "block",
+            opacity: chatOpen ? 0.45 : 1,
+            transition: "opacity 0.2s ease",
+            animation: chatOpen
+              ? "none"
+              : expression === "thinking"
+                ? "none"
+                : "finfox-idle-bob 3s ease-in-out infinite, finfox-idle-glow 3s ease-in-out infinite",
+          }}
+        >
+          <FoxSvg expression={expression} size={38} />
+        </button>
+      </div>
+    </>
   );
 }
