@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Info, ToggleLeft, ToggleRight } from "lucide-react";
+import { ShareButton } from "../ShareButton";
 import { Slider } from "../Slider";
 import { MetricCard } from "../MetricCard";
 import { Tooltip } from "../Tooltip";
@@ -712,6 +713,45 @@ export function VCTab() {
             preference + pro-rata share of remainder.
           </span>
         </div>
+      </div>
+
+      {/* Share cap table */}
+      <div className="flex justify-end mt-4">
+        <ShareButton
+          data={{
+            simulator: "vc",
+            tab: "cap-table",
+            inputs: {
+              founderShares,
+              foundingESOPPct,
+              rounds: rounds.filter((r) => r.enabled),
+            },
+            summary: {
+              title: "VC Cap Table Analysis",
+              subtitle: `${enabledRounds.length} rounds · $${result.currentTotalRaised.toFixed(1)}M raised`,
+              metrics: [
+                {
+                  label: "Founder Ownership",
+                  value: `${(result.currentFounderOwnershipPct * 100).toFixed(1)}%`,
+                  highlight: true,
+                },
+                {
+                  label: "Total Raised",
+                  value: `$${result.currentTotalRaised.toFixed(1)}M`,
+                },
+                {
+                  label: "Fully Diluted Shares",
+                  value: result.fullyDilutedShares.toLocaleString(),
+                },
+                {
+                  label: "ESOP Pool",
+                  value: `${(result.currentESOPPct * 100).toFixed(1)}%`,
+                },
+              ],
+            },
+          }}
+          label="Share Cap Table"
+        />
       </div>
     </div>
   );

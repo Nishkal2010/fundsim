@@ -16,6 +16,8 @@ import {
   Legend,
 } from "recharts";
 import { IBLanding } from "./IBLanding";
+import { exportIBModelToExcel } from "../../lib/excelExport";
+import { ProGate } from "../ProGate";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const A = {
@@ -1635,31 +1637,57 @@ export function IBSimulator() {
           </span>
         </div>
 
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            window.location.hash = "";
-          }}
-          className="text-xs px-3 py-1.5 rounded-lg"
-          style={{
-            color: "#9CA3AF",
-            textDecoration: "none",
-            background: "rgba(55,65,81,0.5)",
-            border: "1px solid #374151",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "#F9FAFB";
-            (e.currentTarget as HTMLAnchorElement).style.background = "#374151";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
-            (e.currentTarget as HTMLAnchorElement).style.background =
-              "rgba(55,65,81,0.5)";
-          }}
-        >
-          ← FundSim
-        </a>
+        <div className="flex items-center gap-2">
+          <ProGate feature="Excel model download">
+            <button
+              onClick={() => exportIBModelToExcel(inputs, C)}
+              className="text-xs px-3 py-1.5 rounded-lg font-medium"
+              style={{
+                color: "#10B981",
+                background: "rgba(16,185,129,0.1)",
+                border: "1px solid rgba(16,185,129,0.3)",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(16,185,129,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  "rgba(16,185,129,0.1)";
+              }}
+              title="Download Excel model with all 4 sheets"
+            >
+              ↓ Excel
+            </button>
+          </ProGate>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = "";
+            }}
+            className="text-xs px-3 py-1.5 rounded-lg"
+            style={{
+              color: "#9CA3AF",
+              textDecoration: "none",
+              background: "rgba(55,65,81,0.5)",
+              border: "1px solid #374151",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#F9FAFB";
+              (e.currentTarget as HTMLAnchorElement).style.background =
+                "#374151";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
+              (e.currentTarget as HTMLAnchorElement).style.background =
+                "rgba(55,65,81,0.5)";
+            }}
+          >
+            ← FundSim
+          </a>
+        </div>
       </div>
 
       {/* Tab Bar */}
