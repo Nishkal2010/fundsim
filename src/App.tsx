@@ -324,14 +324,14 @@ function AppContent({ user, onLogout }: AppContentProps) {
       />
 
       <React.Suspense fallback={lazyFallback}>
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {activeSimulator === null && (
             <motion.div
               key="selector"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.35 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex-1"
             >
               <Hero
@@ -350,10 +350,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
           {activeSimulator === "ib" && (
             <motion.div
               key="ib"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.35 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex-1 flex flex-col"
             >
               {/* IB back bar */}
@@ -422,10 +422,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
           {activeSimulator === "pe" && (
             <motion.div
               key="pe"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.35 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex flex-col flex-1"
             >
               <GlobalInputs />
@@ -457,10 +457,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
           {activeSimulator === "vc" && (
             <motion.div
               key="vc"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.35 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex flex-col flex-1"
             >
               <TabBar
