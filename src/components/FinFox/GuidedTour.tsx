@@ -3,15 +3,66 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFinFox } from "../../hooks/useFinFox";
 import { FoxSvg } from "./FinFoxMascot";
 
+// Edge positions the fox can walk to between steps. The fox transitions
+// smoothly between positions so the tour feels like a guide walking around
+// the screen and pointing at things.
+type FoxCorner = "tl" | "tr" | "br" | "bl" | "tc" | "bc";
+
 interface TourStep {
-  // Optional DOM data-finfox target. If absent, tooltip renders centered
-  // without a spotlight — useful for intro/outro steps and for simulators
-  // that haven't been instrumented with target attributes yet.
   target?: string;
   title: string;
   body: string;
   tabHint?: string;
   navigateTo?: { sim: string; tab: string };
+  foxCorner?: FoxCorner;
+}
+
+function foxCornerStyle(c: FoxCorner): React.CSSProperties {
+  const PAD = 24;
+  switch (c) {
+    case "tl":
+      return { top: PAD, left: PAD };
+    case "tr":
+      return { top: PAD, right: PAD };
+    case "br":
+      return { bottom: PAD, right: PAD };
+    case "bl":
+      return { bottom: PAD, left: PAD };
+    case "tc":
+      return { top: PAD, left: "50%", marginLeft: -28 };
+    case "bc":
+      return { bottom: PAD, left: "50%", marginLeft: -28 };
+  }
+}
+
+function tooltipPosForCorner(
+  c: FoxCorner,
+  vw: number,
+  vh: number,
+): React.CSSProperties {
+  const PAD = 24;
+  const FOX = 60;
+  const W = Math.min(360, vw - PAD * 2);
+  const HALF = W / 2;
+  const ESTIMATED_H = 220;
+  switch (c) {
+    case "tl":
+      return { top: PAD + FOX + 14, left: PAD, width: W };
+    case "tr":
+      return { top: PAD + FOX + 14, right: PAD, width: W };
+    case "br":
+      return { bottom: PAD + FOX + 14, right: PAD, width: W };
+    case "bl":
+      return { bottom: PAD + FOX + 14, left: PAD, width: W };
+    case "tc":
+      return { top: PAD + FOX + 14, left: vw / 2 - HALF, width: W };
+    case "bc":
+      return {
+        top: Math.max(PAD, vh - PAD - FOX - ESTIMATED_H - 14),
+        left: vw / 2 - HALF,
+        width: W,
+      };
+  }
 }
 
 const TOUR_STEPS: Record<"vc" | "pe" | "ib", TourStep[]> = {
@@ -71,55 +122,65 @@ const TOUR_STEPS: Record<"vc" | "pe" | "ib", TourStep[]> = {
   pe: [
     {
       title: "Welcome to the PE Simulator",
-      body: "You're now running a private equity fund. Raise capital from LPs, buy companies with leverage, grow them, and exit for a multiple of your money.",
+      body: "You're running a private equity fund. Raise capital from LPs, buy companies with leverage, grow them, and exit for a multiple of your money. Take a look around — I'll wait, then we'll walk through the four pieces that matter most.",
       navigateTo: { sim: "pe", tab: "lifecycle" },
+      foxCorner: "bc",
     },
     {
       title: "Fund Lifecycle",
-      body: "PE funds live for 10 years: 5 to invest, 5 to harvest. Management fees (2%) eat capital every year — that's the 'fee drag' you have to overcome.",
+      body: "PE funds live for 10 years: 5 to invest, 5 to harvest. Management fees (2%) eat capital every year — that's the 'fee drag' you have to overcome. Try dragging the FUND SIZE slider above and watch the lifecycle change.",
       navigateTo: { sim: "pe", tab: "lifecycle" },
+      foxCorner: "tl",
     },
     {
       title: "J-Curve",
-      body: "Returns are negative for years 1–4 (fees + immature investments), then climb sharply as deals exit. Real LPs accept this curve as the price of buyout-grade returns.",
+      body: "Returns are negative for years 1–4 (fees + immature investments), then climb sharply as deals exit. Real LPs accept this curve as the price of buyout-grade returns. Hover the chart — each point is a real cashflow.",
       navigateTo: { sim: "pe", tab: "jcurve" },
+      foxCorner: "tr",
     },
     {
       title: "Waterfall & Carry",
-      body: "GPs earn 20% of profits above an 8% hurdle. European waterfall pays carry only after LPs are fully repaid; American pays per-deal. Try both and watch GP/LP splits change.",
+      body: "GPs earn 20% of profits above an 8% hurdle. European pays carry only after LPs are fully repaid; American pays per-deal. Toggle waterfall types — watch the GP/LP split swing.",
       navigateTo: { sim: "pe", tab: "waterfall" },
+      foxCorner: "br",
     },
     {
       title: "Performance Metrics",
       body: "DPI tells you what's been returned in cash. TVPI is total value (realized + paper). Net IRR is the time-weighted return. Together they tell the full story.",
       navigateTo: { sim: "pe", tab: "performance" },
+      foxCorner: "bl",
     },
   ],
   ib: [
     {
       title: "Welcome to the IB Simulator",
-      body: "You're an investment banker running an M&A deal — value the target, structure the offer, model accretion/dilution, and score the deal like an analyst.",
+      body: "You're an investment banker running an M&A deal — value the target, structure the offer, model accretion/dilution, and score the deal like an analyst. Have a look. I'll guide you through the four moves that matter.",
       navigateTo: { sim: "ib", tab: "main" },
+      foxCorner: "bc",
     },
     {
       title: "Pick a Deal Preset",
-      body: "Start with one of eight realistic scenarios — Microsoft–LinkedIn, Disney–Fox, Salesforce–Slack. Each one has real revenue, EBITDA, and strategic context.",
+      body: "Eight real scenarios — Microsoft–LinkedIn, Disney–Fox, Salesforce–Slack. Each has real revenue, EBITDA, and strategic context. Pick one to load the inputs.",
       navigateTo: { sim: "ib", tab: "main" },
+      foxCorner: "tr",
     },
     {
       title: "Four Valuation Methods",
       body: "DCF (intrinsic), Comps (peer multiples), Precedents (past deals), and LBO (sponsor floor). The football field chart shows your valuation range at a glance.",
       navigateTo: { sim: "ib", tab: "main" },
+      foxCorner: "br",
     },
     {
       title: "Offer Structure",
       body: "Cash, stock, or mixed — each has tax, EPS, and risk consequences. Adjust the mix and watch accretion/dilution shift in real time as synergies kick in.",
       navigateTo: { sim: "ib", tab: "main" },
+      foxCorner: "bl",
     },
     {
       title: "100-Point Deal Score",
-      body: "Bankers grade deals on valuation discipline, financing structure, synergy assumptions, and risk. Hit 80+ and you've structured a deal that survives committee.",
+      body: "Bankers grade deals on valuation discipline, financing, synergies, and risk. Hit 80+ and you've structured a deal that survives committee.",
       navigateTo: { sim: "ib", tab: "main" },
+      foxCorner: "tl",
     },
   ],
 };
@@ -251,13 +312,11 @@ export function GuidedTour() {
   if (!tourActive || !step) return null;
 
   const found = targetRect !== null;
+  // Default fox corner per step, with sensible fallbacks if not specified.
+  const foxCorner: FoxCorner = step.foxCorner ?? (found ? "br" : "bc");
   const tooltipPos = found
     ? computeTooltipPos(targetRect, vp.w, vp.h)
-    : {
-        top: vp.h / 2 - 130,
-        left: vp.w / 2 - TOOLTIP_WIDTH / 2,
-        width: TOOLTIP_WIDTH,
-      };
+    : tooltipPosForCorner(foxCorner, vp.w, vp.h);
 
   const isLast = tourStep === steps.length - 1;
 
@@ -268,23 +327,40 @@ export function GuidedTour() {
           0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.35); }
           50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.6); }
         }
+        @keyframes finfox-walk {
+          0%   { transform: translateY(0px)  rotate(-3deg); }
+          25%  { transform: translateY(-3px) rotate(0deg); }
+          50%  { transform: translateY(0px)  rotate(3deg); }
+          75%  { transform: translateY(-3px) rotate(0deg); }
+          100% { transform: translateY(0px)  rotate(-3deg); }
+        }
+        .finfox-tour-fox {
+          transition: top 0.7s cubic-bezier(0.65, 0, 0.35, 1),
+                      bottom 0.7s cubic-bezier(0.65, 0, 0.35, 1),
+                      left 0.7s cubic-bezier(0.65, 0, 0.35, 1),
+                      right 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        .finfox-tour-fox-inner {
+          animation: finfox-walk 0.9s ease-in-out infinite;
+          transform-origin: 50% 80%;
+          filter: drop-shadow(0 6px 18px rgba(16,185,129,0.35));
+        }
       `}</style>
 
-      {/* Overlay — 4 strips creating a spotlight hole */}
+      {/* Overlay */}
       {found ? (
         <>
-          {/* Top */}
+          {/* Spotlight strips for targeted steps */}
           <div
             style={{
               position: "fixed",
               inset: 0,
               bottom: vp.h - targetRect.top + 4,
               zIndex: 390,
-              background: "rgba(3,7,18,0.82)",
+              background: "rgba(3,7,18,0.78)",
               pointerEvents: "all",
             }}
           />
-          {/* Left */}
           <div
             style={{
               position: "fixed",
@@ -293,11 +369,10 @@ export function GuidedTour() {
               bottom: vp.h - targetRect.bottom - 4,
               left: 0,
               right: vp.w - targetRect.left + 4,
-              background: "rgba(3,7,18,0.82)",
+              background: "rgba(3,7,18,0.78)",
               pointerEvents: "all",
             }}
           />
-          {/* Right */}
           <div
             style={{
               position: "fixed",
@@ -306,23 +381,20 @@ export function GuidedTour() {
               bottom: vp.h - targetRect.bottom - 4,
               left: targetRect.right + 4,
               right: 0,
-              background: "rgba(3,7,18,0.82)",
+              background: "rgba(3,7,18,0.78)",
               pointerEvents: "all",
             }}
           />
-          {/* Bottom */}
           <div
             style={{
               position: "fixed",
               top: targetRect.bottom + 4,
               inset: 0,
               zIndex: 390,
-              background: "rgba(3,7,18,0.82)",
+              background: "rgba(3,7,18,0.78)",
               pointerEvents: "all",
             }}
           />
-
-          {/* Spotlight border — clickable to advance */}
           <div
             onClick={handleAdvance}
             style={{
@@ -339,28 +411,34 @@ export function GuidedTour() {
           />
         </>
       ) : (
+        // Light dim for no-target steps so the user can SEE the simulator
+        // they're being toured through. pointer-events: none lets them
+        // continue clicking around while the fox narrates.
         <div
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 390,
-            background: "rgba(3,7,18,0.88)",
-            pointerEvents: "all",
+            background: "rgba(3,7,18,0.18)",
+            pointerEvents: "none",
+            transition: "background 0.4s ease",
           }}
         />
       )}
 
-      {/* Fox — always bottom right during tour */}
+      {/* Fox — walks around the screen edges as the tour progresses */}
       <div
+        className="finfox-tour-fox"
         style={{
           position: "fixed",
           zIndex: 401,
-          bottom: 20,
-          right: 20,
+          ...foxCornerStyle(foxCorner),
           pointerEvents: "none",
         }}
       >
-        <FoxSvg expression={found ? "approving" : "thinking"} size={44} />
+        <div className="finfox-tour-fox-inner">
+          <FoxSvg expression={found ? "approving" : "neutral"} size={56} />
+        </div>
       </div>
 
       {/* Tooltip */}
