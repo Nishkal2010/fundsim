@@ -65,6 +65,48 @@ function tooltipPosForCorner(
   }
 }
 
+// Convert a corner identifier to absolute viewport pixel coordinates
+// for the top-left of the fox sprite.
+function cornerToXY(c: FoxCorner, vw: number, vh: number): [number, number] {
+  const PAD = 24;
+  const S = 84; // fox sprite size (approx)
+  switch (c) {
+    case "tl":
+      return [PAD, PAD];
+    case "tc":
+      return [vw / 2 - S / 2, PAD];
+    case "tr":
+      return [vw - S - PAD, PAD];
+    case "br":
+      return [vw - S - PAD, vh - S - PAD];
+    case "bc":
+      return [vw / 2 - S / 2, vh - S - PAD];
+    case "bl":
+      return [PAD, vh - S - PAD];
+  }
+}
+
+// Clockwise ordering of corners around the perimeter. The fox uses this
+// to choose a perimeter-following path instead of cutting diagonally.
+const CORNER_RING: FoxCorner[] = ["tl", "tc", "tr", "br", "bc", "bl"];
+
+function perimeterPath(from: FoxCorner, to: FoxCorner): FoxCorner[] {
+  const n = CORNER_RING.length;
+  const fi = CORNER_RING.indexOf(from);
+  const ti = CORNER_RING.indexOf(to);
+  if (fi === -1 || ti === -1 || fi === ti) return [from, to];
+  const cwDist = (ti - fi + n) % n;
+  const ccwDist = (fi - ti + n) % n;
+  const cw = cwDist <= ccwDist;
+  const out: FoxCorner[] = [from];
+  let i = fi;
+  while (i !== ti) {
+    i = cw ? (i + 1) % n : (i - 1 + n) % n;
+    out.push(CORNER_RING[i]);
+  }
+  return out;
+}
+
 const TOUR_STEPS: Record<"vc" | "pe" | "ib", TourStep[]> = {
   vc: [
     {
@@ -234,6 +276,9 @@ export function GuidedTour() {
   const scrolledRef = useRef<Set<string>>(new Set());
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  // Remembers where the fox was last frame so we can walk along the
+  // perimeter to the next corner instead of cutting diagonally.
+  const prevFoxCornerRef = useRef<FoxCorner | null>(null);
 
   const steps = tourSim ? TOUR_STEPS[tourSim] : [];
   const step = steps[tourStep];
@@ -329,13 +374,7 @@ export function GuidedTour() {
         }
         @keyframes finfox-tour-bob {
           0%, 100% { transform: translateY(0px); }
-          50%      { transform: translateY(-3px); }
-        }
-        .finfox-tour-fox {
-          transition: top 0.9s cubic-bezier(0.65, 0, 0.35, 1),
-                      bottom 0.9s cubic-bezier(0.65, 0, 0.35, 1),
-                      left 0.9s cubic-bezier(0.65, 0, 0.35, 1),
-                      right 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+          50%      { transform: translateY(-4px); }
         }
         .finfox-tour-fox-inner {
           animation: finfox-tour-bob 0.45s ease-in-out infinite;
@@ -422,24 +461,49 @@ export function GuidedTour() {
         />
       )}
 
-      {/* Fox — walks around the screen edges as the tour progresses */}
-      <div
-        className="finfox-tour-fox"
-        style={{
-          position: "fixed",
-          zIndex: 401,
-          ...foxCornerStyle(foxCorner),
-          pointerEvents: "none",
-        }}
-      >
-        <div className="finfox-tour-fox-inner">
-          <FoxSvg
-            expression={found ? "approving" : "neutral"}
-            size={72}
-            walking
-          />
-        </div>
-      </div>
+      {(() => {
+        // Compute a perimeter-walking path from previous corner to current.
+        const path = perimeterPath(
+          prevFoxCornerRef.current ?? foxCorner,
+          foxCorner,
+        );
+        const xs = path.map((c) => cornerToXY(c, vp.w, vp.h)[0]);
+        const ys = path.map((c) => cornerToXY(c, vp.w, vp.h)[1]);
+        const segmentSec = 0.55;
+        const duration = Math.max(0.4, (path.length - 1) * segmentSec);
+        // Capture current corner so the next render walks from here.
+        prevFoxCornerRef.current = foxCorner;
+        return (
+          <motion.div
+            initial={false}
+            animate={{ x: xs, y: ys }}
+            transition={{
+              duration,
+              ease: "linear",
+              times:
+                xs.length > 1
+                  ? xs.map((_, i) => i / (xs.length - 1))
+                  : undefined,
+            }}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              zIndex: 401,
+              pointerEvents: "none",
+              willChange: "transform",
+            }}
+          >
+            <div className="finfox-tour-fox-inner">
+              <FoxSvg
+                expression={found ? "approving" : "neutral"}
+                size={72}
+                walking
+              />
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* Tooltip */}
       <AnimatePresence mode="wait">
