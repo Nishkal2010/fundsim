@@ -98,6 +98,21 @@ function tooltipPosForCorner(
   }
 }
 
+// Given a target rectangle on screen, choose the screen corner that's
+// FURTHEST from it. That way the fox narrates from out of the way of
+// the thing the user is supposed to be looking at, instead of sitting
+// on top of it.
+function cornerOppositeTo(rect: DOMRect, vw: number, vh: number): FoxCorner {
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const isLeft = cx < vw / 2;
+  const isTop = cy < vh / 2;
+  if (isTop && isLeft) return "br";
+  if (isTop && !isLeft) return "bl";
+  if (!isTop && isLeft) return "tr";
+  return "tl";
+}
+
 // Convert a corner identifier to absolute viewport pixel coordinates
 // for the top-left of the fox sprite.
 function cornerToXY(c: FoxCorner, vw: number, vh: number): [number, number] {
@@ -390,7 +405,13 @@ export function GuidedTour() {
   // ── Derived values needed by hooks below — must be computed BEFORE any
   // early returns so the hook order stays stable across renders.
   const safeFound = targetRect !== null;
-  const safeFoxCorner: FoxCorner = step?.foxCorner ?? (safeFound ? "br" : "bc");
+  // If the step explicitly sets foxCorner, honor it. Otherwise, when
+  // we have a target on screen, place the fox at the corner OPPOSITE
+  // the highlighted element so he walks around to narrate from out of
+  // the way. Falls back to bottom-center when there is no target.
+  const safeFoxCorner: FoxCorner =
+    step?.foxCorner ??
+    (safeFound && targetRect ? cornerOppositeTo(targetRect, vp.w, vp.h) : "bc");
   const walkPath = perimeterPath(
     prevFoxCornerRef.current ?? safeFoxCorner,
     safeFoxCorner,
@@ -532,8 +553,8 @@ export function GuidedTour() {
         prevFoxCornerRef.current = foxCorner;
         return (
           <motion.div
-            initial={false}
-            animate={{ x: xs, y: ys }}
+            initial={{ x: xs[0], y: ys[0], opacity: 0, scale: 0.7 }}
+            animate={{ x: xs, y: ys, opacity: 1, scale: 1 }}
             transition={{
               duration,
               ease: "linear",
@@ -668,21 +689,6 @@ export function GuidedTour() {
             >
               Click the <strong>{step.tabHint}</strong> tab above to reveal this
               section
-            </div>
-          )}
-
-          {/* Element found hint */}
-          {found && (
-            <div
-              style={{
-                fontSize: 11,
-                color: "rgba(16,185,129,0.7)",
-                textAlign: "center",
-                marginBottom: 12,
-                letterSpacing: "0.02em",
-              }}
-            >
-              Click the highlighted area to continue →
             </div>
           )}
 

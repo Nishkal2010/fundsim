@@ -153,6 +153,7 @@ export function ChatPanel() {
     activeScreen,
     setExpression,
     startTour,
+    tourActive,
   } = useFinFox();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -434,8 +435,13 @@ export function ChatPanel() {
                   {activeSim && (
                     <button
                       onClick={() => {
+                        if (tourActive) return; // already running
+                        const sim = activeSim;
+                        // Close the chat panel first; defer the tour
+                        // start by one frame so the chat exit animation
+                        // doesn't compete with the fox entrance.
                         closeChat();
-                        startTour(activeSim);
+                        requestAnimationFrame(() => startTour(sim));
                       }}
                       style={{
                         marginTop: 2,
