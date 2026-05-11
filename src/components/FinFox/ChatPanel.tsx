@@ -152,6 +152,7 @@ export function ChatPanel() {
     activeSim,
     activeScreen,
     setExpression,
+    startTour,
   } = useFinFox();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -416,19 +417,61 @@ export function ChatPanel() {
             >
               {/* Greeting when empty */}
               {messages.length === 0 && (
-                <div
-                  style={{
-                    background: "rgba(16,185,129,0.06)",
-                    border: "1px solid rgba(16,185,129,0.12)",
-                    borderRadius: 12,
-                    padding: "12px 14px",
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.55)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {greeting}
-                </div>
+                <>
+                  <div
+                    style={{
+                      background: "rgba(16,185,129,0.06)",
+                      border: "1px solid rgba(16,185,129,0.12)",
+                      borderRadius: 12,
+                      padding: "12px 14px",
+                      fontSize: 13,
+                      color: "rgba(255,255,255,0.55)",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {greeting}
+                  </div>
+                  {activeSim && (
+                    <button
+                      onClick={() => {
+                        closeChat();
+                        startTour(activeSim);
+                      }}
+                      style={{
+                        marginTop: 2,
+                        background: "rgba(16,185,129,0.08)",
+                        border: "1px solid rgba(16,185,129,0.25)",
+                        borderRadius: 10,
+                        padding: "9px 12px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "#34D399",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "rgba(16,185,129,0.14)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "rgba(16,185,129,0.08)";
+                      }}
+                    >
+                      <span>
+                        Take a guided tour of the {activeSim.toUpperCase()}{" "}
+                        simulator
+                      </span>
+                      <span style={{ fontSize: 14 }}>→</span>
+                    </button>
+                  )}
+                </>
               )}
 
               {messages.map((msg, i) => (

@@ -23,6 +23,7 @@ export interface FinFoxContextType {
   activeSim: FinFoxSim | null;
   activeScreen: string;
   tourActive: boolean;
+  tourSim: FinFoxSim | null;
   tourStep: number;
   tourCompleted: boolean;
   foxCorner: FinFoxCorner;
@@ -34,7 +35,7 @@ export interface FinFoxContextType {
   setActiveSim: (sim: FinFoxSim | null) => void;
   setActiveScreen: (screen: string) => void;
   setExpression: (expr: FinFoxExpression) => void;
-  startTour: () => void;
+  startTour: (sim?: FinFoxSim) => void;
   nextTourStep: () => void;
   prevTourStep: () => void;
   skipTour: () => void;
@@ -49,7 +50,12 @@ export interface FinFoxContextType {
 
 export const FinFoxContext = createContext<FinFoxContextType | null>(null);
 
-const TOUR_STEPS_COUNT = 8;
+// Number of steps in each simulator's tour. Kept in sync with TOUR_STEPS in GuidedTour.tsx.
+const TOUR_STEPS_COUNT: Record<FinFoxSim, number> = { vc: 8, pe: 5, ib: 5 };
+
+function tourKey(sim: FinFoxSim): string {
+  return `${sim}_tour_completed`;
+}
 
 export function FinFoxProvider({ children }: { children: React.ReactNode }) {
   const [seen, setSeen] = useState(
@@ -71,6 +77,7 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
   const [activeScreen, setActiveScreen] = useState("home");
 
   const [tourActive, setTourActive] = useState(false);
+  const [tourSim, setTourSim] = useState<FinFoxSim | null>(null);
   const [tourStep, setTourStep] = useState(0);
   const [tourCompleted, setTourCompleted] = useState(
     () => localStorage.getItem("vc_tour_completed") === "true",
@@ -127,33 +134,37 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const startTour = useCallback(() => {
+  const startTour = useCallback((sim: FinFoxSim = "vc") => {
     setTourStep(0);
     tourStepRef.current = 0;
+    setTourSim(sim);
     setTourActive(true);
     tourActiveRef.current = true;
     setChatOpen(false);
+    // Default first-step tab per simulator
+    const firstTab =
+      sim === "vc" ? "captable" : sim === "pe" ? "lifecycle" : "main";
     window.dispatchEvent(
-      new CustomEvent("finfox:navigate", {
-        detail: { sim: "vc", tab: "captable" },
-      }),
+      new CustomEvent("finfox:navigate", { detail: { sim, tab: firstTab } }),
     );
   }, []);
 
   const nextTourStep = useCallback(() => {
+    const sim = tourSim;
     setTourStep((prev) => {
+      const total = sim ? TOUR_STEPS_COUNT[sim] : 0;
       const next = prev + 1;
-      if (next >= TOUR_STEPS_COUNT) {
+      if (!sim || next >= total) {
         setTourActive(false);
         tourActiveRef.current = false;
         setTourCompleted(true);
-        localStorage.setItem("vc_tour_completed", "true");
+        if (sim) localStorage.setItem(tourKey(sim), "true");
         return prev;
       }
       tourStepRef.current = next;
       return next;
     });
-  }, []);
+  }, [tourSim]);
 
   const prevTourStep = useCallback(() => {
     setTourStep((prev) => {
@@ -167,8 +178,8 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     setTourActive(false);
     tourActiveRef.current = false;
     setTourCompleted(true);
-    localStorage.setItem("vc_tour_completed", "true");
-  }, []);
+    if (tourSim) localStorage.setItem(tourKey(tourSim), "true");
+  }, [tourSim]);
 
   const openNegotiation = useCallback((sim: FinFoxSim) => {
     setNegotiationSim(sim);
@@ -191,12 +202,11 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
       setSeen(true);
       setShowOnboarding(false);
       localStorage.setItem("finfox_seen", "true");
-      if (
-        sim === "vc" &&
-        localStorage.getItem("vc_tour_completed") !== "true"
-      ) {
+      // Start a guided tour for whichever simulator the user picked. Skip if
+      // they've already completed that sim's tour before.
+      if (localStorage.getItem(tourKey(sim)) !== "true") {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => startTour(), 600);
+        timeoutRef.current = setTimeout(() => startTour(sim), 600);
       }
     },
     [startTour],
@@ -228,6 +238,8 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
 
   const resetTour = useCallback(() => {
     localStorage.removeItem("vc_tour_completed");
+    localStorage.removeItem("pe_tour_completed");
+    localStorage.removeItem("ib_tour_completed");
     setTourCompleted(false);
   }, []);
 
@@ -240,6 +252,7 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     activeSim,
     activeScreen,
     tourActive,
+    tourSim,
     tourStep,
     tourCompleted,
     foxCorner,

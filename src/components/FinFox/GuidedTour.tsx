@@ -4,67 +4,125 @@ import { useFinFox } from "../../hooks/useFinFox";
 import { FoxSvg } from "./FinFoxMascot";
 
 interface TourStep {
-  target: string;
+  // Optional DOM data-finfox target. If absent, tooltip renders centered
+  // without a spotlight — useful for intro/outro steps and for simulators
+  // that haven't been instrumented with target attributes yet.
+  target?: string;
   title: string;
   body: string;
   tabHint?: string;
-  // Which tab to navigate to for this step
   navigateTo?: { sim: string; tab: string };
 }
 
-const TOUR_STEPS: TourStep[] = [
-  {
-    target: "sim-overview",
-    title: "Welcome to the VC Simulator",
-    body: "You're about to run a real venture capital deal. You decide the valuation, check size, and terms — just like a real investor.",
-    navigateTo: { sim: "vc", tab: "captable" },
-  },
-  {
-    target: "pitch-panel",
-    title: "Read the Startup Pitch",
-    body: "Every deal starts here. Revenue, burn, runway — these tell you how urgently the founder needs money and how much leverage you have.",
-    navigateTo: { sim: "vc", tab: "captable" },
-  },
-  {
-    target: "valuation",
-    title: "Set the Pre-Money Valuation",
-    body: "This is what you're agreeing the company is worth before your check. Too high = small ownership. Too low = the founder walks.",
-    navigateTo: { sim: "vc", tab: "captable" },
-  },
-  {
-    target: "check-size",
-    title: "Choose Your Check Size",
-    body: "Investment ÷ (Pre-money + Investment) = your ownership. A $2M check at $8M pre-money gives you 20% of the company.",
-    navigateTo: { sim: "vc", tab: "captable" },
-  },
-  {
-    target: "cap-table",
-    title: "Watch the Cap Table Update",
-    body: "Every row is a shareholder. Founders dilute every round. Adding an option pool before your investment dilutes founders even more — that's the 'option pool shuffle.'",
-    navigateTo: { sim: "vc", tab: "captable" },
-  },
-  {
-    target: "terms",
-    title: "Negotiate Deal Terms",
-    body: "1x non-participating liquidation preference is founder-friendly. Anything above 1x or participating is aggressive. Good investors don't need predatory terms.",
-    navigateTo: { sim: "vc", tab: "termsheet" },
-    tabHint: "Term Sheet",
-  },
-  {
-    target: "negotiation",
-    title: "Role-Play the Negotiation",
-    body: "FinFox plays the founder and responds to your term sheet in real time. Try making an aggressive offer — see what the founder says.",
-    navigateTo: { sim: "vc", tab: "termsheet" },
-    tabHint: "Term Sheet",
-  },
-  {
-    target: "outcome",
-    title: "See the Deal Score",
-    body: "This score shows how balanced your term sheet is. Balanced terms close deals. Predatory terms lose them. Real investors learn the difference.",
-    navigateTo: { sim: "vc", tab: "termsheet" },
-    tabHint: "Term Sheet",
-  },
-];
+const TOUR_STEPS: Record<"vc" | "pe" | "ib", TourStep[]> = {
+  vc: [
+    {
+      target: "sim-overview",
+      title: "Welcome to the VC Simulator",
+      body: "You're about to run a real venture capital deal. You decide the valuation, check size, and terms — just like a real investor.",
+      navigateTo: { sim: "vc", tab: "captable" },
+    },
+    {
+      target: "pitch-panel",
+      title: "Read the Startup Pitch",
+      body: "Every deal starts here. Revenue, burn, runway — these tell you how urgently the founder needs money and how much leverage you have.",
+      navigateTo: { sim: "vc", tab: "captable" },
+    },
+    {
+      target: "valuation",
+      title: "Set the Pre-Money Valuation",
+      body: "This is what you're agreeing the company is worth before your check. Too high = small ownership. Too low = the founder walks.",
+      navigateTo: { sim: "vc", tab: "captable" },
+    },
+    {
+      target: "check-size",
+      title: "Choose Your Check Size",
+      body: "Investment ÷ (Pre-money + Investment) = your ownership. A $2M check at $8M pre-money gives you 20% of the company.",
+      navigateTo: { sim: "vc", tab: "captable" },
+    },
+    {
+      target: "cap-table",
+      title: "Watch the Cap Table Update",
+      body: "Every row is a shareholder. Founders dilute every round. Adding an option pool before your investment dilutes founders even more — the 'option pool shuffle.'",
+      navigateTo: { sim: "vc", tab: "captable" },
+    },
+    {
+      target: "terms",
+      title: "Negotiate Deal Terms",
+      body: "1x non-participating liquidation preference is founder-friendly. Anything above 1x or participating is aggressive. Good investors don't need predatory terms.",
+      navigateTo: { sim: "vc", tab: "termsheet" },
+      tabHint: "Term Sheet",
+    },
+    {
+      target: "negotiation",
+      title: "Role-Play the Negotiation",
+      body: "FinFox plays the founder and responds to your term sheet in real time. Try making an aggressive offer — see what the founder says.",
+      navigateTo: { sim: "vc", tab: "termsheet" },
+      tabHint: "Term Sheet",
+    },
+    {
+      target: "outcome",
+      title: "See the Deal Score",
+      body: "This score shows how balanced your term sheet is. Balanced terms close deals. Predatory terms lose them. Real investors learn the difference.",
+      navigateTo: { sim: "vc", tab: "termsheet" },
+      tabHint: "Term Sheet",
+    },
+  ],
+  pe: [
+    {
+      title: "Welcome to the PE Simulator",
+      body: "You're now running a private equity fund. Raise capital from LPs, buy companies with leverage, grow them, and exit for a multiple of your money.",
+      navigateTo: { sim: "pe", tab: "lifecycle" },
+    },
+    {
+      title: "Fund Lifecycle",
+      body: "PE funds live for 10 years: 5 to invest, 5 to harvest. Management fees (2%) eat capital every year — that's the 'fee drag' you have to overcome.",
+      navigateTo: { sim: "pe", tab: "lifecycle" },
+    },
+    {
+      title: "J-Curve",
+      body: "Returns are negative for years 1–4 (fees + immature investments), then climb sharply as deals exit. Real LPs accept this curve as the price of buyout-grade returns.",
+      navigateTo: { sim: "pe", tab: "jcurve" },
+    },
+    {
+      title: "Waterfall & Carry",
+      body: "GPs earn 20% of profits above an 8% hurdle. European waterfall pays carry only after LPs are fully repaid; American pays per-deal. Try both and watch GP/LP splits change.",
+      navigateTo: { sim: "pe", tab: "waterfall" },
+    },
+    {
+      title: "Performance Metrics",
+      body: "DPI tells you what's been returned in cash. TVPI is total value (realized + paper). Net IRR is the time-weighted return. Together they tell the full story.",
+      navigateTo: { sim: "pe", tab: "performance" },
+    },
+  ],
+  ib: [
+    {
+      title: "Welcome to the IB Simulator",
+      body: "You're an investment banker running an M&A deal — value the target, structure the offer, model accretion/dilution, and score the deal like an analyst.",
+      navigateTo: { sim: "ib", tab: "main" },
+    },
+    {
+      title: "Pick a Deal Preset",
+      body: "Start with one of eight realistic scenarios — Microsoft–LinkedIn, Disney–Fox, Salesforce–Slack. Each one has real revenue, EBITDA, and strategic context.",
+      navigateTo: { sim: "ib", tab: "main" },
+    },
+    {
+      title: "Four Valuation Methods",
+      body: "DCF (intrinsic), Comps (peer multiples), Precedents (past deals), and LBO (sponsor floor). The football field chart shows your valuation range at a glance.",
+      navigateTo: { sim: "ib", tab: "main" },
+    },
+    {
+      title: "Offer Structure",
+      body: "Cash, stock, or mixed — each has tax, EPS, and risk consequences. Adjust the mix and watch accretion/dilution shift in real time as synergies kick in.",
+      navigateTo: { sim: "ib", tab: "main" },
+    },
+    {
+      title: "100-Point Deal Score",
+      body: "Bankers grade deals on valuation discipline, financing structure, synergy assumptions, and risk. Hit 80+ and you've structured a deal that survives committee.",
+      navigateTo: { sim: "ib", tab: "main" },
+    },
+  ],
+};
 
 const TOOLTIP_WIDTH = 310;
 const TOOLTIP_PAD = 16;
@@ -101,8 +159,14 @@ function computeTooltipPos(
 }
 
 export function GuidedTour() {
-  const { tourActive, tourStep, nextTourStep, prevTourStep, skipTour } =
-    useFinFox();
+  const {
+    tourActive,
+    tourSim,
+    tourStep,
+    nextTourStep,
+    prevTourStep,
+    skipTour,
+  } = useFinFox();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -110,7 +174,8 @@ export function GuidedTour() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  const step = TOUR_STEPS[tourStep];
+  const steps = tourSim ? TOUR_STEPS[tourSim] : [];
+  const step = steps[tourStep];
 
   // Navigate to correct tab when step changes, then reset scroll so the
   // next "scrollIntoView" starts from a known top-of-page position. Without
@@ -130,22 +195,29 @@ export function GuidedTour() {
 
   // Poll for target element — but only scroll ONCE per step. Wait a brief
   // moment after navigation so React has actually mounted the new tab.
+  // Steps without a `target` skip polling entirely and render centered.
   useEffect(() => {
     if (!tourActive || !step) return;
     if (pollRef.current) clearInterval(pollRef.current);
 
-    scrolledRef.current.delete(step.target);
+    if (!step.target) {
+      // No spotlight needed — center tooltip on screen
+      setTargetRect(null);
+      return;
+    }
+
+    const targetId = step.target;
+    scrolledRef.current.delete(targetId);
 
     const measureAndUpdate = () => {
-      const el = getTargetEl(step.target);
+      const el = getTargetEl(targetId);
       if (el) {
-        if (!scrolledRef.current.has(step.target)) {
-          scrolledRef.current.add(step.target);
+        if (!scrolledRef.current.has(targetId)) {
+          scrolledRef.current.add(targetId);
           el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         animFrameRef.current = requestAnimationFrame(() => {
-          const rect =
-            getTargetEl(step.target)?.getBoundingClientRect() ?? null;
+          const rect = getTargetEl(targetId)?.getBoundingClientRect() ?? null;
           setTargetRect(rect);
         });
       } else {
@@ -153,14 +225,12 @@ export function GuidedTour() {
       }
     };
 
-    // Give the target tab ~250ms to mount before first measurement. This
-    // is the difference between a smooth tour and one that "goes aya".
     const initialDelay = setTimeout(measureAndUpdate, 250);
     pollRef.current = setInterval(measureAndUpdate, 600);
 
     const onResize = () => {
       setVp({ w: window.innerWidth, h: window.innerHeight });
-      const rect = getTargetEl(step.target)?.getBoundingClientRect() ?? null;
+      const rect = getTargetEl(targetId)?.getBoundingClientRect() ?? null;
       setTargetRect(rect);
     };
     window.addEventListener("resize", onResize);
@@ -171,7 +241,7 @@ export function GuidedTour() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener("resize", onResize);
     };
-  }, [tourActive, tourStep]);
+  }, [tourActive, tourStep, step]);
 
   const handleAdvance = useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -189,7 +259,7 @@ export function GuidedTour() {
         width: TOOLTIP_WIDTH,
       };
 
-  const isLast = tourStep === TOUR_STEPS.length - 1;
+  const isLast = tourStep === steps.length - 1;
 
   return (
     <>
@@ -330,10 +400,10 @@ export function GuidedTour() {
                 letterSpacing: "0.1em",
               }}
             >
-              {tourStep + 1} / {TOUR_STEPS.length}
+              {tourStep + 1} / {steps.length}
             </span>
             <div style={{ display: "flex", gap: 3 }}>
-              {TOUR_STEPS.map((_, i) => (
+              {steps.map((_, i) => (
                 <div
                   key={i}
                   style={{
