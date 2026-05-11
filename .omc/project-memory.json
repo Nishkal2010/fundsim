@@ -448,6 +448,12 @@
       "type": "file"
     },
     {
+      "path": "src/components/Hero.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1778474757574,
+      "type": "file"
+    },
+    {
       "path": "src/components/YIS/YISLanding.tsx",
       "accessCount": 2,
       "lastAccessed": 1775793081674,
@@ -469,12 +475,6 @@
       "path": "src/components/Footer.tsx",
       "accessCount": 2,
       "lastAccessed": 1775793093608,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Hero.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775793093847,
       "type": "file"
     },
     {

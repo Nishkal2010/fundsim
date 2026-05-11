@@ -423,6 +423,14 @@ export function GuidedTour() {
   );
   const typedBody = useTypewriter(step?.body ?? "", walkDurationMs);
 
+  // Capture the corner the fox is at AFTER this render commits, so the
+  // next step's path can start from the right place. Doing this in an
+  // effect (instead of mutating during render) avoids strict-mode
+  // double-renders from wiping prev before we use it.
+  useEffect(() => {
+    prevFoxCornerRef.current = safeFoxCorner;
+  }, [safeFoxCorner]);
+
   if (!tourActive || !step) return null;
 
   const found = safeFound;
@@ -550,7 +558,10 @@ export function GuidedTour() {
             cornerToXY(path[i + 1], vp.w, vp.h),
           );
         }
-        prevFoxCornerRef.current = foxCorner;
+        // NOTE: prevFoxCornerRef is updated in a useEffect below, not
+        // here — mutating refs during render is impure and was causing
+        // strict-mode double-renders to wipe the previous corner before
+        // the walk could be computed.
         return (
           <motion.div
             initial={{ x: xs[0], y: ys[0], opacity: 0, scale: 0.7 }}
