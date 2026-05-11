@@ -1,20 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinFox } from "../../hooks/useFinFox";
-import { FoxWalkingSide, type FoxFacing } from "./FinFoxMascot";
-
-// Pick the dominant facing for a walk from `from` to `to`. If the
-// horizontal delta is larger we say the fox is walking right/left;
-// otherwise up/down. This is the simplest read that "looks right".
-function facingForMove(
-  from: [number, number],
-  to: [number, number],
-): FoxFacing {
-  const dx = to[0] - from[0];
-  const dy = to[1] - from[1];
-  if (Math.abs(dx) > Math.abs(dy)) return dx >= 0 ? "right" : "left";
-  return dy >= 0 ? "down" : "up";
-}
+import { FoxSvg } from "./FinFoxMascot";
 
 // Typewriter effect — reveals `text` over `durationMs`, mounting from
 // empty whenever the source text changes (i.e. on every tour step).
@@ -541,53 +528,24 @@ export function GuidedTour() {
         />
       )}
 
-      {(() => {
-        // Compute a perimeter-walking path from previous corner to current.
-        const path = perimeterPath(
-          prevFoxCornerRef.current ?? foxCorner,
-          foxCorner,
-        );
-        const xs = path.map((c) => cornerToXY(c, vp.w, vp.h)[0]);
-        const ys = path.map((c) => cornerToXY(c, vp.w, vp.h)[1]);
-        const segmentSec = 1.4;
-        const duration = Math.max(0.6, (path.length - 1) * segmentSec);
-        let facing: FoxFacing = "right";
-        for (let i = 0; i < path.length - 1; i++) {
-          facing = facingForMove(
-            cornerToXY(path[i], vp.w, vp.h),
-            cornerToXY(path[i + 1], vp.w, vp.h),
-          );
-        }
-        // NOTE: prevFoxCornerRef is updated in a useEffect below, not
-        // here — mutating refs during render is impure and was causing
-        // strict-mode double-renders to wipe the previous corner before
-        // the walk could be computed.
-        return (
-          <motion.div
-            initial={{ x: xs[0], y: ys[0], opacity: 0, scale: 0.7 }}
-            animate={{ x: xs, y: ys, opacity: 1, scale: 1 }}
-            transition={{
-              duration,
-              ease: "linear",
-              times:
-                xs.length > 1
-                  ? xs.map((_, i) => i / (xs.length - 1))
-                  : undefined,
-            }}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              zIndex: 401,
-              pointerEvents: "none",
-              willChange: "transform",
-              filter: "drop-shadow(0 10px 26px rgba(16,185,129,0.45))",
-            }}
-          >
-            <FoxWalkingSide size={104} facing={facing} />
-          </motion.div>
-        );
-      })()}
+      {/* Fox — front-facing, Duolingo-style. Teleports between corners
+          with a quick fade so the eye notices the jump but it isn't
+          jarring. */}
+      <motion.div
+        key={`fox-${foxCorner}`}
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: "fixed",
+          ...foxCornerStyle(foxCorner),
+          zIndex: 401,
+          pointerEvents: "none",
+          filter: "drop-shadow(0 10px 26px rgba(16,185,129,0.45))",
+        }}
+      >
+        <FoxSvg expression={found ? "approving" : "neutral"} size={88} />
+      </motion.div>
 
       {/* Tooltip */}
       <AnimatePresence mode="wait">
