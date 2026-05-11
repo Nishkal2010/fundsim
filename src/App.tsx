@@ -188,6 +188,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("finfox:navigate", handler);
   }, []);
 
+  // Scroll to top whenever a simulator is entered or tab changes within a sim.
+  // Without this, entering a simulator can land the user mid-page.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [activeSimulator, activePETab, activeVCTab, ibView]);
+
   const peTabOrder: PETabId[] = [
     "lifecycle",
     "jcurve",

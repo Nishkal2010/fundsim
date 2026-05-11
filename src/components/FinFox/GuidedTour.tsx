@@ -112,20 +112,28 @@ export function GuidedTour() {
 
   const step = TOUR_STEPS[tourStep];
 
-  // Navigate to correct tab when step changes
+  // Navigate to correct tab when step changes, then reset scroll so the
+  // next "scrollIntoView" starts from a known top-of-page position. Without
+  // this the page can land mid-scroll and the spotlight feels disoriented.
   useEffect(() => {
     if (!tourActive || !step?.navigateTo) return;
     window.dispatchEvent(
       new CustomEvent("finfox:navigate", { detail: step.navigateTo }),
     );
+    // Hide the previous spotlight while the new tab mounts to avoid a flash
+    // of the old highlight in the wrong place.
+    setTargetRect(null);
+    requestAnimationFrame(() =>
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" }),
+    );
   }, [tourActive, tourStep]);
 
-  // Poll for target element — but only scroll ONCE per step
+  // Poll for target element — but only scroll ONCE per step. Wait a brief
+  // moment after navigation so React has actually mounted the new tab.
   useEffect(() => {
     if (!tourActive || !step) return;
     if (pollRef.current) clearInterval(pollRef.current);
 
-    // Reset scroll tracking for new step
     scrolledRef.current.delete(step.target);
 
     const measureAndUpdate = () => {
@@ -135,7 +143,6 @@ export function GuidedTour() {
           scrolledRef.current.add(step.target);
           el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-        // Measure after potential scroll settles
         animFrameRef.current = requestAnimationFrame(() => {
           const rect =
             getTargetEl(step.target)?.getBoundingClientRect() ?? null;
@@ -146,8 +153,10 @@ export function GuidedTour() {
       }
     };
 
-    measureAndUpdate();
-    pollRef.current = setInterval(measureAndUpdate, 800);
+    // Give the target tab ~250ms to mount before first measurement. This
+    // is the difference between a smooth tour and one that "goes aya".
+    const initialDelay = setTimeout(measureAndUpdate, 250);
+    pollRef.current = setInterval(measureAndUpdate, 600);
 
     const onResize = () => {
       setVp({ w: window.innerWidth, h: window.innerHeight });
@@ -157,6 +166,7 @@ export function GuidedTour() {
     window.addEventListener("resize", onResize);
 
     return () => {
+      clearTimeout(initialDelay);
       if (pollRef.current) clearInterval(pollRef.current);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener("resize", onResize);

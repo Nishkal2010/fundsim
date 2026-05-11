@@ -238,6 +238,12 @@
       "type": "file"
     },
     {
+      "path": "src/App.tsx",
+      "accessCount": 34,
+      "lastAccessed": 1778361064725,
+      "type": "file"
+    },
+    {
       "path": "src/utils/jCurve.ts",
       "accessCount": 33,
       "lastAccessed": 1776019208009,
@@ -253,12 +259,6 @@
       "path": "src/utils/performance.ts",
       "accessCount": 29,
       "lastAccessed": 1776019202635,
-      "type": "file"
-    },
-    {
-      "path": "src/App.tsx",
-      "accessCount": 28,
-      "lastAccessed": 1776019208772,
       "type": "file"
     },
     {
@@ -395,8 +395,14 @@
     },
     {
       "path": "src/components/GlobalInputs.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1775860226443,
+      "accessCount": 4,
+      "lastAccessed": 1778360748880,
+      "type": "file"
+    },
+    {
+      "path": "src/components/FundLifecycle/FundLifecycleTab.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1778360801815,
       "type": "file"
     },
     {
@@ -415,12 +421,6 @@
       "path": "src/components/Performance/SensitivityTable.tsx",
       "accessCount": 3,
       "lastAccessed": 1776018844421,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/FundLifecycleTab.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018845890,
       "type": "file"
     },
     {

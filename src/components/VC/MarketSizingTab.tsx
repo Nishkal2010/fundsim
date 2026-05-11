@@ -189,28 +189,34 @@ function CircularGauge({ score, label }: { score: number; label: string }) {
           textAnchor="middle"
           dominantBaseline="middle"
           fill={color}
-          fontSize={22}
-          fontWeight={700}
-          fontFamily="monospace"
+          fontSize={24}
+          fontWeight={600}
+          fontFamily="system-ui, -apple-system, sans-serif"
+          style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {score}
         </text>
         <text
           x={cx}
-          y={cy + 16}
+          y={cy + 18}
           textAnchor="middle"
           dominantBaseline="middle"
-          fill={C.muted}
+          fill={C.dim}
           fontSize={9}
+          fontFamily="system-ui, -apple-system, sans-serif"
+          style={{ letterSpacing: "0.05em" }}
         >
           / 100
         </text>
       </svg>
-      <p className="text-sm font-semibold -mt-2" style={{ color }}>
+      <p className="text-sm font-semibold -mt-1" style={{ color }}>
         {label}
       </p>
-      <p className="text-xs mt-0.5" style={{ color: C.muted }}>
-        Market Timing Score
+      <p
+        className="text-[10px] mt-1 uppercase tracking-widest"
+        style={{ color: C.dim, letterSpacing: "0.16em" }}
+      >
+        Market Timing
       </p>
     </div>
   );
@@ -613,19 +619,19 @@ export function MarketSizingTab() {
         <div className="lg:col-span-3 flex flex-col gap-5">
           {/* VC Viability badge */}
           <div
-            className="rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-4"
+            className="rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-5"
             style={{ background: C.card, border: `1px solid ${C.border}` }}
           >
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p
-                className="text-xs font-semibold uppercase tracking-widest mb-1"
-                style={{ color: C.dim }}
+                className="text-[10px] font-semibold uppercase tracking-widest mb-2"
+                style={{ color: C.dim, letterSpacing: "0.18em" }}
               >
                 VC Viability
               </p>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-baseline gap-3 mb-2 flex-wrap">
                 <span
-                  className="px-3 py-1 rounded-full text-sm font-bold"
+                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
                   style={{
                     background: `${viabilityBadgeColor}22`,
                     color: viabilityBadgeColor,
@@ -635,10 +641,21 @@ export function MarketSizingTab() {
                   {result.vcViability}
                 </span>
                 <span
-                  className="text-lg font-bold font-mono"
-                  style={{ color: C.accent }}
+                  className="flex items-baseline gap-1.5"
+                  style={{ color: C.text }}
                 >
-                  TAM {fmt(result.tam)}
+                  <span
+                    className="text-[10px] uppercase tracking-widest"
+                    style={{ color: C.dim, letterSpacing: "0.18em" }}
+                  >
+                    TAM
+                  </span>
+                  <span
+                    className="text-base font-semibold tabular-nums"
+                    style={{ color: C.accent }}
+                  >
+                    {fmt(result.tam)}
+                  </span>
                 </span>
               </div>
               <p className="text-xs leading-relaxed" style={{ color: C.muted }}>
