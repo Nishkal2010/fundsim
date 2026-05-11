@@ -310,6 +310,12 @@
       "type": "file"
     },
     {
+      "path": "src/main.tsx",
+      "accessCount": 8,
+      "lastAccessed": 1778476262480,
+      "type": "file"
+    },
+    {
       "path": "src/components/ComparePage.tsx",
       "accessCount": 7,
       "lastAccessed": 1776018834239,
@@ -331,12 +337,6 @@
       "path": "src/lib/supabase.ts",
       "accessCount": 6,
       "lastAccessed": 1776018832818,
-      "type": "file"
-    },
-    {
-      "path": "src/main.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1776018833320,
       "type": "file"
     },
     {
