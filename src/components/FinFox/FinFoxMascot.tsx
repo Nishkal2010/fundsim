@@ -230,6 +230,25 @@ export function FoxWalkingSide({
         willChange: "transform",
       }}
     >
+      <style>{`
+        @keyframes finfox-leg-step-a {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-5px); }
+        }
+        @keyframes finfox-leg-step-b {
+          0%, 100% { transform: translateY(-5px); }
+          50%      { transform: translateY(0); }
+        }
+        @keyframes finfox-side-bob {
+          0%, 100% { transform: translateY(0px); }
+          50%      { transform: translateY(-2px); }
+        }
+        @keyframes finfox-tail-swish {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          25%      { transform: translateX(-1.5px) translateY(-1px); }
+          75%      { transform: translateX(1.5px) translateY(1px); }
+        }
+      `}</style>
       <svg
         width="100%"
         height="100%"
@@ -238,76 +257,32 @@ export function FoxWalkingSide({
         xmlns="http://www.w3.org/2000/svg"
         style={{ display: "block", overflow: "visible" }}
       >
-        <style>{`
-          @keyframes finfox-leg-walk-a {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50%      { transform: translateY(-4px) rotate(-14deg); }
-          }
-          @keyframes finfox-leg-walk-b {
-            0%, 100% { transform: translateY(-4px) rotate(-14deg); }
-            50%      { transform: translateY(0) rotate(0deg); }
-          }
-          @keyframes finfox-side-bob {
-            0%, 100% { transform: translateY(0px); }
-            50%      { transform: translateY(-1.5px); }
-          }
-          @keyframes finfox-tail-side {
-            0%, 100% { transform: rotate(-8deg); }
-            50%      { transform: rotate(10deg); }
-          }
-          @keyframes finfox-ear-twitch {
-            0%, 90%, 100% { transform: rotate(0deg); }
-            93%, 97%      { transform: rotate(-15deg); }
-          }
-        `}</style>
-
-        {/* Tail wags from behind (left side). transform-origin at attachment point. */}
-        <g
-          style={{
-            transformOrigin: "24px 28px",
-            transformBox: "fill-box" as any,
-            animation: "finfox-tail-side 0.7s ease-in-out infinite",
-          }}
-        >
+        {/* Tail wags from behind */}
+        <g style={{ animation: "finfox-tail-swish 0.7s ease-in-out infinite" }}>
           <path d="M22 28 Q4 22 10 38 Q16 44 28 36 Z" fill="#059669" />
           <path d="M23 30 Q9 26 14 36 Q18 40 27 35 Z" fill="#A7F3D0" />
         </g>
 
-        {/* Back legs (behind body). Back-left = phase A, back-right = phase B. */}
+        {/* Back legs */}
         <g
-          style={{
-            transformOrigin: "40px 42px",
-            transformBox: "fill-box" as any,
-            animation: "finfox-leg-walk-a 0.65s ease-in-out infinite",
-          }}
+          style={{ animation: "finfox-leg-step-a 0.55s ease-in-out infinite" }}
         >
           <rect x="38" y="40" width="5" height="18" rx="2" fill="#047857" />
         </g>
         <g
-          style={{
-            transformOrigin: "47px 42px",
-            transformBox: "fill-box" as any,
-            animation: "finfox-leg-walk-b 0.65s ease-in-out infinite",
-          }}
+          style={{ animation: "finfox-leg-step-b 0.55s ease-in-out infinite" }}
         >
           <rect x="45" y="40" width="5" height="18" rx="2" fill="#059669" />
         </g>
 
-        {/* Whole-body subtle bob so the fox feels alive, not slidey. */}
-        <g style={{ animation: "finfox-side-bob 0.65s ease-in-out infinite" }}>
-          {/* Body */}
+        {/* Whole-body subtle bob so the fox feels alive, not slidey */}
+        <g style={{ animation: "finfox-side-bob 0.55s ease-in-out infinite" }}>
           <ellipse cx="52" cy="32" rx="26" ry="11" fill="#10B981" />
-          {/* Chest patch */}
           <ellipse cx="62" cy="36" rx="14" ry="5.5" fill="#ECFDF5" />
-          {/* Neck/shoulder shade */}
           <ellipse cx="70" cy="28" rx="8" ry="6" fill="#10B981" />
-          {/* Head */}
           <ellipse cx="78" cy="22" rx="11" ry="10" fill="#10B981" />
-          {/* Snout */}
           <path d="M84 21 L95 24 L93 30 L82 27 Z" fill="#ECFDF5" />
-          {/* Nose */}
           <ellipse cx="93" cy="25" rx="2.5" ry="1.8" fill="#065F46" />
-          {/* Mouth */}
           <path
             d="M84 28 Q88 31 91 29"
             stroke="#065F46"
@@ -315,38 +290,20 @@ export function FoxWalkingSide({
             fill="none"
             strokeLinecap="round"
           />
-          {/* Eye */}
           <circle cx="80" cy="19" r="2.4" fill="#065F46" />
           <circle cx="81" cy="18" r="0.9" fill="white" />
-          {/* Ear (twitches) */}
-          <g
-            style={{
-              transformOrigin: "76px 12px",
-              transformBox: "fill-box" as any,
-              animation: "finfox-ear-twitch 3.6s ease-in-out infinite",
-            }}
-          >
-            <polygon points="72,12 78,1 82,12" fill="#10B981" />
-            <polygon points="74,11 78,4 81,11" fill="#6EE7B7" />
-          </g>
+          <polygon points="72,12 78,1 82,12" fill="#10B981" />
+          <polygon points="74,11 78,4 81,11" fill="#6EE7B7" />
         </g>
 
-        {/* Front legs (in front of body). Front-left = phase B, front-right = phase A. */}
+        {/* Front legs */}
         <g
-          style={{
-            transformOrigin: "63px 42px",
-            transformBox: "fill-box" as any,
-            animation: "finfox-leg-walk-b 0.65s ease-in-out infinite",
-          }}
+          style={{ animation: "finfox-leg-step-b 0.55s ease-in-out infinite" }}
         >
           <rect x="61" y="40" width="5" height="18" rx="2" fill="#047857" />
         </g>
         <g
-          style={{
-            transformOrigin: "70px 42px",
-            transformBox: "fill-box" as any,
-            animation: "finfox-leg-walk-a 0.65s ease-in-out infinite",
-          }}
+          style={{ animation: "finfox-leg-step-a 0.55s ease-in-out infinite" }}
         >
           <rect x="68" y="40" width="5" height="18" rx="2" fill="#10B981" />
         </g>
