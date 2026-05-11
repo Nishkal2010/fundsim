@@ -1,7 +1,40 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFinFox } from "../../hooks/useFinFox";
-import { FoxSvg } from "./FinFoxMascot";
+import { FoxWalkingSide, type FoxFacing } from "./FinFoxMascot";
+
+// Pick the dominant facing for a walk from `from` to `to`. If the
+// horizontal delta is larger we say the fox is walking right/left;
+// otherwise up/down. This is the simplest read that "looks right".
+function facingForMove(
+  from: [number, number],
+  to: [number, number],
+): FoxFacing {
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  if (Math.abs(dx) > Math.abs(dy)) return dx >= 0 ? "right" : "left";
+  return dy >= 0 ? "down" : "up";
+}
+
+// Typewriter effect — reveals `text` over `durationMs`, mounting from
+// empty whenever the source text changes (i.e. on every tour step).
+function useTypewriter(text: string, durationMs: number): string {
+  const [shown, setShown] = useState("");
+  useEffect(() => {
+    setShown("");
+    if (!text) return;
+    const total = text.length;
+    const perChar = Math.max(10, durationMs / Math.max(1, total));
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setShown(text.slice(0, i));
+      if (i >= total) clearInterval(id);
+    }, perChar);
+    return () => clearInterval(id);
+  }, [text, durationMs]);
+  return shown;
+}
 
 // Edge positions the fox can walk to between steps. The fox transitions
 // smoothly between positions so the tour feels like a guide walking around
@@ -354,11 +387,25 @@ export function GuidedTour() {
     nextTourStep();
   }, [nextTourStep]);
 
+  // ── Derived values needed by hooks below — must be computed BEFORE any
+  // early returns so the hook order stays stable across renders.
+  const safeFound = targetRect !== null;
+  const safeFoxCorner: FoxCorner = step?.foxCorner ?? (safeFound ? "br" : "bc");
+  const walkPath = perimeterPath(
+    prevFoxCornerRef.current ?? safeFoxCorner,
+    safeFoxCorner,
+  );
+  const walkSegmentSec = 1.4;
+  const walkDurationMs = Math.max(
+    700,
+    (walkPath.length - 1) * walkSegmentSec * 1000,
+  );
+  const typedBody = useTypewriter(step?.body ?? "", walkDurationMs);
+
   if (!tourActive || !step) return null;
 
-  const found = targetRect !== null;
-  // Default fox corner per step, with sensible fallbacks if not specified.
-  const foxCorner: FoxCorner = step.foxCorner ?? (found ? "br" : "bc");
+  const found = safeFound;
+  const foxCorner = safeFoxCorner;
   const tooltipPos = found
     ? computeTooltipPos(targetRect, vp.w, vp.h)
     : tooltipPosForCorner(foxCorner, vp.w, vp.h);
@@ -375,6 +422,10 @@ export function GuidedTour() {
         @keyframes finfox-tour-bob {
           0%, 100% { transform: translateY(0px); }
           50%      { transform: translateY(-4px); }
+        }
+        @keyframes finfox-cursor-blink {
+          0%, 100% { opacity: 1; }
+          50%      { opacity: 0; }
         }
         .finfox-tour-fox-inner {
           animation: finfox-tour-bob 0.45s ease-in-out infinite;
@@ -469,9 +520,15 @@ export function GuidedTour() {
         );
         const xs = path.map((c) => cornerToXY(c, vp.w, vp.h)[0]);
         const ys = path.map((c) => cornerToXY(c, vp.w, vp.h)[1]);
-        const segmentSec = 0.55;
-        const duration = Math.max(0.4, (path.length - 1) * segmentSec);
-        // Capture current corner so the next render walks from here.
+        const segmentSec = 1.4;
+        const duration = Math.max(0.6, (path.length - 1) * segmentSec);
+        let facing: FoxFacing = "right";
+        for (let i = 0; i < path.length - 1; i++) {
+          facing = facingForMove(
+            cornerToXY(path[i], vp.w, vp.h),
+            cornerToXY(path[i + 1], vp.w, vp.h),
+          );
+        }
         prevFoxCornerRef.current = foxCorner;
         return (
           <motion.div
@@ -492,15 +549,10 @@ export function GuidedTour() {
               zIndex: 401,
               pointerEvents: "none",
               willChange: "transform",
+              filter: "drop-shadow(0 10px 26px rgba(16,185,129,0.45))",
             }}
           >
-            <div className="finfox-tour-fox-inner">
-              <FoxSvg
-                expression={found ? "approving" : "neutral"}
-                size={72}
-                walking
-              />
-            </div>
+            <FoxWalkingSide size={104} facing={facing} />
           </motion.div>
         );
       })()}
@@ -584,7 +636,20 @@ export function GuidedTour() {
               marginBottom: 14,
             }}
           >
-            {step.body}
+            {typedBody}
+            {typedBody.length < step.body.length && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 2,
+                  height: "1em",
+                  background: "#34D399",
+                  marginLeft: 2,
+                  verticalAlign: "text-bottom",
+                  animation: "finfox-cursor-blink 0.7s steps(1) infinite",
+                }}
+              />
+            )}
           </p>
 
           {/* Tab hint when element not yet visible */}
