@@ -41,7 +41,7 @@ function tooltipPosForCorner(
   vh: number,
 ): React.CSSProperties {
   const PAD = 24;
-  const FOX = 60;
+  const FOX = 84;
   const W = Math.min(360, vw - PAD * 2);
   const HALF = W / 2;
   const ESTIMATED_H = 220;
@@ -327,23 +327,19 @@ export function GuidedTour() {
           0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.35); }
           50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.0), 0 0 0 3px rgba(16,185,129,0.6); }
         }
-        @keyframes finfox-walk {
-          0%   { transform: translateY(0px)  rotate(-3deg); }
-          25%  { transform: translateY(-3px) rotate(0deg); }
-          50%  { transform: translateY(0px)  rotate(3deg); }
-          75%  { transform: translateY(-3px) rotate(0deg); }
-          100% { transform: translateY(0px)  rotate(-3deg); }
+        @keyframes finfox-tour-bob {
+          0%, 100% { transform: translateY(0px); }
+          50%      { transform: translateY(-3px); }
         }
         .finfox-tour-fox {
-          transition: top 0.7s cubic-bezier(0.65, 0, 0.35, 1),
-                      bottom 0.7s cubic-bezier(0.65, 0, 0.35, 1),
-                      left 0.7s cubic-bezier(0.65, 0, 0.35, 1),
-                      right 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+          transition: top 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+                      bottom 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+                      left 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+                      right 0.9s cubic-bezier(0.65, 0, 0.35, 1);
         }
         .finfox-tour-fox-inner {
-          animation: finfox-walk 0.9s ease-in-out infinite;
-          transform-origin: 50% 80%;
-          filter: drop-shadow(0 6px 18px rgba(16,185,129,0.35));
+          animation: finfox-tour-bob 0.45s ease-in-out infinite;
+          filter: drop-shadow(0 8px 22px rgba(16,185,129,0.4));
         }
       `}</style>
 
@@ -437,7 +433,11 @@ export function GuidedTour() {
         }}
       >
         <div className="finfox-tour-fox-inner">
-          <FoxSvg expression={found ? "approving" : "neutral"} size={56} />
+          <FoxSvg
+            expression={found ? "approving" : "neutral"}
+            size={72}
+            walking
+          />
         </div>
       </div>
 

@@ -5,20 +5,103 @@ import type { FinFoxExpression } from "./FinFoxProvider";
 interface FoxSvgProps {
   expression: FinFoxExpression;
   size?: number;
+  walking?: boolean;
 }
 
-export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
+export function FoxSvg({
+  expression,
+  size = 48,
+  walking = false,
+}: FoxSvgProps) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 80 80"
+      viewBox="0 0 80 90"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Tail */}
-      <path d="M52 56 Q70 44 65 62 Q61 72 46 66 Z" fill="#059669" />
-      <path d="M54 59 Q66 50 63 62 Q60 68 48 64 Z" fill="#A7F3D0" />
+      <style>{`
+        @keyframes finfox-leg-a {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50%      { transform: translateY(-2.5px) rotate(10deg); }
+        }
+        @keyframes finfox-leg-b {
+          0%, 100% { transform: translateY(-2.5px) rotate(10deg); }
+          50%      { transform: translateY(0) rotate(0deg); }
+        }
+        @keyframes finfox-tail-wag {
+          0%, 100% { transform: rotate(-6deg); }
+          50%      { transform: rotate(8deg); }
+        }
+      `}</style>
+
+      {/* Tail (wags when walking) */}
+      <g
+        style={
+          walking
+            ? {
+                transformOrigin: "54px 60px",
+                animation: "finfox-tail-wag 0.7s ease-in-out infinite",
+              }
+            : undefined
+        }
+      >
+        <path d="M52 56 Q70 44 65 62 Q61 72 46 66 Z" fill="#059669" />
+        <path d="M54 59 Q66 50 63 62 Q60 68 48 64 Z" fill="#A7F3D0" />
+      </g>
+
+      {/* Legs (visible below body). Front-left + back-right share a phase;
+          front-right + back-left share the opposite phase, so the walk
+          looks like a real diagonal gait. */}
+      <g
+        style={
+          walking
+            ? {
+                transformOrigin: "27px 64px",
+                animation: "finfox-leg-a 0.45s ease-in-out infinite",
+              }
+            : undefined
+        }
+      >
+        <rect x="24.5" y="62" width="5" height="14" rx="2.5" fill="#059669" />
+      </g>
+      <g
+        style={
+          walking
+            ? {
+                transformOrigin: "53px 64px",
+                animation: "finfox-leg-a 0.45s ease-in-out infinite",
+              }
+            : undefined
+        }
+      >
+        <rect x="50.5" y="62" width="5" height="14" rx="2.5" fill="#059669" />
+      </g>
+      <g
+        style={
+          walking
+            ? {
+                transformOrigin: "37px 64px",
+                animation: "finfox-leg-b 0.45s ease-in-out infinite",
+              }
+            : undefined
+        }
+      >
+        <rect x="34.5" y="62" width="5" height="14" rx="2.5" fill="#10B981" />
+      </g>
+      <g
+        style={
+          walking
+            ? {
+                transformOrigin: "47px 64px",
+                animation: "finfox-leg-b 0.45s ease-in-out infinite",
+              }
+            : undefined
+        }
+      >
+        <rect x="44.5" y="62" width="5" height="14" rx="2.5" fill="#10B981" />
+      </g>
 
       {/* Body */}
       <ellipse cx="40" cy="56" rx="18" ry="13" fill="#10B981" />

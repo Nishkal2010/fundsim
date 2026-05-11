@@ -19,6 +19,7 @@ import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
 import { OnboardingModal } from "./components/FinFox/OnboardingModal";
 import { GuidedTour } from "./components/FinFox/GuidedTour";
+import { TourBoundary } from "./components/FinFox/TourBoundary";
 const FundLifecycleTab = React.lazy(() =>
   import("./components/FundLifecycle/FundLifecycleTab").then((m) => ({
     default: m.FundLifecycleTab,
@@ -502,10 +503,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
       )}
 
       {/* FinFox AI Tutor */}
-      <OnboardingModal />
-      <GuidedTour />
-      <ChatPanel />
-      <FinFoxMascot />
+      <TourBoundary>
+        <OnboardingModal />
+        <GuidedTour />
+        <ChatPanel />
+        <FinFoxMascot />
+      </TourBoundary>
     </div>
   );
 }
