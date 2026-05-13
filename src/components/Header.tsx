@@ -10,8 +10,6 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  Bot,
-  RotateCcw,
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
 
@@ -45,8 +43,7 @@ export function Header({
 }: HeaderProps) {
   const [finfoxMenuOpen, setFinfoxMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { disabled, toggleDisabled, resetOnboarding, resetTour, startTour } =
-    useFinFox();
+  const { disabled, toggleDisabled } = useFinFox();
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -192,53 +189,6 @@ export function Header({
               >
                 {disabled ? <Eye size={13} /> : <EyeOff size={13} />}
                 {disabled ? "Show FinFox" : "Hide FinFox"}
-              </button>
-              <div style={{ height: 1, background: "#1F2937" }} />
-              <button
-                onClick={() => {
-                  resetOnboarding();
-                  setFinfoxMenuOpen(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  width: "100%",
-                  padding: "9px 14px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "rgba(255,255,255,0.6)",
-                  fontSize: 13,
-                  textAlign: "left",
-                }}
-              >
-                <Bot size={13} />
-                Replay intro
-              </button>
-              <div style={{ height: 1, background: "#1F2937" }} />
-              <button
-                onClick={() => {
-                  resetTour();
-                  startTour();
-                  setFinfoxMenuOpen(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  width: "100%",
-                  padding: "9px 14px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "rgba(255,255,255,0.6)",
-                  fontSize: 13,
-                  textAlign: "left",
-                }}
-              >
-                <RotateCcw size={13} />
-                Replay VC tour
               </button>
             </div>
           )}

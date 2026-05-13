@@ -17,9 +17,7 @@ import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
 import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
-import { OnboardingModal } from "./components/FinFox/OnboardingModal";
-import { GuidedTour } from "./components/FinFox/GuidedTour";
-import { TourBoundary } from "./components/FinFox/TourBoundary";
+import { useFinFox } from "./hooks/useFinFox";
 const FundLifecycleTab = React.lazy(() =>
   import("./components/FundLifecycle/FundLifecycleTab").then((m) => ({
     default: m.FundLifecycleTab,
@@ -101,6 +99,11 @@ const IBSimulator = React.lazy(() =>
     default: m.IBSimulator,
   })),
 );
+const IBCompare = React.lazy(() =>
+  import("./components/IB/IBCompare").then((m) => ({
+    default: m.IBCompare,
+  })),
+);
 const VCRoleplayTab = React.lazy(() =>
   import("./components/VC/VCRoleplayTab").then((m) => ({
     default: m.VCRoleplayTab,
@@ -163,7 +166,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
   );
   const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
   const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
-  const [ibView, setIbView] = useState<"simulator" | "roleplay">("simulator");
+  const [ibView, setIbView] = useState<"simulator" | "roleplay" | "compare">(
+    "simulator",
+  );
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
@@ -174,20 +179,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // FinFox guided tour navigation — responds to finfox:navigate custom events
+  // Sync the App's active simulator into FinFox context so the chatbot
+  // knows which simulator the user is currently inside.
+  const { setActiveSim } = useFinFox();
   useEffect(() => {
-    const handler = (e: Event) => {
-      const { sim, tab } = (e as CustomEvent<{ sim: string; tab?: string }>)
-        .detail;
-      if (sim === "vc" || sim === "pe" || sim === "ib") {
-        setActiveSimulator(sim as SimulatorId);
-        if (sim === "vc" && tab) setActiveVCTab(tab as VCTabId);
-        if (sim === "pe" && tab) setActivePETab(tab as PETabId);
-      }
-    };
-    window.addEventListener("finfox:navigate", handler);
-    return () => window.removeEventListener("finfox:navigate", handler);
-  }, []);
+    setActiveSim(activeSimulator);
+  }, [activeSimulator, setActiveSim]);
 
   // Scroll to top whenever a simulator is entered or tab changes within a sim.
   // Without this, entering a simulator can land the user mid-page.
@@ -331,7 +328,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
       />
 
       <React.Suspense fallback={lazyFallback}>
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {activeSimulator === null && (
             <motion.div
               key="selector"
@@ -398,7 +395,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
                   Investment Banking · M&A Deal Simulator
                 </span>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-                  {(["simulator", "roleplay"] as const).map((v) => (
+                  {(["simulator", "compare", "roleplay"] as const).map((v) => (
                     <button
                       key={v}
                       onClick={() => setIbView(v)}
@@ -417,12 +414,22 @@ function AppContent({ user, onLogout }: AppContentProps) {
                         textTransform: "capitalize",
                       }}
                     >
-                      {v === "roleplay" ? "FinFox Role-Play" : "Simulator"}
+                      {v === "roleplay"
+                        ? "FinFox Role-Play"
+                        : v === "compare"
+                          ? "Compare Deals"
+                          : "Simulator"}
                     </button>
                   ))}
                 </div>
               </div>
-              {ibView === "simulator" ? <IBSimulator /> : <IBRoleplayTab />}
+              {ibView === "simulator" ? (
+                <IBSimulator />
+              ) : ibView === "compare" ? (
+                <IBCompare />
+              ) : (
+                <IBRoleplayTab />
+              )}
             </motion.div>
           )}
 
@@ -502,13 +509,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
         <KeyboardShortcutsModal onClose={() => setShortcutsOpen(false)} />
       )}
 
-      {/* FinFox AI Tutor */}
-      <TourBoundary>
-        <OnboardingModal />
-        <GuidedTour />
-        <ChatPanel />
-        <FinFoxMascot />
-      </TourBoundary>
+      {/* FinFox chatbot */}
+      <ChatPanel />
+      <FinFoxMascot />
     </div>
   );
 }

@@ -5,14 +5,10 @@ import type { FinFoxExpression } from "./FinFoxProvider";
 interface FoxSvgProps {
   expression: FinFoxExpression;
   size?: number;
-  walking?: boolean;
 }
 
-export function FoxSvg({
-  expression,
-  size = 48,
-  walking = false,
-}: FoxSvgProps) {
+export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
+  const walking = false;
   return (
     <svg
       width={size}
@@ -190,133 +186,10 @@ export function FoxSvg({
   );
 }
 
-// Direction the side-profile fox is facing while walking. The SVG is
-// drawn facing RIGHT — other directions are achieved with CSS transforms
-// (scaleX for left, rotate for up/down).
-export type FoxFacing = "right" | "left" | "up" | "down";
-
-interface FoxWalkingSideProps {
-  size?: number;
-  facing?: FoxFacing;
-}
-
-/**
- * Side-profile walking fox. Four visible legs cycle in a real diagonal
- * gait (front-left + back-right on phase A, front-right + back-left on
- * phase B). Tail wags, ear twitches. Used for the guided tour mascot
- * walking around the screen edges.
- */
-export function FoxWalkingSide({
-  size = 96,
-  facing = "right",
-}: FoxWalkingSideProps) {
-  const transform =
-    facing === "left"
-      ? "scaleX(-1)"
-      : facing === "up"
-        ? "rotate(-90deg)"
-        : facing === "down"
-          ? "rotate(90deg)"
-          : "none";
-
-  return (
-    <div
-      style={{
-        width: size,
-        height: size * 0.65,
-        transform,
-        transformOrigin: "50% 50%",
-        transition: "transform 0.35s ease",
-        willChange: "transform",
-      }}
-    >
-      <style>{`
-        @keyframes finfox-leg-step-a {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-5px); }
-        }
-        @keyframes finfox-leg-step-b {
-          0%, 100% { transform: translateY(-5px); }
-          50%      { transform: translateY(0); }
-        }
-        @keyframes finfox-side-bob {
-          0%, 100% { transform: translateY(0px); }
-          50%      { transform: translateY(-2px); }
-        }
-        @keyframes finfox-tail-swish {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          25%      { transform: translateX(-1.5px) translateY(-1px); }
-          75%      { transform: translateX(1.5px) translateY(1px); }
-        }
-      `}</style>
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 65"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block", overflow: "visible" }}
-      >
-        {/* Tail wags from behind */}
-        <g style={{ animation: "finfox-tail-swish 0.7s ease-in-out infinite" }}>
-          <path d="M22 28 Q4 22 10 38 Q16 44 28 36 Z" fill="#059669" />
-          <path d="M23 30 Q9 26 14 36 Q18 40 27 35 Z" fill="#A7F3D0" />
-        </g>
-
-        {/* Back legs */}
-        <g
-          style={{ animation: "finfox-leg-step-a 0.55s ease-in-out infinite" }}
-        >
-          <rect x="38" y="40" width="5" height="18" rx="2" fill="#047857" />
-        </g>
-        <g
-          style={{ animation: "finfox-leg-step-b 0.55s ease-in-out infinite" }}
-        >
-          <rect x="45" y="40" width="5" height="18" rx="2" fill="#059669" />
-        </g>
-
-        {/* Whole-body subtle bob so the fox feels alive, not slidey */}
-        <g style={{ animation: "finfox-side-bob 0.55s ease-in-out infinite" }}>
-          <ellipse cx="52" cy="32" rx="26" ry="11" fill="#10B981" />
-          <ellipse cx="62" cy="36" rx="14" ry="5.5" fill="#ECFDF5" />
-          <ellipse cx="70" cy="28" rx="8" ry="6" fill="#10B981" />
-          <ellipse cx="78" cy="22" rx="11" ry="10" fill="#10B981" />
-          <path d="M84 21 L95 24 L93 30 L82 27 Z" fill="#ECFDF5" />
-          <ellipse cx="93" cy="25" rx="2.5" ry="1.8" fill="#065F46" />
-          <path
-            d="M84 28 Q88 31 91 29"
-            stroke="#065F46"
-            strokeWidth="1.2"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <circle cx="80" cy="19" r="2.4" fill="#065F46" />
-          <circle cx="81" cy="18" r="0.9" fill="white" />
-          <polygon points="72,12 78,1 82,12" fill="#10B981" />
-          <polygon points="74,11 78,4 81,11" fill="#6EE7B7" />
-        </g>
-
-        {/* Front legs */}
-        <g
-          style={{ animation: "finfox-leg-step-b 0.55s ease-in-out infinite" }}
-        >
-          <rect x="61" y="40" width="5" height="18" rx="2" fill="#047857" />
-        </g>
-        <g
-          style={{ animation: "finfox-leg-step-a 0.55s ease-in-out infinite" }}
-        >
-          <rect x="68" y="40" width="5" height="18" rx="2" fill="#10B981" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
 export function FinFoxMascot() {
-  const { disabled, chatOpen, expression, tourActive, openChat } = useFinFox();
+  const { disabled, chatOpen, expression, openChat } = useFinFox();
 
   if (disabled) return null;
-  if (tourActive) return null;
 
   return (
     <>

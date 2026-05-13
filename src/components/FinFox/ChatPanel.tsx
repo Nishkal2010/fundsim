@@ -152,8 +152,6 @@ export function ChatPanel() {
     activeSim,
     activeScreen,
     setExpression,
-    startTour,
-    tourActive,
   } = useFinFox();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -432,51 +430,6 @@ export function ChatPanel() {
                   >
                     {greeting}
                   </div>
-                  {activeSim && (
-                    <button
-                      onClick={() => {
-                        if (tourActive) return; // already running
-                        const sim = activeSim;
-                        // Close the chat panel first; defer the tour
-                        // start by one frame so the chat exit animation
-                        // doesn't compete with the fox entrance.
-                        closeChat();
-                        requestAnimationFrame(() => startTour(sim));
-                      }}
-                      style={{
-                        marginTop: 2,
-                        background: "rgba(16,185,129,0.08)",
-                        border: "1px solid rgba(16,185,129,0.25)",
-                        borderRadius: 10,
-                        padding: "9px 12px",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#34D399",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        (
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = "rgba(16,185,129,0.14)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = "rgba(16,185,129,0.08)";
-                      }}
-                    >
-                      <span>
-                        Take a guided tour of the {activeSim.toUpperCase()}{" "}
-                        simulator
-                      </span>
-                      <span style={{ fontSize: 14 }}>→</span>
-                    </button>
-                  )}
                 </>
               )}
 
