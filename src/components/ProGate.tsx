@@ -1,14 +1,50 @@
 import React, { useState } from "react";
 import { useProStatus } from "../lib/useProStatus";
+import { supabase } from "../lib/supabase";
 
 interface ProGateProps {
   children: React.ReactNode;
   feature?: string;
 }
 
+async function startCheckout(): Promise<{ url?: string; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Please sign in first." };
+  try {
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id, userEmail: user.email }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) {
+      return { error: data.error ?? "Could not start checkout." };
+    }
+    return { url: data.url };
+  } catch {
+    return { error: "Network error — please try again." };
+  }
+}
+
 export function ProGate({ children, feature = "this feature" }: ProGateProps) {
   const { isPro, loading } = useProStatus();
   const [showModal, setShowModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  async function handleUpgrade() {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    const { url, error } = await startCheckout();
+    if (url) {
+      window.location.href = url;
+    } else {
+      setCheckoutError(error ?? "Could not start checkout.");
+      setCheckoutLoading(false);
+    }
+  }
 
   if (loading) return null;
   if (isPro) return <>{children}</>;
@@ -120,28 +156,47 @@ export function ProGate({ children, feature = "this feature" }: ProGateProps) {
               ))}
             </div>
 
+            {checkoutError && (
+              <div
+                style={{
+                  background: "rgba(239,68,68,0.1)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  fontSize: "12px",
+                  color: "#FCA5A5",
+                  marginBottom: "12px",
+                }}
+              >
+                {checkoutError}
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <a
-                href="mailto:nishkal.dachepelly@gmail.com?subject=FundSim Pro Access"
+              <button
+                onClick={handleUpgrade}
+                disabled={checkoutLoading}
                 style={{
                   flex: 1,
-                  background: "#F59E0B",
+                  background: checkoutLoading ? "#92400E" : "#F59E0B",
                   color: "#000",
                   border: "none",
                   borderRadius: "8px",
                   padding: "12px 20px",
                   fontSize: "14px",
                   fontWeight: 700,
-                  cursor: "pointer",
+                  cursor: checkoutLoading ? "wait" : "pointer",
                   textAlign: "center",
-                  textDecoration: "none",
                   display: "block",
                 }}
               >
-                Get Pro Access — $149/yr
-              </a>
+                {checkoutLoading
+                  ? "Redirecting to checkout…"
+                  : "Get Pro Access — $149/yr"}
+              </button>
               <button
                 onClick={() => setShowModal(false)}
+                disabled={checkoutLoading}
                 style={{
                   background: "transparent",
                   border: "1px solid #374151",
