@@ -1,0 +1,57 @@
+name: Overnight Agent
+
+# Nightly health agent — see docs/OVERNIGHT_AGENT.md
+on:
+  schedule:
+    - cron: "0 6 * * *"  # 06:00 UTC daily (~01:00 ET / ~02:00 ET DST)
+  workflow_dispatch:     # manual trigger for testing
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  health:
+    name: FundSim health check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run agent
+        id: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/overnight_agent.py | tee report.json
+
+      - name: Post Slack digest
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -s report.json ]; then
+            cat report.json | python scripts/post_digest.py
+          else
+            echo '{"error":"agent produced no output"}' | python scripts/post_digest.py
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: overnight-report
+          path: report.json
+          retention-days: 14
