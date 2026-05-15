@@ -132,6 +132,11 @@ const YISFinanceSuite = React.lazy(() =>
 const ComparePage = React.lazy(() =>
   import("./components/ComparePage").then((m) => ({ default: m.ComparePage })),
 );
+const ScenarioCompare = React.lazy(() =>
+  import("./components/Scenarios/ScenarioCompare").then((m) => ({
+    default: m.ScenarioCompare,
+  })),
+);
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -288,6 +293,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return (
       <React.Suspense fallback={lazyFallback}>
         <YISFinanceSuite />
+      </React.Suspense>
+    );
+  if (hash === "scenarios")
+    return (
+      <React.Suspense fallback={lazyFallback}>
+        <ScenarioCompare />
       </React.Suspense>
     );
 

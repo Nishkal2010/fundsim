@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Layers,
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
 
@@ -209,6 +210,18 @@ export function Header({
         >
           <Columns2 size={14} />
           Compare
+        </button>
+
+        {/* Scenarios — Bull / Base / Bear */}
+        <button
+          onClick={() => {
+            window.location.hash = "#scenarios";
+          }}
+          style={btnBase}
+          title="Run Bull / Base / Bear scenarios on a single base case"
+        >
+          <Layers size={14} />
+          Scenarios
         </button>
 
         {/* GitHub */}
