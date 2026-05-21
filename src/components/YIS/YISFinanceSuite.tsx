@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { safeStorageGet, safeStorageSet } from "../../lib/storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { YISLanding } from "./YISLanding";
 import { DCFCalculator } from "../DCF/DCFCalculator";
@@ -721,7 +722,7 @@ function ValuationTab() {
 function ChecklistTab() {
   const [checked, setChecked] = useState<Set<string>>(() => {
     try {
-      const stored = localStorage.getItem("yis-checklist");
+      const stored = safeStorageGet("yis-checklist");
       return stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
     } catch {
       return new Set<string>();
@@ -741,13 +742,9 @@ function ChecklistTab() {
     });
 
   const saveProgress = () => {
-    try {
-      localStorage.setItem("yis-checklist", JSON.stringify([...checked]));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // localStorage unavailable
-    }
+    safeStorageSet("yis-checklist", JSON.stringify([...checked]));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const sections = [

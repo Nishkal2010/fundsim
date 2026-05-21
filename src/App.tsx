@@ -14,6 +14,11 @@ import type { SimulatorId } from "./components/SimulatorSelector";
 import { Hero } from "./components/Hero";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import {
+  safeStorageGet,
+  safeStorageSet,
+  safeStorageRemove,
+} from "./lib/storage";
 import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
 import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
@@ -143,6 +148,7 @@ const ScenarioCompare = React.lazy(() =>
     default: m.ScenarioCompare,
   })),
 );
+import { captureEvent } from "./lib/posthog";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -185,7 +191,17 @@ function AppContent({ user, onLogout }: AppContentProps) {
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
-    const onHash = () => setHash(window.location.hash.replace("#", ""));
+    const onHash = () => {
+      const h = window.location.hash.replace("#", "");
+      setHash(h);
+      if (h === "pe" || h === "vc" || h === "ib") {
+        captureEvent("sim_opened", { sim: h });
+      } else if (h === "compare") {
+        captureEvent("compare_opened");
+      } else if (h === "scenarios") {
+        captureEvent("scenarios_opened");
+      }
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -545,10 +561,10 @@ function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(mapSupabaseUser(session.user));
-        localStorage.removeItem("fundsim_auth");
+        safeStorageRemove("fundsim_auth");
       } else {
         // No Supabase session — check for a demo user in localStorage
-        const stored = localStorage.getItem("fundsim_auth");
+        const stored = safeStorageGet("fundsim_auth");
         if (stored) {
           try {
             const parsed = JSON.parse(stored);
@@ -560,11 +576,11 @@ function App() {
               setUser(parsed);
             } else {
               // Malformed entry — discard it
-              localStorage.removeItem("fundsim_auth");
+              safeStorageRemove("fundsim_auth");
               setUser(null);
             }
           } catch {
-            localStorage.removeItem("fundsim_auth");
+            safeStorageRemove("fundsim_auth");
             setUser(null);
           }
         } else {
@@ -583,12 +599,12 @@ function App() {
     if (user?.id) {
       await supabase.auth.signOut();
     }
-    localStorage.removeItem("fundsim_auth");
+    safeStorageRemove("fundsim_auth");
     setUser(null);
   }
 
   function handleDemoLogin(u: AuthUser) {
-    localStorage.setItem("fundsim_auth", JSON.stringify(u));
+    safeStorageSet("fundsim_auth", JSON.stringify(u));
     setUser(u);
   }
 

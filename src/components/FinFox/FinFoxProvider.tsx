@@ -7,6 +7,11 @@ import React, {
 } from "react";
 
 import type { SimulatorId } from "../SimulatorSelector";
+import {
+  safeStorageGet,
+  safeStorageSet,
+  safeStorageRemove,
+} from "../../lib/storage";
 export type FinFoxSim = SimulatorId;
 export type FinFoxExpression = "neutral" | "thinking" | "approving";
 
@@ -33,7 +38,7 @@ export const FinFoxContext = createContext<FinFoxContextType | null>(null);
 
 export function FinFoxProvider({ children }: { children: React.ReactNode }) {
   const [disabled, setDisabled] = useState(
-    () => localStorage.getItem("finfox_disabled") === "true",
+    () => safeStorageGet("finfox_disabled") === "true",
   );
 
   const [chatOpen, setChatOpen] = useState(false);
@@ -103,9 +108,9 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
     setDisabled((prev) => {
       const next = !prev;
       if (next) {
-        localStorage.setItem("finfox_disabled", "true");
+        safeStorageSet("finfox_disabled", "true");
       } else {
-        localStorage.removeItem("finfox_disabled");
+        safeStorageRemove("finfox_disabled");
       }
       return next;
     });

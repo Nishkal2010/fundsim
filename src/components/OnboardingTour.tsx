@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  safeStorageGet,
+  safeStorageSet,
+  safeStorageRemove,
+} from "../lib/storage";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -72,11 +77,7 @@ const DARK_POPOVER_STYLE = `
 
 /** Call this from devtools to reset the tour: resetOnboardingTour() */
 export function resetOnboardingTour() {
-  try {
-    localStorage.removeItem(TOUR_KEY);
-  } catch {
-    // Safari private mode — swallow
-  }
+  safeStorageRemove(TOUR_KEY);
 }
 
 // Only expose on window in dev — avoids polluting production global scope
@@ -136,13 +137,7 @@ export function OnboardingTour() {
   }, []);
 
   useEffect(() => {
-    // tour-2: guard localStorage.getItem against Safari private-mode throws
-    let alreadySeen = false;
-    try {
-      alreadySeen = !!localStorage.getItem(TOUR_KEY);
-    } catch {
-      // private mode — treat as not seen, tour will fire
-    }
+    const alreadySeen = !!safeStorageGet(TOUR_KEY);
     // bug3: explicit Tour button click sets a sessionStorage flag; if set, proceed
     // regardless of alreadySeen. Natural first-visit (no TOUR_KEY) also proceeds.
     let consumed = false;
@@ -226,12 +221,7 @@ export function OnboardingTour() {
           }
 
           if (activeIndex >= 1) {
-            // tour-2: guard localStorage.setItem against Safari private-mode throws
-            try {
-              localStorage.setItem(TOUR_KEY, "1");
-            } catch {
-              // private mode — swallow, tour will fire again next visit
-            }
+            safeStorageSet(TOUR_KEY, "1");
           }
         },
         steps: [

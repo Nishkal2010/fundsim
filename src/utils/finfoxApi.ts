@@ -1,3 +1,5 @@
+import { safeStorageGet, safeStorageSet } from "../lib/storage";
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -83,7 +85,7 @@ function getTodayKey(): string {
 
 function getCache(): Record<string, string> {
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) ?? "{}");
+    return JSON.parse(safeStorageGet(CACHE_KEY) ?? "{}");
   } catch {
     return {};
   }
@@ -93,7 +95,7 @@ function setCache(cache: Record<string, string>) {
   // Keep only the latest 50 entries
   const entries = Object.entries(cache);
   const trimmed = Object.fromEntries(entries.slice(-50));
-  localStorage.setItem(CACHE_KEY, JSON.stringify(trimmed));
+  safeStorageSet(CACHE_KEY, JSON.stringify(trimmed));
 }
 
 export function normalizeCacheKey(question: string): string {
@@ -117,14 +119,14 @@ export function setCachedAnswer(question: string, answer: string) {
 
 export function getRemainingQueries(): number {
   const key = getTodayKey();
-  const used = parseInt(localStorage.getItem(key) ?? "0", 10);
+  const used = parseInt(safeStorageGet(key) ?? "0", 10);
   return Math.max(0, 30 - used);
 }
 
 export function incrementQueryCount() {
   const key = getTodayKey();
-  const used = parseInt(localStorage.getItem(key) ?? "0", 10);
-  localStorage.setItem(key, String(used + 1));
+  const used = parseInt(safeStorageGet(key) ?? "0", 10);
+  safeStorageSet(key, String(used + 1));
 }
 
 export async function callFinFox(opts: FinFoxApiOptions): Promise<string> {
