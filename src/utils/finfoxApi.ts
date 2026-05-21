@@ -3,10 +3,75 @@ export interface ChatMessage {
   content: string;
 }
 
+// Mirror of api/chat.ts ALLOWED_SCREENS — keep in sync. Narrowing the client
+// type here surfaces drift at compile time instead of as a 400 at runtime.
+export type FinFoxScreen =
+  | ""
+  | "home"
+  | "captable"
+  | "termsheet"
+  | "safe"
+  | "lifecycle"
+  | "lbo"
+  | "gplp"
+  | "jcurve"
+  | "waterfall"
+  | "performance"
+  | "portfolio"
+  | "debt"
+  | "sector"
+  | "main"
+  | "compare"
+  | "valuation"
+  | "score"
+  | "qualitative"
+  | "marketsizing"
+  | "dealmemo"
+  | "portfolioconstruction";
+
+export const FINFOX_ALLOWED_SCREENS: ReadonlySet<FinFoxScreen> =
+  new Set<FinFoxScreen>([
+    "",
+    "home",
+    "captable",
+    "termsheet",
+    "safe",
+    "lifecycle",
+    "lbo",
+    "gplp",
+    "jcurve",
+    "waterfall",
+    "performance",
+    "portfolio",
+    "debt",
+    "sector",
+    "main",
+    "compare",
+    "valuation",
+    "score",
+    "qualitative",
+    "marketsizing",
+    "dealmemo",
+    "portfolioconstruction",
+  ]);
+
+export function coerceScreen(s: string | null | undefined): FinFoxScreen {
+  if (typeof s !== "string") return "";
+  return FINFOX_ALLOWED_SCREENS.has(s as FinFoxScreen)
+    ? (s as FinFoxScreen)
+    : "";
+}
+
 export interface FinFoxApiOptions {
   mode: "tutor" | "founder" | "pe_seller" | "ib_client" | "breakdown";
   messages: ChatMessage[];
-  systemPrompt: string;
+  // sim/screen are only used by tutor mode; roleplay/breakdown can omit them.
+  sim?: string | null;
+  screen?: FinFoxScreen;
+  // Optional scenario-specific system prompt for non-tutor roleplay modes
+  // (founder, pe_seller, ib_client). Server REJECTS this field for tutor mode
+  // to preserve the prompt-injection guardrail on the high-traffic chatbot.
+  systemPrompt?: string;
 }
 
 const CACHE_KEY = "finfox_cache";

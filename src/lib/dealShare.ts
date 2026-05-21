@@ -18,14 +18,29 @@ export interface DealShare extends DealSharePayload {
   created_at: string;
 }
 
-export async function saveDealShare(payload: DealSharePayload): Promise<string> {
-  const { data, error } = await supabase
-    .from("deal_shares")
-    .insert(payload)
-    .select("id")
-    .single();
-  if (error) throw error;
-  return (data as { id: string }).id;
+export async function saveDealShare(
+  payload: DealSharePayload,
+): Promise<string> {
+  // Direct anon insert is no longer allowed — the RLS policy was locked down
+  // in migration 20260521_deal_shares_throttle.sql. All inserts go through
+  // /api/share-create, which holds the service-role key and enforces per-IP
+  // rate limits before writing to the DB.
+  const res = await fetch("/api/share-create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 429) {
+      const err = new Error("Rate limit exceeded — try again in a minute.");
+      (err as any).status = 429;
+      throw err;
+    }
+    throw new Error(body.error ?? `share-create returned ${res.status}`);
+  }
+  const { id } = await res.json();
+  return id as string;
 }
 
 export async function getDealShare(id: string): Promise<DealShare | null> {

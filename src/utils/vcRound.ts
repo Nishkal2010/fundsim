@@ -176,7 +176,6 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     // Non-participating: gets max(liq pref, pro-rata share of exit)
     // Participating: gets liq pref + pro-rata share of remainder
 
-    let remainingProceeds = exitVal;
     const investorResults: Array<{
       round: string;
       cost: number;
@@ -191,10 +190,12 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     );
 
     if (exitVal <= totalLiqPrefs) {
-      // Proceeds < total liq prefs: distribute pro-rata among investors
+      // Proceeds < total liq prefs: distribute pro-rata among investors.
+      // Guard against 0/0 when totalLiqPrefs===0 (all rounds disabled or zero-cost).
       investorPools.forEach((p) => {
         const ownPref = p.cost * p.liquidationPref;
-        const proceeds = exitVal * (ownPref / totalLiqPrefs);
+        const proceeds =
+          totalLiqPrefs > 0 ? exitVal * (ownPref / totalLiqPrefs) : 0;
         investorResults.push({
           round: p.round,
           cost: p.cost,
@@ -202,93 +203,152 @@ export function calculateVCCapTable(state: VCInputState): VCData {
           moic: p.cost > 0 ? parseFloat((proceeds / p.cost).toFixed(2)) : 0,
         });
       });
+      const totalProceeds = investorResults.reduce((s, r) => s + r.proceeds, 0);
       return {
         exitValuation: exitVal,
         label,
         founderProceeds: 0,
         esopProceeds: 0,
         investorsByRound: investorResults,
-        totalInvestorProceeds: exitVal,
+        totalInvestorProceeds: parseFloat(totalProceeds.toFixed(2)),
         totalInvestorMOIC:
           cumulativeRaised > 0
-            ? parseFloat((exitVal / cumulativeRaised).toFixed(2))
+            ? parseFloat((totalProceeds / cumulativeRaised).toFixed(2))
             : 0,
       };
     }
 
     // Above liq prefs — handle participating vs non-participating
-    // Step 1: pay liquidation preferences
-    const prefPaidPerInvestor = investorPools.map(
-      (p) => p.cost * p.liquidationPref,
-    );
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    remainingProceeds -= prefPaidPerInvestor.reduce((a, b) => a + b, 0);
-
-    // Step 2: distribute remainder pro-rata on fully diluted shares
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const totalInvestorShares = investorPools.reduce((s, p) => s + p.shares, 0);
     const esopSharesFinal = totalESOPShares;
-    const totalFDShares = totalShares; // founderShares + esopShares + all investor shares
 
-    // Participating preferred: investor gets pref + pro-rata remainder
-    // Non-participating: investor gets max(pref, pro-rata of TOTAL proceeds)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let totalParticipatingShares = 0;
     const nonParticipating: typeof investorPools = [];
     const participating: typeof investorPools = [];
 
     investorPools.forEach((p) => {
       if (p.participating) {
         participating.push(p);
-        totalParticipatingShares += p.shares;
       } else {
         nonParticipating.push(p);
       }
     });
 
-    // For non-participating: compare pref vs pro-rata of total exit, take max
-    let nonParticipatingPrefsUsed = 0;
-    let nonParticipatingProRataSharesOut = 0; // shares no longer in the pool if they convert
-
-    const npResults = nonParticipating.map((p) => {
-      const myPref = p.cost * p.liquidationPref;
-      const proRata =
-        totalFDShares > 0 ? (p.shares / totalFDShares) * exitVal : 0;
-      if (proRata >= myPref) {
-        // Convert — give up pref, take pro-rata of total
-        nonParticipatingProRataSharesOut += p.shares;
-        return { ...p, proceeds: proRata, usedPref: false };
-      } else {
-        nonParticipatingPrefsUsed += myPref;
-        return { ...p, proceeds: myPref, usedPref: true };
-      }
-    });
-
-    // Remaining after non-participating prefs paid and participating prefs paid
     const participatingPrefsPaid = participating.reduce(
       (s, p) => s + p.cost * p.liquidationPref,
       0,
     );
-    const totalPrefsPaid = nonParticipatingPrefsUsed + participatingPrefsPaid;
-    const leftover = Math.max(0, exitVal - totalPrefsPaid);
+    const participatingShares = participating.reduce((s, p) => s + p.shares, 0);
 
-    // Shares participating in the remainder:
-    const sharesInRemainder =
-      founderShares +
-      esopSharesFinal +
-      participating.reduce((s, p) => s + p.shares, 0) +
-      nonParticipatingProRataSharesOut;
+    // Fixed-point iteration: each NP investor's conversion decision depends on
+    // which other NPs convert (because sharesInRemainder changes). We iterate
+    // until no investor's optimal action flips. Caps at 20 iterations to
+    // prevent oscillation; typical convergence is 2-3 iterations.
+    type NPState = {
+      round: string;
+      shares: number;
+      cost: number;
+      myPref: number;
+    };
+    const npList: NPState[] = nonParticipating.map((p) => ({
+      round: p.round,
+      shares: p.shares,
+      cost: p.cost,
+      myPref: p.cost * p.liquidationPref,
+    }));
+    const converts: boolean[] = new Array(npList.length).fill(true);
 
-    // Non-participating who convert receive their pro-rata share of the leftover
-    // pool (same pool as founders, ESOP, and participating preferred).
-    // Using (shares/sharesInRemainder)*leftover — NOT (shares/totalFDShares)*exitVal —
-    // ensures all proceeds sum exactly to exitVal regardless of who took their pref.
-    const npFinal = npResults.map((r) => {
-      const proceeds = r.usedPref
-        ? r.proceeds // liq pref amount already capped
-        : sharesInRemainder > 0
+    // Helper: derive {sharesInRemainder, leftover} from the current converts[].
+    // Used by both Gauss-Seidel updates and the final settlement so the two
+    // can't drift out of sync.
+    const computeRemainder = (
+      convertsArr: boolean[],
+      list: NPState[],
+    ): { sharesInRemainder: number; leftover: number } => {
+      let sir = founderShares + esopSharesFinal + participatingShares;
+      let npPrefsUsed = 0;
+      for (let i = 0; i < list.length; i++) {
+        if (convertsArr[i]) {
+          sir += list[i].shares;
+        } else {
+          npPrefsUsed += list[i].myPref;
+        }
+      }
+      const lo = Math.max(0, exitVal - npPrefsUsed - participatingPrefsPaid);
+      return { sharesInRemainder: sir, leftover: lo };
+    };
+
+    const MAX_ITERS = 20;
+    let iters = 0;
+    let stable = false;
+    let sharesInRemainder = 0;
+    let leftover = 0;
+
+    // Gauss-Seidel: update converts[i] in place so subsequent investors in
+    // the same pass observe the new decision. Breaks symmetric ping-pongs
+    // that Jacobi-style updates can sustain near breakeven exits.
+    while (!stable && iters < MAX_ITERS) {
+      stable = true;
+      iters++;
+
+      for (let i = 0; i < npList.length; i++) {
+        const { shares, myPref } = npList[i];
+        const { sharesInRemainder: sir, leftover: lo } = computeRemainder(
+          converts,
+          npList,
+        );
+        const sharesIfConvert = sir + (converts[i] ? 0 : shares);
+        const leftoverIfConvert = lo + (converts[i] ? 0 : myPref);
+        const proceedsIfConvert =
+          sharesIfConvert === 0
+            ? 0
+            : (shares / sharesIfConvert) * leftoverIfConvert;
+        const wantsToConvert = proceedsIfConvert > myPref;
+
+        if (wantsToConvert !== converts[i]) {
+          converts[i] = wantsToConvert;
+          stable = false;
+        }
+      }
+    }
+
+    // Deterministic fallback: if iteration hit the cap without converging,
+    // pick each NP's choice based on the FINAL state — convert iff pro-rata
+    // beats pref. This is the rational individual choice and kills any
+    // residual oscillation.
+    if (iters === MAX_ITERS && !stable) {
+      if (
+        typeof process !== "undefined" &&
+        process.env.NODE_ENV !== "production"
+      ) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[vcRound] NP-conversion fixed-point did not converge in ${MAX_ITERS} iterations at exitVal=${exitVal}; applying deterministic fallback.`,
+        );
+      }
+      const { sharesInRemainder: sir, leftover: lo } = computeRemainder(
+        converts,
+        npList,
+      );
+      for (let i = 0; i < npList.length; i++) {
+        const { shares, myPref } = npList[i];
+        const sharesIfConvert = sir + (converts[i] ? 0 : shares);
+        const leftoverIfConvert = lo + (converts[i] ? 0 : myPref);
+        const proRataIfConvert =
+          sharesIfConvert === 0
+            ? 0
+            : (shares / sharesIfConvert) * leftoverIfConvert;
+        converts[i] = proRataIfConvert > myPref;
+      }
+    }
+
+    // Final sharesInRemainder/leftover using converged converts[]
+    ({ sharesInRemainder, leftover } = computeRemainder(converts, npList));
+
+    const npFinal = npList.map((r, i) => {
+      const proceeds = converts[i]
+        ? sharesInRemainder > 0
           ? (r.shares / sharesInRemainder) * leftover
-          : 0;
+          : 0
+        : r.myPref;
       return {
         round: r.round,
         cost: r.cost,
@@ -327,11 +387,22 @@ export function calculateVCCapTable(state: VCInputState): VCData {
     const totalInvestorMOIC =
       cumulativeRaised > 0 ? totalInvestorProceeds / cumulativeRaised : 0;
 
+    // Residual reconciliation: rounding from toFixed(2) can leave a small gap
+    // between sum(all proceeds) and exitVal. Push it onto founderProceeds so
+    // the cap table sums exactly.
+    const founderProceedsRaw = parseFloat(founderShareOfRemainder.toFixed(2));
+    const esopProceedsRaw = parseFloat(esopShareOfRemainder.toFixed(2));
+    const sumAll = founderProceedsRaw + esopProceedsRaw + totalInvestorProceeds;
+    const residual = parseFloat((exitVal - sumAll).toFixed(2));
+    const founderProceedsFinal = parseFloat(
+      (founderProceedsRaw + residual).toFixed(2),
+    );
+
     return {
       exitValuation: exitVal,
       label,
-      founderProceeds: parseFloat(founderShareOfRemainder.toFixed(2)),
-      esopProceeds: parseFloat(esopShareOfRemainder.toFixed(2)),
+      founderProceeds: founderProceedsFinal,
+      esopProceeds: esopProceedsRaw,
       investorsByRound: allInvestorResults,
       totalInvestorProceeds: parseFloat(totalInvestorProceeds.toFixed(2)),
       totalInvestorMOIC: parseFloat(totalInvestorMOIC.toFixed(2)),

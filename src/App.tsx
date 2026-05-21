@@ -18,6 +18,11 @@ import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
 import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
 import { useFinFox } from "./hooks/useFinFox";
+const OnboardingTour = React.lazy(() =>
+  import("./components/OnboardingTour").then((m) => ({
+    default: m.OnboardingTour,
+  })),
+);
 const FundLifecycleTab = React.lazy(() =>
   import("./components/FundLifecycle/FundLifecycleTab").then((m) => ({
     default: m.FundLifecycleTab,
@@ -527,6 +532,13 @@ function AppContent({ user, onLogout }: AppContentProps) {
       {/* FinFox chatbot */}
       <ChatPanel />
       <FinFoxMascot />
+
+      {/* Onboarding tour — lazy-loaded, fires once per browser on the home screen */}
+      {activeSimulator === null && !hash && (
+        <React.Suspense fallback={null}>
+          <OnboardingTour />
+        </React.Suspense>
+      )}
     </div>
   );
 }

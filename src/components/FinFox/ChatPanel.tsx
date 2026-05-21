@@ -10,6 +10,7 @@ import {
   incrementQueryCount,
   setCachedAnswer,
   seedCache,
+  coerceScreen,
 } from "../../utils/finfoxApi";
 
 seedCache();
@@ -60,17 +61,6 @@ function getChips(sim: string | null, screen: string): string[] {
   if (sim === "pe") return QUICK_CHIPS["pe-lifecycle"];
   if (sim === "ib") return QUICK_CHIPS["ib-main"];
   return ["What's pre-money?", "Explain carry", "What is an LBO?"];
-}
-
-function buildSystemPrompt(sim: string | null, screen: string): string {
-  const ctx = sim
-    ? `${sim.toUpperCase()} simulator, screen: ${screen}`
-    : "general finance";
-  return `You are FinFox, a sharp and direct finance tutor inside FundSim, a deal simulation app.
-User context: ${ctx}. Anchor every answer to what the user is doing in this simulator — reference the mechanics they're practicing.
-Rules: Max 3 sentences. Plain English, no jargon without defining it. No emojis. Never say "as an AI".
-Always include one concrete number: use realistic PE/VC/IB ranges (e.g. 2-4x MOIC, 8-12x EBITDA, 15-25% IRR, 60-70% debt in LBOs, 20% carry, 8% hurdle).
-If off-topic: name 3 finance concepts relevant to their current simulator screen instead.`;
 }
 
 interface Message {
@@ -235,6 +225,85 @@ export function ChatPanel() {
     setTimeout(() => inputRef.current?.focus(), 120);
   }, [chatOpen]);
 
+  // Memoized so the preloadedQuestion effect captures the latest state instead
+  // of a stale first-render closure over messages/loading/sim/screen.
+  const sendMessage = useCallback(
+    async (text: string, skipInputClear = false) => {
+      const trimmed = text.trim();
+      if (!trimmed || loading) return;
+
+      if (remainingQueries <= 0) return;
+
+      if (!skipInputClear) setInput("");
+
+      const userMsg: Message = { role: "user", content: trimmed };
+      const newMessages: Message[] = [...messages, userMsg];
+      setMessages(newMessages);
+      setLoading(true);
+      setExpression("thinking");
+      scrollToBottom();
+
+      const cached = getCachedAnswer(trimmed);
+      if (cached) {
+        const assistantIdx = newMessages.length;
+        setMessages([
+          ...newMessages,
+          { role: "assistant", content: cached, streaming: true },
+        ]);
+        setStreamingIdx(assistantIdx);
+        setLoading(false);
+        setExpression("approving");
+        setTimeout(() => setExpression("neutral"), 3000);
+        return;
+      }
+
+      try {
+        const answer = await callFinFox({
+          mode: "tutor",
+          messages: newMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          sim: activeSim,
+          screen: coerceScreen(activeScreen),
+        });
+
+        incrementQueryCount();
+        const newCount = getRemainingQueries();
+        setRemainingQueries(newCount);
+        setCachedAnswer(trimmed, answer);
+        const assistantIdx = newMessages.length;
+        setMessages([
+          ...newMessages,
+          { role: "assistant", content: answer, streaming: true },
+        ]);
+        setStreamingIdx(assistantIdx);
+        setExpression("approving");
+        setTimeout(() => setExpression("neutral"), 3000);
+      } catch {
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: "Network error — try again in a moment.",
+          },
+        ]);
+        setExpression("neutral");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      messages,
+      loading,
+      remainingQueries,
+      activeSim,
+      activeScreen,
+      setExpression,
+      scrollToBottom,
+    ],
+  );
+
   // Handle preloaded questions — auto-send them
   useEffect(() => {
     if (!chatOpen || !preloadedQuestion) return;
@@ -264,76 +333,11 @@ export function ChatPanel() {
 
     // Auto-send to API
     sendMessage(preloadedQuestion, true);
-  }, [chatOpen, preloadedQuestion]);
+  }, [chatOpen, preloadedQuestion, sendMessage, scrollToBottom]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
-
-  async function sendMessage(text: string, skipInputClear = false) {
-    const trimmed = text.trim();
-    if (!trimmed || loading) return;
-
-    if (remainingQueries <= 0) return;
-
-    if (!skipInputClear) setInput("");
-
-    const userMsg: Message = { role: "user", content: trimmed };
-    const newMessages: Message[] = [...messages, userMsg];
-    setMessages(newMessages);
-    setLoading(true);
-    setExpression("thinking");
-    scrollToBottom();
-
-    const cached = getCachedAnswer(trimmed);
-    if (cached) {
-      const assistantIdx = newMessages.length;
-      setMessages([
-        ...newMessages,
-        { role: "assistant", content: cached, streaming: true },
-      ]);
-      setStreamingIdx(assistantIdx);
-      setLoading(false);
-      setExpression("approving");
-      setTimeout(() => setExpression("neutral"), 3000);
-      return;
-    }
-
-    try {
-      const answer = await callFinFox({
-        mode: "tutor",
-        messages: newMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        systemPrompt: buildSystemPrompt(activeSim, activeScreen),
-      });
-
-      incrementQueryCount();
-      const newCount = getRemainingQueries();
-      setRemainingQueries(newCount);
-      setCachedAnswer(trimmed, answer);
-      const assistantIdx = newMessages.length;
-      setMessages([
-        ...newMessages,
-        { role: "assistant", content: answer, streaming: true },
-      ]);
-      setStreamingIdx(assistantIdx);
-      setExpression("approving");
-      setTimeout(() => setExpression("neutral"), 3000);
-    } catch {
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
-          content: "Network error — try again in a moment.",
-        },
-      ]);
-      setExpression("neutral");
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [messages, loading, scrollToBottom]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
