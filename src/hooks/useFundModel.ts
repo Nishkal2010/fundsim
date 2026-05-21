@@ -13,6 +13,13 @@ import { calculateWaterfall } from "../utils/waterfall";
 import { calculatePerformance } from "../utils/performance";
 import { calculatePortfolio } from "../utils/portfolio";
 import { supabase } from "../lib/supabase";
+import {
+  safeStorageGet,
+  safeStorageSet,
+  safeStorageRemove,
+} from "../lib/storage";
+
+const ANON_STORAGE_KEY = "fundsim_anon_model";
 
 const defaultInputs: FundInputs = {
   fundSize: 100,
@@ -52,14 +59,28 @@ export function useFundModelState(
     userIdRef.current = userId;
   }, [userId]);
 
-  // Load saved inputs when user logs in; reset to defaults when logged out
+  // Load saved inputs when user logs in; restore from localStorage for anon users
   useEffect(() => {
     if (!userId) {
       loaded.current = false;
-      setInputs(defaultInputs);
+      // Restore anon session if available
+      const stored = safeStorageGet(ANON_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as FundInputs;
+          setInputs({ ...defaultInputs, ...parsed });
+        } catch {
+          // malformed — use defaults
+        }
+      } else {
+        setInputs(defaultInputs);
+      }
+      loaded.current = true;
       return;
     }
     loaded.current = false;
+    // Clear anon data when a real user logs in
+    safeStorageRemove(ANON_STORAGE_KEY);
     (async () => {
       try {
         const { data } = await supabase
@@ -92,25 +113,35 @@ export function useFundModelState(
   ) => {
     setInputs((prev) => {
       const next = { ...prev, [key]: value };
-      if (userId && loaded.current) {
+      if (loaded.current) {
         if (saveTimer.current) clearTimeout(saveTimer.current);
-        const capturedUserId = userId;
-        saveTimer.current = setTimeout(async () => {
-          if (capturedUserId !== userIdRef.current) return;
-          try {
-            const { error } = await supabase
-              .from("fund_models")
-              .upsert(
-                { user_id: capturedUserId, inputs: next },
-                { onConflict: "user_id" },
+        if (userId) {
+          const capturedUserId = userId;
+          saveTimer.current = setTimeout(async () => {
+            if (capturedUserId !== userIdRef.current) return;
+            try {
+              const { error } = await supabase
+                .from("fund_models")
+                .upsert(
+                  { user_id: capturedUserId, inputs: next },
+                  { onConflict: "user_id" },
+                );
+              if (error) {
+                console.error("useFundModel: failed to save inputs", error);
+              }
+            } catch (err) {
+              console.error(
+                "useFundModel: unexpected error saving inputs",
+                err,
               );
-            if (error) {
-              console.error("useFundModel: failed to save inputs", error);
             }
-          } catch (err) {
-            console.error("useFundModel: unexpected error saving inputs", err);
-          }
-        }, 1500);
+          }, 1500);
+        } else {
+          // Anonymous user — persist to localStorage with short debounce
+          saveTimer.current = setTimeout(() => {
+            safeStorageSet(ANON_STORAGE_KEY, JSON.stringify(next));
+          }, 800);
+        }
       }
       return next;
     });

@@ -248,6 +248,7 @@ export function FinFoxMascot() {
 
         <button
           onClick={() => !chatOpen && openChat()}
+          aria-label="Open FinFox AI tutor"
           title="Ask FinFox (press ? anywhere)"
           style={{
             background: "none",

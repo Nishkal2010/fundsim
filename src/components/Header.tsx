@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   BookOpen,
   Columns2,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
 import { FundSimLogo } from "./FundSimLogo";
+import { useHash } from "../hooks/useHash";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
@@ -45,20 +46,9 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   const [finfoxMenuOpen, setFinfoxMenuOpen] = useState(false);
-  const [currentHash, setCurrentHash] = useState(() =>
-    typeof window !== "undefined" ? window.location.hash : "",
-  );
+  const [currentHash] = useHash();
   const menuRef = useRef<HTMLDivElement>(null);
   const { disabled, toggleDisabled } = useFinFox();
-
-  // Track hash changes so Tour button hides on non-home views
-  useEffect(() => {
-    function onHashChange() {
-      setCurrentHash(window.location.hash);
-    }
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -114,7 +104,7 @@ export function Header({
             padding: "5px 10px",
           }}
         >
-          <GraduationCap size={13} />
+          <GraduationCap size={13} aria-hidden="true" />
           DECA
         </button>
 
@@ -129,7 +119,7 @@ export function Header({
             padding: "5px 10px",
           }}
         >
-          <Trophy size={13} />
+          <Trophy size={13} aria-hidden="true" />
           YIS
         </button>
 
@@ -137,6 +127,8 @@ export function Header({
         <div ref={menuRef} style={{ position: "relative" }}>
           <button
             onClick={() => setFinfoxMenuOpen((v) => !v)}
+            aria-expanded={finfoxMenuOpen}
+            aria-haspopup="true"
             style={{
               ...btnBase,
               fontSize: "12px",
@@ -145,7 +137,11 @@ export function Header({
               borderColor: disabled ? "#374151" : "#374151",
             }}
           >
-            {disabled ? <EyeOff size={13} /> : <Eye size={13} />}
+            {disabled ? (
+              <EyeOff size={13} aria-hidden="true" />
+            ) : (
+              <Eye size={13} aria-hidden="true" />
+            )}
             FinFox
             <ChevronDown
               size={11}
@@ -159,6 +155,7 @@ export function Header({
 
           {finfoxMenuOpen && (
             <div
+              role="menu"
               style={{
                 position: "absolute",
                 top: "calc(100% + 6px)",
@@ -172,6 +169,7 @@ export function Header({
               }}
             >
               <button
+                role="menuitem"
                 onClick={() => {
                   toggleDisabled();
                   setFinfoxMenuOpen(false);
@@ -190,7 +188,11 @@ export function Header({
                   textAlign: "left",
                 }}
               >
-                {disabled ? <Eye size={13} /> : <EyeOff size={13} />}
+                {disabled ? (
+                  <Eye size={13} aria-hidden="true" />
+                ) : (
+                  <EyeOff size={13} aria-hidden="true" />
+                )}
                 {disabled ? "Show FinFox" : "Hide FinFox"}
               </button>
             </div>
@@ -305,6 +307,7 @@ export function Header({
             {/* Logout */}
             <button
               onClick={onLogout}
+              aria-label="Sign out"
               title="Sign out"
               style={{
                 background: "none",
@@ -316,7 +319,7 @@ export function Header({
                 transition: "color 0.15s ease",
               }}
             >
-              <LogOut size={15} />
+              <LogOut size={15} aria-hidden="true" />
             </button>
           </div>
         )}
