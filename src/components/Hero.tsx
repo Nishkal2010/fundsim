@@ -39,7 +39,7 @@ interface HeroProps {
   onStart: () => void;
 }
 
-export function Hero({ onStart: _onStart }: HeroProps) {
+export function Hero({ onStart }: HeroProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -271,6 +271,37 @@ export function Hero({ onStart: _onStart }: HeroProps) {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* CTA */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={onStart}
+            style={{
+              background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+              border: "none",
+              borderRadius: 12,
+              padding: "12px 32px",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            Pick your simulator
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M3 8h10M9 4l4 4-4 4"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </motion.div>

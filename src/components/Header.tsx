@@ -204,7 +204,7 @@ export function Header({
         {/* Compare */}
         <button
           onClick={() => {
-            window.location.hash = "#compare";
+            window.location.hash = "compare";
           }}
           style={btnBase}
         >
@@ -215,7 +215,7 @@ export function Header({
         {/* Scenarios — Bull / Base / Bear */}
         <button
           onClick={() => {
-            window.location.hash = "#scenarios";
+            window.location.hash = "scenarios";
           }}
           style={btnBase}
           title="Run Bull / Base / Bear scenarios on a single base case"

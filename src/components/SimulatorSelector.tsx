@@ -189,7 +189,13 @@ function SimCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${sim.label} simulator`}
       onClick={() => onSelect(sim.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSelect(sim.id);
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics, track } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
@@ -184,25 +184,31 @@ function AppContent({ user, onLogout }: AppContentProps) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // Sync the App's active simulator into FinFox context so the chatbot
-  // knows which simulator the user is currently inside.
-  const { setActiveSim } = useFinFox();
+  // Sync simulator + active tab into FinFox so the chatbot's quick chips
+  // and system prompt reflect exactly what the user is looking at.
+  const { setActiveSim, setActiveScreen } = useFinFox();
   useEffect(() => {
     setActiveSim(activeSimulator);
-  }, [activeSimulator, setActiveSim]);
+    if (activeSimulator === null) {
+      setActiveScreen("home");
+    } else {
+      track("simulator_entered", { simulator: activeSimulator });
+    }
+  }, [activeSimulator, setActiveSim, setActiveScreen]);
+
+  useEffect(() => {
+    if (activeSimulator === "pe") setActiveScreen(activePETab);
+  }, [activeSimulator, activePETab, setActiveScreen]);
+
+  useEffect(() => {
+    if (activeSimulator === "vc") setActiveScreen(activeVCTab);
+  }, [activeSimulator, activeVCTab, setActiveScreen]);
 
   // Scroll to top whenever a simulator is entered or tab changes within a sim.
   // Without this, entering a simulator can land the user mid-page.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [activeSimulator, activePETab, activeVCTab, ibView]);
-
-  const peTabOrder: PETabId[] = [
-    "lifecycle",
-    "jcurve",
-    "waterfall",
-    "performance",
-  ];
 
   useKeyboardShortcuts([
     {
@@ -256,8 +262,6 @@ function AppContent({ user, onLogout }: AppContentProps) {
       },
     },
   ]);
-
-  void peTabOrder;
 
   const lazyFallback = (
     <div

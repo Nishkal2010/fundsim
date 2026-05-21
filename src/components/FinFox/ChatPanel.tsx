@@ -14,6 +14,9 @@ import {
 
 seedCache();
 
+const STORAGE_KEY = "finfox_messages";
+const MAX_STORED_MESSAGES = 20;
+
 const QUICK_CHIPS: Record<string, string[]> = {
   "vc-captable": [
     "What's pre-money?",
@@ -60,18 +63,39 @@ function getChips(sim: string | null, screen: string): string[] {
 }
 
 function buildSystemPrompt(sim: string | null, screen: string): string {
-  return `You are FinFox, a finance tutor for users learning on FundSim.
-Current context: Sim=${sim ?? "general"}, Screen=${screen}.
-Rules: Max 3 sentences. Plain English only — zero finance background assumed.
-Give one concrete numerical example when possible.
-If off-topic: redirect to 3 related finance topics.
-Never say "as an AI". You are FinFox. No emojis.`;
+  const ctx = sim
+    ? `${sim.toUpperCase()} simulator, screen: ${screen}`
+    : "general finance";
+  return `You are FinFox, a sharp and direct finance tutor inside FundSim, a deal simulation app.
+User context: ${ctx}. Anchor every answer to what the user is doing in this simulator — reference the mechanics they're practicing.
+Rules: Max 3 sentences. Plain English, no jargon without defining it. No emojis. Never say "as an AI".
+Always include one concrete number: use realistic PE/VC/IB ranges (e.g. 2-4x MOIC, 8-12x EBITDA, 15-25% IRR, 60-70% debt in LBOs, 20% carry, 8% hurdle).
+If off-topic: name 3 finance concepts relevant to their current simulator screen instead.`;
 }
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   streaming?: boolean;
+}
+
+function loadStoredMessages(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (m) =>
+          m &&
+          (m.role === "user" || m.role === "assistant") &&
+          typeof m.content === "string",
+      )
+      .map((m) => ({ role: m.role, content: m.content }));
+  } catch {
+    return [];
+  }
 }
 
 // Simulates streaming by revealing text character by character
@@ -154,7 +178,9 @@ export function ChatPanel() {
     setExpression,
   } = useFinFox();
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    loadStoredMessages(),
+  );
   const [loading, setLoading] = useState(false);
   const [streamingIdx, setStreamingIdx] = useState<number | null>(null);
   const [remainingQueries, setRemainingQueries] = useState(
@@ -163,6 +189,38 @@ export function ChatPanel() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const sentRef = useRef<Set<string>>(new Set());
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSaveRef = useRef<number>(0);
+
+  // Persist messages to sessionStorage, throttled to once per second
+  useEffect(() => {
+    const persist = () => {
+      try {
+        const trimmed = messages
+          .slice(-MAX_STORED_MESSAGES)
+          .map(({ role, content }) => ({ role, content }));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+        lastSaveRef.current = Date.now();
+      } catch {
+        // ignore quota or serialization errors
+      }
+    };
+
+    const elapsed = Date.now() - lastSaveRef.current;
+    if (elapsed >= 1000) {
+      persist();
+    } else {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(persist, 1000 - elapsed);
+    }
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+  }, [messages]);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(
@@ -187,12 +245,19 @@ export function ChatPanel() {
     // Glossary hit: inject directly without API call
     const glossEntry = finfoxGlossary[preloadedQuestion];
     if (glossEntry) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: `Explain: ${preloadedQuestion}` },
-        { role: "assistant", content: glossEntry.long, streaming: true },
-      ]);
-      setStreamingIdx((prev) => (prev === null ? 1 : prev + 2));
+      setMessages((prev) => {
+        const next = [
+          ...prev,
+          { role: "user" as const, content: `Explain: ${preloadedQuestion}` },
+          {
+            role: "assistant" as const,
+            content: glossEntry.long,
+            streaming: true,
+          },
+        ];
+        setStreamingIdx(next.length - 1);
+        return next;
+      });
       scrollToBottom();
       return;
     }
@@ -235,10 +300,6 @@ export function ChatPanel() {
     }
 
     try {
-      incrementQueryCount();
-      const newCount = getRemainingQueries();
-      setRemainingQueries(newCount);
-
       const answer = await callFinFox({
         mode: "tutor",
         messages: newMessages.map((m) => ({
@@ -248,6 +309,9 @@ export function ChatPanel() {
         systemPrompt: buildSystemPrompt(activeSim, activeScreen),
       });
 
+      incrementQueryCount();
+      const newCount = getRemainingQueries();
+      setRemainingQueries(newCount);
       setCachedAnswer(trimmed, answer);
       const assistantIdx = newMessages.length;
       setMessages([
@@ -276,6 +340,11 @@ export function ChatPanel() {
     sentRef.current.clear();
     setStreamingIdx(null);
     setInput("");
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const greeting = GREETINGS[activeSim ?? "general"];

@@ -136,18 +136,31 @@ export default async function handler(req: any, res: any) {
     }
   }
 
+  // Build system prompt array. The guardrail + per-mode prompt is the same
+  // across every tutor-mode request, so marking it ephemeral lets Anthropic
+  // cache it server-side and bill only cache-read tokens on subsequent calls.
+  const systemBlocks: object[] = [
+    {
+      type: "text",
+      text: SERVER_GUARDRAIL + (systemPrompt ? "\n\n" + systemPrompt : ""),
+      cache_control: { type: "ephemeral" },
+    },
+  ];
+
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: AbortSignal.timeout(25000),
       headers: {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
+        "anthropic-beta": "prompt-caching-2024-07-31",
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: MAX_TOKENS[mode],
-        system: SERVER_GUARDRAIL + "\n\n" + (systemPrompt ?? ""),
+        system: systemBlocks,
         messages,
       }),
     });
@@ -166,6 +179,10 @@ export default async function handler(req: any, res: any) {
     const data = await response.json();
     return res.status(200).json({ content: data.content?.[0]?.text ?? "" });
   } catch (err: any) {
+    if (err.name === "TimeoutError") {
+      console.error("[chat] upstream timeout after 25s");
+      return res.status(504).json({ error: "Request timed out" });
+    }
     console.error("[chat] handler error", err);
     return res.status(500).json({ error: "Internal server error" });
   }

@@ -71,10 +71,16 @@ async function checkSupabase(): Promise<{
 export default async function handler(req: any) {
   // Same-origin or no-origin (curl, GH Actions) only. Mirrors /api/chat's posture.
   const origin = req.headers?.get?.("origin") ?? "";
+  const HEALTH_ALLOWED = new Set([
+    "https://fundsimulate.com",
+    "https://www.fundsimulate.com",
+    "http://localhost:5200",
+    "http://127.0.0.1:5200",
+  ]);
   const allowed =
     !origin ||
-    origin.endsWith("fundsimulate.com") ||
-    origin.endsWith(".vercel.app") ||
+    HEALTH_ALLOWED.has(origin) ||
+    (origin.endsWith(".vercel.app") && origin.includes("fundsim")) ||
     origin.startsWith("http://localhost");
   if (origin && !allowed) {
     return new Response(

@@ -16,7 +16,6 @@ import {
   Legend,
 } from "recharts";
 import { IBLanding } from "./IBLanding";
-import { exportIBModelToExcel } from "../../lib/excelExport";
 import { ProGate } from "../ProGate";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -1640,7 +1639,11 @@ export function IBSimulator() {
         <div className="flex items-center gap-2">
           <ProGate feature="Excel model download">
             <button
-              onClick={() => exportIBModelToExcel(inputs, C)}
+              onClick={async () => {
+                const { exportIBModelToExcel } =
+                  await import("../../lib/excelExport");
+                exportIBModelToExcel(inputs, C);
+              }}
               className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{
                 color: "#10B981",

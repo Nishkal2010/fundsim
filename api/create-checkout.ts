@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { createClient } from "@supabase/supabase-js";
 
 // Creates a Stripe Checkout session for FundSim Pro and returns the URL.
 // Client redirects to the URL; Stripe handles the payment UI; on success
@@ -46,9 +47,32 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: "Billing not configured" });
   }
 
+  // Verify JWT — ensure the caller owns the userId they're submitting
+  const authHeader = req.headers?.authorization as string | undefined;
+  const token = authHeader?.replace("Bearer ", "").trim();
+  if (!token) return res.status(401).json({ error: "Authentication required" });
+
+  const supabaseAdmin = createClient(
+    process.env.VITE_SUPABASE_URL ?? "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.VITE_SUPABASE_ANON_KEY ??
+      "",
+  );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseAdmin.auth.getUser(token);
+  if (authError || !user)
+    return res.status(401).json({ error: "Invalid or expired token" });
+
   const { userId, userEmail } = req.body ?? {};
   if (typeof userId !== "string" || userId.length < 8 || userId.length > 64) {
     return res.status(400).json({ error: "Invalid userId" });
+  }
+  if (user.id !== userId) {
+    return res
+      .status(403)
+      .json({ error: "userId does not match authenticated user" });
   }
   if (
     userEmail !== undefined &&
@@ -57,8 +81,9 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: "Invalid userEmail" });
   }
 
-  const successUrl = (origin ?? "https://fundsimulate.com") + "/?pro=success";
-  const cancelUrl = (origin ?? "https://fundsimulate.com") + "/?pro=cancel";
+  // Hardcoded — never reflect client origin to prevent open redirect
+  const successUrl = "https://fundsimulate.com/?pro=success";
+  const cancelUrl = "https://fundsimulate.com/?pro=cancel";
 
   // Stripe Checkout Sessions API — form-encoded body, server-to-server only.
   const params = new URLSearchParams();
