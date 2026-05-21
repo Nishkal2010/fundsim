@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { driver, type Driver } from "driver.js";
+import { useEffect, useRef, useState } from "react";
+import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
 const TOUR_KEY = "fundsim_tour_done";
@@ -72,7 +72,11 @@ const DARK_POPOVER_STYLE = `
 
 /** Call this from devtools to reset the tour: resetOnboardingTour() */
 export function resetOnboardingTour() {
-  localStorage.removeItem(TOUR_KEY);
+  try {
+    localStorage.removeItem(TOUR_KEY);
+  } catch {
+    // Safari private mode — swallow
+  }
 }
 
 // Only expose on window in dev — avoids polluting production global scope
@@ -116,7 +120,20 @@ function waitForElements(
 
 export function OnboardingTour() {
   // tour-5: hold driver instance in a ref so cleanup can destroy it
-  const driverRef = useRef<Driver | null>(null);
+  const driverRef = useRef<ReturnType<typeof driver> | null>(null);
+  // Incremented by the fundsim:start-tour event to re-trigger the main effect
+  const [retrigger, setRetrigger] = useState(0);
+
+  useEffect(() => {
+    function handleStartTour() {
+      // Reset persistent TOUR_KEY so the tour actually runs on retrigger
+      resetOnboardingTour();
+      setRetrigger((n) => n + 1);
+    }
+    window.addEventListener("fundsim:start-tour", handleStartTour);
+    return () =>
+      window.removeEventListener("fundsim:start-tour", handleStartTour);
+  }, []);
 
   useEffect(() => {
     // tour-2: guard localStorage.getItem against Safari private-mode throws
@@ -126,7 +143,15 @@ export function OnboardingTour() {
     } catch {
       // private mode — treat as not seen, tour will fire
     }
-    if (alreadySeen) return;
+    // bug3: explicit Tour button click sets a sessionStorage flag; if set, proceed
+    // regardless of alreadySeen. Natural first-visit (no TOUR_KEY) also proceeds.
+    let consumed = false;
+    try {
+      consumed = sessionStorage.getItem("fundsim_tour_consumed") === "1";
+    } catch {
+      // private mode — swallow
+    }
+    if (alreadySeen && !consumed) return;
 
     // Inject styles
     const styleEl = document.createElement("style");
@@ -135,6 +160,7 @@ export function OnboardingTour() {
     document.head.appendChild(styleEl);
 
     let cancelled = false;
+    let localDriver: ReturnType<typeof driver> | null = null;
 
     function tagElements() {
       // Glossary button — find by text in header
@@ -172,6 +198,11 @@ export function OnboardingTour() {
         return;
       }
 
+      // bug2: destroy any prior driver only AFTER we know we're going to run,
+      // and inside the async body so concurrent effect runs don't race.
+      driverRef.current?.destroy();
+      driverRef.current = null;
+
       const obj = driver({
         popoverClass: "fundsim-tour",
         showProgress: true,
@@ -185,6 +216,14 @@ export function OnboardingTour() {
 
           // tour-8: remove style BEFORE setItem so cleanup always runs
           document.getElementById("fundsim-tour-styles")?.remove();
+
+          // bug3: clear the consumed flag now that the tour has run/closed
+          // so a Suspense remount doesn't auto-fire it again.
+          try {
+            sessionStorage.removeItem("fundsim_tour_consumed");
+          } catch {
+            // private mode — swallow
+          }
 
           if (activeIndex >= 1) {
             // tour-2: guard localStorage.setItem against Safari private-mode throws
@@ -240,7 +279,13 @@ export function OnboardingTour() {
         ],
       });
 
+      localDriver = obj;
       driverRef.current = obj;
+      if (cancelled) {
+        localDriver?.destroy();
+        if (driverRef.current === localDriver) driverRef.current = null;
+        return;
+      }
       obj.drive();
     }
 
@@ -249,11 +294,11 @@ export function OnboardingTour() {
     return () => {
       cancelled = true;
       // tour-5: destroy driver instance to remove DOM overlay
-      driverRef.current?.destroy();
-      driverRef.current = null;
+      localDriver?.destroy();
+      if (driverRef.current === localDriver) driverRef.current = null;
       document.getElementById("fundsim-tour-styles")?.remove();
     };
-  }, []);
+  }, [retrigger]);
 
   return null;
 }

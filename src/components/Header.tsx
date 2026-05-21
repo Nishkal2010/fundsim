@@ -1,8 +1,9 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   Columns2,
   ExternalLink,
+  HelpCircle,
   LogOut,
   User,
   GraduationCap,
@@ -44,8 +45,20 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   const [finfoxMenuOpen, setFinfoxMenuOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState(() =>
+    typeof window !== "undefined" ? window.location.hash : "",
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const { disabled, toggleDisabled } = useFinFox();
+
+  // Track hash changes so Tour button hides on non-home views
+  useEffect(() => {
+    function onHashChange() {
+      setCurrentHash(window.location.hash);
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -189,6 +202,26 @@ export function Header({
           <BookOpen size={14} />
           Glossary
         </button>
+
+        {/* Tour — only shown on the home view (no hash) */}
+        {!currentHash && (
+          <button
+            onClick={() => {
+              try {
+                sessionStorage.setItem("fundsim_tour_consumed", "1");
+              } catch {
+                // private mode — swallow
+              }
+              window.location.hash = "";
+              window.dispatchEvent(new Event("fundsim:start-tour"));
+            }}
+            style={btnBase}
+            title="Restart the onboarding tour"
+          >
+            <HelpCircle size={14} aria-hidden="true" />
+            Tour
+          </button>
+        )}
 
         {/* Compare */}
         <button

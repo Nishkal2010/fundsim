@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1776019143818,
+  "lastScanned": 1779327593536,
   "projectRoot": "/Users/nishkaldachepelly/fundsim",
   "techStack": {
     "languages": [
@@ -23,11 +23,6 @@
     ],
     "frameworks": [
       {
-        "name": "express",
-        "version": "4.18.3",
-        "category": "backend"
-      },
-      {
         "name": "react",
         "version": "19.2.4",
         "category": "frontend"
@@ -41,6 +36,11 @@
         "name": "vite",
         "version": "8.0.1",
         "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "2.0.0",
+        "category": "testing"
       }
     ],
     "packageManager": "npm",
@@ -48,16 +48,17 @@
   },
   "build": {
     "buildCommand": "npm run build",
-    "testCommand": null,
+    "testCommand": "npm test",
     "lintCommand": "npm run lint",
     "devCommand": "npm run dev",
     "scripts": {
-      "dev": "concurrently \"node server/index.js\" \"vite\"",
-      "dev:client": "vite",
-      "dev:server": "node server/index.js",
+      "dev": "vite",
       "build": "tsc -b && vite build",
-      "lint": "eslint .",
-      "preview": "vite preview"
+      "lint": "eslint src/",
+      "preview": "vite preview",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage"
     }
   },
   "conventions": {
@@ -72,66 +73,79 @@
     "mainDirectories": [
       "docs",
       "public",
+      "scripts",
       "src"
     ],
-    "gitBranches": null
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
   },
   "customNotes": [],
   "directoryMap": {
     "api": {
       "path": "api",
       "purpose": "API routes",
-      "fileCount": 2,
-      "lastAccessed": 1776019143798,
+      "fileCount": 5,
+      "lastAccessed": 1779327593507,
       "keyFiles": [
-        "index.js",
-        "package.json"
+        "chat.ts",
+        "create-checkout.ts",
+        "health.ts",
+        "share-create.ts",
+        "stripe-webhook.ts"
       ]
     },
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
-      "fileCount": 3,
-      "lastAccessed": 1776019143798,
+      "fileCount": 5,
+      "lastAccessed": 1779327593508,
       "keyFiles": [
         "favicon.svg",
         "icons.svg",
-        "index.html"
+        "index.html",
+        "robots.txt",
+        "sitemap.xml"
       ]
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 0,
-      "lastAccessed": 1776019143801,
-      "keyFiles": []
+      "fileCount": 1,
+      "lastAccessed": 1779327593512,
+      "keyFiles": [
+        "OVERNIGHT_AGENT.md"
+      ]
     },
     "public": {
       "path": "public",
       "purpose": "Public files",
-      "fileCount": 2,
-      "lastAccessed": 1776019143801,
+      "fileCount": 4,
+      "lastAccessed": 1779327593513,
       "keyFiles": [
         "favicon.svg",
-        "icons.svg"
+        "icons.svg",
+        "robots.txt",
+        "sitemap.xml"
       ]
     },
-    "server": {
-      "path": "server",
-      "purpose": null,
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
       "fileCount": 3,
-      "lastAccessed": 1776019143801,
+      "lastAccessed": 1779327593514,
       "keyFiles": [
-        "index.js",
-        "package-lock.json",
-        "package.json"
+        "overnight_agent.py",
+        "post_digest.py",
+        "requirements.txt"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 4,
-      "lastAccessed": 1776019143802,
+      "lastAccessed": 1779327593514,
       "keyFiles": [
         "App.css",
         "App.tsx",
@@ -139,46 +153,41 @@
         "main.tsx"
       ]
     },
+    "src_backup_20260421_200745": {
+      "path": "src_backup_20260421_200745",
+      "purpose": null,
+      "fileCount": 4,
+      "lastAccessed": 1779327593514,
+      "keyFiles": [
+        "App.css",
+        "App.tsx",
+        "index.css",
+        "main.tsx"
+      ]
+    },
+    "supabase": {
+      "path": "supabase",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1779327593515,
+      "keyFiles": []
+    },
     "dist/assets": {
       "path": "dist/assets",
       "purpose": "Static assets",
-      "fileCount": 2,
-      "lastAccessed": 1776019143802,
+      "fileCount": 54,
+      "lastAccessed": 1779327593516,
       "keyFiles": [
-        "index-C38EfNKf.css",
-        "index-M2Qi7n0Z.js"
-      ]
-    },
-    "server/config": {
-      "path": "server/config",
-      "purpose": "Configuration files",
-      "fileCount": 1,
-      "lastAccessed": 1776019143802,
-      "keyFiles": [
-        "passport.js"
-      ]
-    },
-    "server/node_modules": {
-      "path": "server/node_modules",
-      "purpose": "Dependencies",
-      "fileCount": 1,
-      "lastAccessed": 1776019143803,
-      "keyFiles": []
-    },
-    "server/routes": {
-      "path": "server/routes",
-      "purpose": "Route handlers",
-      "fileCount": 1,
-      "lastAccessed": 1776019143803,
-      "keyFiles": [
-        "auth.js"
+        "ComparePage-CYWaYYd2.js",
+        "DECAFinanceSuite-BfF-FGdY.js",
+        "DealMemoTab-3yCeFWNf.js"
       ]
     },
     "src/assets": {
       "path": "src/assets",
       "purpose": "Static assets",
       "fileCount": 3,
-      "lastAccessed": 1776019143803,
+      "lastAccessed": 1779327593516,
       "keyFiles": [
         "hero.png",
         "react.svg",
@@ -188,47 +197,114 @@
     "src/components": {
       "path": "src/components",
       "purpose": "UI components",
-      "fileCount": 12,
-      "lastAccessed": 1776019143804,
+      "fileCount": 24,
+      "lastAccessed": 1779327593517,
+      "keyFiles": [
+        "AppErrorBoundary.tsx",
+        "ComparePage.tsx",
+        "ComparePanel.tsx"
+      ]
+    },
+    "src/data": {
+      "path": "src/data",
+      "purpose": "Data files",
+      "fileCount": 3,
+      "lastAccessed": 1779327593517,
+      "keyFiles": [
+        "finfoxGlossary.ts",
+        "glossary.ts",
+        "scenarios.ts"
+      ]
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 7,
+      "lastAccessed": 1779327593517,
+      "keyFiles": [
+        "dealShare.ts",
+        "excelExport.ts",
+        "ibScenarios.ts"
+      ]
+    },
+    "src/test": {
+      "path": "src/test",
+      "purpose": "Test files",
+      "fileCount": 4,
+      "lastAccessed": 1779327593518,
+      "keyFiles": [
+        "irr.test.ts",
+        "setup.ts",
+        "vcRound.test.ts"
+      ]
+    },
+    "src_backup_20260421_200745/assets": {
+      "path": "src_backup_20260421_200745/assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1779327593518,
+      "keyFiles": [
+        "hero.png",
+        "react.svg",
+        "vite.svg"
+      ]
+    },
+    "src_backup_20260421_200745/components": {
+      "path": "src_backup_20260421_200745/components",
+      "purpose": "UI components",
+      "fileCount": 16,
+      "lastAccessed": 1779327593519,
       "keyFiles": [
         "ComparePage.tsx",
         "ComparePanel.tsx",
         "Footer.tsx"
       ]
     },
-    "src/data": {
-      "path": "src/data",
+    "src_backup_20260421_200745/data": {
+      "path": "src_backup_20260421_200745/data",
       "purpose": "Data files",
-      "fileCount": 1,
-      "lastAccessed": 1776019143804,
+      "fileCount": 2,
+      "lastAccessed": 1779327593519,
       "keyFiles": [
-        "glossary.ts"
+        "glossary.ts",
+        "scenarios.ts"
       ]
     },
-    "src/lib": {
-      "path": "src/lib",
+    "src_backup_20260421_200745/lib": {
+      "path": "src_backup_20260421_200745/lib",
       "purpose": "Library code",
       "fileCount": 1,
-      "lastAccessed": 1776019143804,
+      "lastAccessed": 1779327593519,
       "keyFiles": [
         "supabase.ts"
       ]
     },
-    "src/types": {
-      "path": "src/types",
-      "purpose": "Type definitions",
+    "src_backup_20260421_200745/test": {
+      "path": "src_backup_20260421_200745/test",
+      "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1776019143804,
+      "lastAccessed": 1779327593519,
       "keyFiles": [
-        "fund.ts"
+        "setup.ts"
+      ]
+    },
+    "supabase/migrations": {
+      "path": "supabase/migrations",
+      "purpose": "Database migrations",
+      "fileCount": 4,
+      "lastAccessed": 1779327593520,
+      "keyFiles": [
+        "20260430_deal_shares.sql",
+        "20260510_profiles_is_pro.sql",
+        "20260513_security_hardening.sql"
       ]
     }
   },
   "hotPaths": [
     {
       "path": "src/components/IB/IBSimulator.tsx",
-      "accessCount": 268,
-      "lastAccessed": 1776219353309,
+      "accessCount": 300,
+      "lastAccessed": 1779325606988,
       "type": "file"
     },
     {
@@ -239,8 +315,8 @@
     },
     {
       "path": "src/App.tsx",
-      "accessCount": 36,
-      "lastAccessed": 1778472854890,
+      "accessCount": 47,
+      "lastAccessed": 1779328635061,
       "type": "file"
     },
     {
@@ -275,8 +351,8 @@
     },
     {
       "path": "src/hooks/useFundModel.ts",
-      "accessCount": 20,
-      "lastAccessed": 1776019208825,
+      "accessCount": 21,
+      "lastAccessed": 1779328162755,
       "type": "file"
     },
     {
@@ -286,9 +362,15 @@
       "type": "file"
     },
     {
+      "path": "src/components/Header.tsx",
+      "accessCount": 17,
+      "lastAccessed": 1779328778429,
+      "type": "file"
+    },
+    {
       "path": "src/types/fund.ts",
-      "accessCount": 12,
-      "lastAccessed": 1776018851327,
+      "accessCount": 13,
+      "lastAccessed": 1779327929885,
       "type": "file"
     },
     {
@@ -451,12 +533,6 @@
       "path": "src/components/Hero.tsx",
       "accessCount": 3,
       "lastAccessed": 1778474757574,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Header.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1778475750567,
       "type": "file"
     },
     {

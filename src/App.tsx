@@ -18,6 +18,7 @@ import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
 import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
 import { useFinFox } from "./hooks/useFinFox";
+import LoadingSkeleton from "./components/LoadingSkeleton";
 const OnboardingTour = React.lazy(() =>
   import("./components/OnboardingTour").then((m) => ({
     default: m.OnboardingTour,
@@ -268,23 +269,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
     },
   ]);
 
-  const lazyFallback = (
-    <div
-      className="flex-1 flex items-center justify-center"
-      style={{ background: "#0D1220", minHeight: "60vh" }}
-    >
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          border: "2px solid #374151",
-          borderTopColor: "#6366F1",
-          borderRadius: "50%",
-          animation: "spin 0.8s linear infinite",
-        }}
-      />
-    </div>
-  );
+  const lazyFallback = <LoadingSkeleton />;
 
   if (hash === "compare")
     return (

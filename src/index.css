@@ -47,6 +47,24 @@ body {
   font-family: "Instrument Serif", serif;
 }
 
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes skeleton-shimmer {
+    0%,
+    100% {
+      background-position: 0 0;
+    }
+  }
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }

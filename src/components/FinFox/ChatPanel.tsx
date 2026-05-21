@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, RotateCcw } from "lucide-react";
 import { useFinFox } from "../../hooks/useFinFox";
 import { finfoxGlossary } from "../../data/finfoxGlossary";
+import { trackEvent } from "../../lib/analytics";
 import {
   callFinFox,
   getCachedAnswer,
@@ -17,6 +18,8 @@ seedCache();
 
 const STORAGE_KEY = "finfox_messages";
 const MAX_STORED_MESSAGES = 20;
+const MAX_CACHE_HIT_EVENTS = 5;
+let cacheHitEventCount = 0;
 
 const QUICK_CHIPS: Record<string, string[]> = {
   "vc-captable": [
@@ -97,7 +100,13 @@ function useStreamingText(
   const [displayed, setDisplayed] = useState("");
   const frameRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const indexRef = useRef(0);
+  const onDoneRef = useRef(onDone);
 
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onDone read via ref to avoid restarting the typewriter on every parent render
   useEffect(() => {
     if (!active || !targetText) {
       setDisplayed(targetText);
@@ -117,7 +126,7 @@ function useStreamingText(
         const delay = char === "." || char === "?" ? 30 : char === " " ? 6 : 12;
         frameRef.current = setTimeout(step, delay);
       } else {
-        onDone();
+        onDoneRef.current();
       }
     };
 
@@ -245,6 +254,10 @@ export function ChatPanel() {
 
       const cached = getCachedAnswer(trimmed);
       if (cached) {
+        if (cacheHitEventCount < MAX_CACHE_HIT_EVENTS) {
+          trackEvent("finfox_cache_hit", { sim: activeSim ?? "general" });
+          cacheHitEventCount++;
+        }
         const assistantIdx = newMessages.length;
         setMessages([
           ...newMessages,
@@ -272,6 +285,11 @@ export function ChatPanel() {
         const newCount = getRemainingQueries();
         setRemainingQueries(newCount);
         setCachedAnswer(trimmed, answer);
+        trackEvent("finfox_question_asked", {
+          sim: activeSim ?? "general",
+          screen: activeScreen ?? "",
+          length: trimmed.length,
+        });
         const assistantIdx = newMessages.length;
         setMessages([
           ...newMessages,
@@ -281,6 +299,7 @@ export function ChatPanel() {
         setExpression("approving");
         setTimeout(() => setExpression("neutral"), 3000);
       } catch {
+        trackEvent("finfox_error", { sim: activeSim ?? "general" });
         setMessages([
           ...newMessages,
           {

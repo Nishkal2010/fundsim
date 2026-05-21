@@ -1,5 +1,6 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -73,7 +74,61 @@ const securityHeaders = {
 };
 
 export default defineConfig({
-  plugins: [react(), devApiPlugin()],
+  plugins: [
+    react(),
+    devApiPlugin(),
+    VitePWA({
+      registerType: "autoUpdate",
+      manifest: {
+        name: "FundSim",
+        short_name: "FundSim",
+        description: "PE, VC & IB simulators. Free finance education.",
+        theme_color: "#0A0F1C",
+        background_color: "#0A0F1C",
+        display: "standalone",
+        start_url: "/",
+        icons: [{ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }],
+      },
+      workbox: {
+        globPatterns: [
+          "index.html",
+          "assets/index-*.{js,css}",
+          "assets/vendor-react-*.{js,css}",
+          "assets/vendor-motion-*.{js,css}",
+          "assets/vendor-supabase-*.{js,css}",
+          "**/*.{ico,svg,woff2,webmanifest,json}",
+        ],
+        globIgnores: ["**/*.map"],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }: { url: URL }) =>
+              url.origin === "https://api.anthropic.com",
+            handler: "NetworkOnly" as const,
+          },
+          {
+            urlPattern: ({ url }: { url: URL }) =>
+              url.pathname.startsWith("/api/"),
+            handler: "NetworkOnly" as const,
+          },
+          {
+            urlPattern: ({ url }: { url: URL }) =>
+              url.hostname.endsWith(".supabase.co"),
+            handler: "NetworkOnly" as const,
+          },
+          {
+            urlPattern: ({ url }: { url: URL }) =>
+              url.pathname.startsWith("/assets/"),
+            handler: "StaleWhileRevalidate" as const,
+            options: {
+              cacheName: "fundsim-assets",
+              expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            },
+          },
+        ],
+      },
+    }),
+  ],
   server: {
     port: 5200,
     headers: securityHeaders,

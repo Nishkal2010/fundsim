@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -176,6 +176,22 @@ export function SimulatorSelector({ onSelect }: Props) {
   );
 }
 
+const MOBILE_VISIBLE_FEATURES = 4;
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
 function SimCard({
   sim,
   onSelect,
@@ -186,12 +202,24 @@ function SimCard({
   Icon: React.FC<{ size?: number; color?: string }>;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
+  const isMobile = useIsMobile();
+
+  const hiddenCount = sim.features.length - MOBILE_VISIBLE_FEATURES;
+  const featuresId = `${sim.id}-features`;
+
+  // Option B: on mobile the expand <button> is visible inside this card, so
+  // we must not also have role="button" on the card — interactive descendants
+  // of interactive elements break screen reader virtual cursor (ARIA 1.2 §6.6.1).
+  // On desktop (≥640px) the expand button is CSS-hidden (sm:hidden), so the
+  // card can safely carry its interactive role.
+  const expandVisible = isMobile && hiddenCount > 0;
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-label={`Open ${sim.label} simulator`}
+      role={expandVisible ? undefined : "button"}
+      tabIndex={expandVisible ? undefined : 0}
+      aria-label={expandVisible ? undefined : `Open ${sim.label} simulator`}
       onClick={() => onSelect(sim.id)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onSelect(sim.id);
@@ -202,7 +230,6 @@ function SimCard({
         background: hovered ? "#111827" : "#0D1220",
         border: `1px solid ${hovered ? sim.hoverBorder : sim.border}`,
         borderRadius: "14px",
-        padding: "24px",
         cursor: "pointer",
         transition:
           "border-color 0.2s ease, background 0.2s ease, transform 0.2s ease",
@@ -211,16 +238,17 @@ function SimCard({
         flexDirection: "column",
         height: "100%",
       }}
+      className="p-4 sm:p-6"
     >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-4">
+      {/* Header — badge uses flex-shrink-0 + min-w-0 on the middle column to prevent wrapping */}
+      <div className="flex items-start gap-3 mb-4 min-w-0">
         <div
           className="flex items-center justify-center w-11 h-11 rounded-xl flex-shrink-0"
           style={{ background: sim.dim, border: `1px solid ${sim.border}` }}
         >
           <Icon size={20} color={sim.color} />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <div
             className="font-serif text-xl leading-tight"
             style={{ color: "#F9FAFB" }}
@@ -239,7 +267,7 @@ function SimCard({
           </div>
         </div>
         <span
-          className="ml-auto text-xs font-bold px-2 py-0.5 rounded flex-shrink-0"
+          className="ml-auto text-xs font-bold px-2 py-0.5 rounded flex-shrink-0 whitespace-nowrap"
           style={{
             background: sim.dim,
             color: sim.color,
@@ -256,23 +284,56 @@ function SimCard({
         {sim.description}
       </p>
 
-      {/* Features */}
+      {/* Features — on mobile show first 4, rest behind expand trigger */}
       <div className="flex-1 mb-5 space-y-0">
-        {sim.features.map((f) => (
-          <div
-            key={f}
-            className="flex items-center gap-2.5 py-1.5"
+        <div id={featuresId} aria-live="polite">
+          {sim.features.map((f, idx) => {
+            const hiddenOnMobile = idx >= MOBILE_VISIBLE_FEATURES;
+            return (
+              <div
+                key={f}
+                className={`flex items-center gap-2.5 py-1.5 ${hiddenOnMobile ? (featuresExpanded ? "" : "hidden sm:flex") : ""}`}
+                style={{ borderBottom: "1px solid rgba(31,41,55,0.8)" }}
+              >
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: sim.color, opacity: 0.7 }}
+                />
+                <span className="text-xs" style={{ color: "#D1D5DB" }}>
+                  {f}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Expand/collapse trigger — only visible on mobile when there are hidden items.
+            Safe here because when this button is visible, the parent div has no
+            role="button" (expandVisible gates both). */}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            className="sm:hidden flex items-center gap-1.5 py-1.5 w-full text-left"
             style={{ borderBottom: "1px solid rgba(31,41,55,0.8)" }}
+            aria-expanded={featuresExpanded}
+            aria-controls={featuresId}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFeaturesExpanded((v) => !v);
+            }}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             <div
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ background: sim.color, opacity: 0.7 }}
+              style={{ background: sim.color, opacity: 0.4 }}
             />
-            <span className="text-xs" style={{ color: "#D1D5DB" }}>
-              {f}
+            <span className="text-xs font-medium" style={{ color: sim.color }}>
+              {featuresExpanded
+                ? "Show less"
+                : `+ ${hiddenCount} more feature${hiddenCount > 1 ? "s" : ""}`}
             </span>
-          </div>
-        ))}
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -292,8 +353,8 @@ function SimCard({
         ))}
       </div>
 
-      {/* Tagline */}
-      <div className="text-xs mb-4" style={{ color: "#4B5563" }}>
+      {/* Tagline — line-clamp-2 wraps to 2 lines; title omitted (invisible on touch) */}
+      <div className="text-xs mb-4 line-clamp-2" style={{ color: "#4B5563" }}>
         Used at: {sim.tagline}
       </div>
 
