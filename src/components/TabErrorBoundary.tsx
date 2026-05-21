@@ -1,4 +1,5 @@
 import React from "react";
+import { captureError } from "../lib/sentry";
 
 interface State {
   error: Error | null;
@@ -16,6 +17,7 @@ export class TabErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[TabErrorBoundary] tab crash:", error, info);
+    captureError(error, { boundary: "TabErrorBoundary", tabId: this.props.tabId });
   }
 
   render() {

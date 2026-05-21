@@ -6,7 +6,8 @@ import React, {
   useState,
 } from "react";
 
-export type FinFoxSim = "vc" | "pe" | "ib";
+import type { SimulatorId } from "../SimulatorSelector";
+export type FinFoxSim = SimulatorId;
 export type FinFoxExpression = "neutral" | "thinking" | "approving";
 
 export interface FinFoxContextType {

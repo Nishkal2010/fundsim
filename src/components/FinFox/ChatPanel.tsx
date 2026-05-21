@@ -655,6 +655,7 @@ export function ChatPanel() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                maxLength={500}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

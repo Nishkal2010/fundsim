@@ -213,7 +213,19 @@ export function calculateLBO(inputs: LBOInputs): LBOData {
   const sensitivityGrid = exitMults.flatMap((em) =>
     growthRates.map((gr) => {
       const exitEB = entryEBITDA * Math.pow(1 + gr, holdYears);
-      const eqAtExit = Math.max(0, exitEB * em - exitDebt);
+      // Re-run debt sweep for this growth rate so FCF (and thus cash sweep)
+      // reflects gr, not the base case. Lower gr → less FCF → higher exit debt.
+      let gridDebt = entryDebt;
+      for (let yr = 1; yr <= holdYears; yr++) {
+        const grEBITDA = entryEBITDA * Math.pow(1 + gr, yr);
+        const grFCF = grEBITDA * fcfConversion;
+        const grInterest = gridDebt * interestRate;
+        const grMandatory = entryDebt * mandatoryAmortization;
+        const cashAfter = Math.max(0, grFCF - grInterest);
+        const amort = Math.min(gridDebt, Math.max(grMandatory, cashAfter));
+        gridDebt = Math.max(0, gridDebt - amort);
+      }
+      const eqAtExit = Math.max(0, exitEB * em - gridDebt);
       const m = entryEquity > 0 ? eqAtExit / entryEquity : 0;
       const cf = [-entryEquity, ...Array(holdYears - 1).fill(0), eqAtExit];
       return { exitMult: em, growthRate: gr, moic: m, irr: calculateIRR(cf) };

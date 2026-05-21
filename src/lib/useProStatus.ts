@@ -26,11 +26,13 @@ export function useProStatus(): ProStatus {
         return;
       }
 
+      // maybeSingle() returns null (not an error) when no profile row exists yet,
+      // avoiding the PGRST116 "exactly one row" error from .single().
       const { data } = await supabase
         .from("profiles")
         .select("is_pro")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!cancelled) {
         setIsPro(data?.is_pro ?? false);

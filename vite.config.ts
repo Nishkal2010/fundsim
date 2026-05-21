@@ -86,6 +86,12 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (
+            id.includes("xlsx-js-style") ||
+            id.includes("xlsx") ||
+            id.includes("/lib/excelExport")
+          )
+            return "feature-excel";
+          if (
             id.includes("node_modules/react") ||
             id.includes("node_modules/react-dom")
           )

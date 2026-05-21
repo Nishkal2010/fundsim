@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
+import { FundSimLogo } from "./FundSimLogo";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
@@ -71,19 +72,7 @@ export function Header({
     >
       <div className="flex items-center gap-3">
         {/* Logo mark */}
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 32 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ flexShrink: 0 }}
-        >
-          <rect width="32" height="32" rx="7" fill="#0D1220" />
-          <rect x="7" y="19" width="4" height="7" rx="1" fill="#6366F1" />
-          <rect x="14" y="13" width="4" height="13" rx="1" fill="#818CF8" />
-          <rect x="21" y="7" width="4" height="19" rx="1" fill="#A5B4FC" />
-        </svg>
+        <FundSimLogo size={28} />
         <div className="flex flex-col">
           <span
             className="font-serif leading-none tracking-tight"

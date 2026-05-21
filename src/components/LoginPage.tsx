@@ -10,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { FundSimLogo } from "./FundSimLogo";
 
 interface LoginPageProps {
   onDemoLogin: (user: {
@@ -139,18 +140,7 @@ export function LoginPage({ onDemoLogin }: LoginPageProps) {
         }}
       >
         <div className="flex items-center gap-3">
-          <svg
-            width="36"
-            height="36"
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect width="32" height="32" rx="7" fill="#0D1220" />
-            <rect x="7" y="19" width="4" height="7" rx="1" fill="#6366F1" />
-            <rect x="14" y="13" width="4" height="13" rx="1" fill="#818CF8" />
-            <rect x="21" y="7" width="4" height="19" rx="1" fill="#A5B4FC" />
-          </svg>
+          <FundSimLogo size={36} />
           <span className="font-serif text-2xl" style={{ color: "#F9FAFB" }}>
             FundSim
           </span>
@@ -255,18 +245,7 @@ export function LoginPage({ onDemoLogin }: LoginPageProps) {
         >
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect width="32" height="32" rx="7" fill="#0D1220" />
-              <rect x="7" y="19" width="4" height="7" rx="1" fill="#6366F1" />
-              <rect x="14" y="13" width="4" height="13" rx="1" fill="#818CF8" />
-              <rect x="21" y="7" width="4" height="19" rx="1" fill="#A5B4FC" />
-            </svg>
+            <FundSimLogo size={32} />
             <span className="font-serif text-xl" style={{ color: "#F9FAFB" }}>
               FundSim
             </span>

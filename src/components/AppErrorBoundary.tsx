@@ -1,4 +1,5 @@
 import React from "react";
+import { captureError } from "../lib/sentry";
 
 interface State {
   hasError: boolean;
@@ -23,6 +24,7 @@ export class AppErrorBoundary extends React.Component<
 
   componentDidCatch(err: Error, info: React.ErrorInfo) {
     console.error("[FundSim] uncaught render error:", err, info);
+    captureError(err, { boundary: "AppErrorBoundary" });
   }
 
   render() {

@@ -536,6 +536,11 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    const timeout = setTimeout(() => setAuthChecked(true), 5000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
     // onAuthStateChange fires immediately with the current session on mount,
     // so it serves as a single source of truth — no separate getSession() needed.
     const {

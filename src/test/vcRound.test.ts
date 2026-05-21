@@ -4,7 +4,8 @@ import {
   DEFAULT_VC_FOUNDER_SHARES,
   DEFAULT_ESOP_FOUNDING_PCT,
 } from "../utils/vcRound";
-import type { VCInputState, VCRoundInput } from "../utils/vcRound";
+import type { VCInputState } from "../utils/vcRound";
+import type { VCRoundInput } from "../types/fund";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

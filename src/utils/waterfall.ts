@@ -88,25 +88,28 @@ function calculateEuropeanWaterfall(
 
   // Tier 3: GP Catch-Up
   //
-  // FIX (Issue 2): The prior code used targetGPCarry = lpProfits * carryPct
-  // (wrong basis) and catch-up pool = targetGPCarry / catchUpRate, ignoring
-  // that Tier 4 also pays GP carryPct of every remaining dollar. This caused
-  // effective carry to reach ~28% against a 20% nominal — a systematic
-  // overstatement of GP economics.
-  //
   // Correct derivation: let P = catch-up pool, c = catchUpRate,
-  // k = carryPercentage, R = remaining before catch-up.
+  // k = carryPercentage, R = remaining before catch-up,
+  // F = totalFundProfit = totalProceeds - fundSize.
   //
-  //   Total GP carry = P·c + (R - P)·k = k · totalFundProfit
-  //   Solving for P:  P = k · totalPrefPaid / (c - k)
+  //   Total GP carry = P·c + (R - P)·k = k · F
+  //   Solving for P:  P = k · (F - R) / (c - k)
+  //                     = k · totalFundProfit / (c - k)
   //
-  // where totalPrefPaid = preferredLP + preferredGP (all Tier 2 distributions).
-  // This ensures: effective carry ≡ carryPercentage for any catchUpRate > k.
+  // Note: (F - R) = profit already distributed above capital (Tier 2 pref),
+  // but targeting k·F (not k·prefPaid) is the correct nominal carry basis.
+  // This ensures: effective carry ≡ carryPercentage over totalFundProfit.
   //
+  const totalFundProfit = Math.max(0, totalProceeds - inputs.fundSize);
   const totalPrefPaid = preferredLP + preferredGP;
   let gpCatchUp = 0;
   let lpDuringCatchUp = 0;
 
+  // Derivation: GP target carry = k·F where F = totalFundProfit.
+  // GP carry = C·c + (F - P - C)·k where C = catchup pool, c = catchUpRate,
+  // P = totalPrefPaid. Solving C·c + k(F - P - C) = k·F gives:
+  //   C = k·P / (c - k)
+  // (totalPrefPaid is the correct numerator, not totalFundProfit.)
   const effectiveCatchUpRate = catchUpRate || 0;
   if (effectiveCatchUpRate > carryPercentage && totalPrefPaid > 0) {
     const catchUpPool = Math.min(

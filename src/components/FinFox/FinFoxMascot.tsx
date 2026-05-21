@@ -5,10 +5,14 @@ import type { FinFoxExpression } from "./FinFoxProvider";
 interface FoxSvgProps {
   expression: FinFoxExpression;
   size?: number;
+  walking?: boolean;
 }
 
-export function FoxSvg({ expression, size = 48 }: FoxSvgProps) {
-  const walking = false;
+export function FoxSvg({
+  expression,
+  size = 48,
+  walking = false,
+}: FoxSvgProps) {
   return (
     <svg
       width={size}
@@ -260,7 +264,11 @@ export function FinFoxMascot() {
                 : "finfox-idle-bob 3s ease-in-out infinite, finfox-idle-glow 3s ease-in-out infinite",
           }}
         >
-          <FoxSvg expression={expression} size={38} />
+          <FoxSvg
+            expression={expression}
+            size={38}
+            walking={expression === "thinking"}
+          />
         </button>
       </div>
     </>
