@@ -55,3 +55,16 @@ export function resetUser(): void {
     if (import.meta.env.DEV) console.warn("[posthog] reset failed:", err);
   }
 }
+
+/**
+ * Check a PostHog feature flag. Returns false when PostHog is not loaded
+ * (no key, private mode, ad-blocker) so callers get a safe default.
+ */
+export function isFeatureEnabled(flag: string): boolean {
+  if (!POSTHOG_KEY) return false;
+  try {
+    return posthog.isFeatureEnabled(flag) === true;
+  } catch {
+    return false;
+  }
+}

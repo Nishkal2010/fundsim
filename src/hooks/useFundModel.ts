@@ -18,6 +18,7 @@ import {
   safeStorageSet,
   safeStorageRemove,
 } from "../lib/storage";
+import { getSharedScenario } from "../lib/shareUrl";
 
 const ANON_STORAGE_KEY = "fundsim_anon_model";
 
@@ -63,7 +64,18 @@ export function useFundModelState(
   useEffect(() => {
     if (!userId) {
       loaded.current = false;
-      // Restore anon session if available
+      // Shared URL param takes top priority — merge with defaults and clear the param
+      const shared = getSharedScenario();
+      if (shared) {
+        setInputs({ ...defaultInputs, ...shared });
+        // Remove ?model= so refreshing doesn't re-apply the shared state
+        const url = new URL(window.location.href);
+        url.searchParams.delete("model");
+        window.history.replaceState(null, "", url.toString());
+        loaded.current = true;
+        return;
+      }
+      // Fall back to localStorage anon session
       const stored = safeStorageGet(ANON_STORAGE_KEY);
       if (stored) {
         try {

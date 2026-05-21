@@ -1,11 +1,14 @@
-import React from "react"; // kept
+import React, { useState } from "react";
+import { Link2 } from "lucide-react";
 import { Slider } from "./Slider";
 import { useFundModel } from "../hooks/useFundModel";
 import { ScenarioPresets } from "./ScenarioPresets";
+import { buildShareUrl } from "../lib/shareUrl";
 import type { FundInputs } from "../types/fund";
 
 export function GlobalInputs() {
   const { inputs, setInput } = useFundModel();
+  const [copied, setCopied] = useState(false);
 
   function handleLoadScenario(preset: Partial<FundInputs>) {
     (Object.keys(preset) as Array<keyof FundInputs>).forEach((key) => {
@@ -19,6 +22,25 @@ export function GlobalInputs() {
         )(key, value);
       }
     });
+  }
+
+  async function handleShare() {
+    const url = buildShareUrl(inputs);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for browsers that block clipboard without user gesture
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -37,7 +59,22 @@ export function GlobalInputs() {
           <div className="text-[10px] text-[#6B7280] uppercase tracking-widest font-semibold">
             Global Fund Parameters
           </div>
-          <ScenarioPresets onLoad={handleLoadScenario} />
+          <div className="flex items-center gap-2">
+            <ScenarioPresets onLoad={handleLoadScenario} />
+            <button
+              onClick={handleShare}
+              title="Copy shareable link to this model"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border transition-all duration-150"
+              style={{
+                background: copied ? "rgba(16,185,129,0.1)" : "#18202F",
+                borderColor: copied ? "#10B981" : "#374151",
+                color: copied ? "#10B981" : "rgba(255,255,255,0.45)",
+              }}
+            >
+              <Link2 size={12} />
+              {copied ? "Copied!" : "Share"}
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-x-6 gap-y-4">
           <Slider
