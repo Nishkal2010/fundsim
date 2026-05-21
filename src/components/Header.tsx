@@ -12,10 +12,15 @@ import {
   Eye,
   EyeOff,
   Layers,
+  Printer,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useFinFox } from "../hooks/useFinFox";
 import { FundSimLogo } from "./FundSimLogo";
 import { useHash } from "../hooks/useHash";
+import { useDarkMode } from "../hooks/useDarkMode";
+import { captureEvent } from "../lib/posthog";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
@@ -49,6 +54,7 @@ export function Header({
   const [currentHash] = useHash();
   const menuRef = useRef<HTMLDivElement>(null);
   const { disabled, toggleDisabled } = useFinFox();
+  const { dark, toggle } = useDarkMode();
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -248,6 +254,36 @@ export function Header({
           Scenarios
         </button>
 
+        {/* Print */}
+        <button
+          onClick={() => {
+            const safePage = (currentHash || "home")
+              .slice(0, 64)
+              .replace(/[^a-zA-Z0-9_-]/g, "_");
+            captureEvent("print_triggered", { page: safePage });
+            window.print();
+          }}
+          style={btnBase}
+          title="Print / Export as PDF"
+        >
+          <Printer size={14} aria-hidden="true" />
+          Print
+        </button>
+
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggle}
+          style={btnBase}
+          title={dark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {dark ? (
+            <Sun size={14} aria-hidden="true" />
+          ) : (
+            <Moon size={14} aria-hidden="true" />
+          )}
+          {dark ? "Light" : "Dark"}
+        </button>
+
         {/* GitHub */}
         <a
           href="https://github.com"
@@ -275,7 +311,7 @@ export function Header({
                 border: "1px solid #374151",
               }}
             >
-              {userPicture ? (
+              {userPicture && userPicture.startsWith("https://") ? (
                 <img
                   src={userPicture}
                   alt={userName}

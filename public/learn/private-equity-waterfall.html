@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>How a Private Equity Waterfall Works (European vs American) — FundSim</title>
+<meta name="description" content="A plain-English walk through PE distribution waterfalls. Hurdle, catch-up, carry split, European vs American — with a free interactive simulator." />
+<link rel="canonical" href="https://fundsimulate.com/learn/private-equity-waterfall.html" />
+<meta property="og:title" content="How a Private Equity Waterfall Works — FundSim" />
+<meta property="og:description" content="Hurdle, catch-up, carry. European vs American. Try every tier in the free simulator." />
+<meta property="og:url" content="https://fundsimulate.com/learn/private-equity-waterfall.html" />
+<meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"How a Private Equity Waterfall Works","author":{"@type":"Organization","name":"FundSim"},"datePublished":"2026-05-21","image":"https://fundsimulate.com/og-image.png","publisher":{"@type":"Organization","name":"FundSim","logo":{"@type":"ImageObject","url":"https://fundsimulate.com/favicon.svg"}}}
+</script>
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;line-height:1.75}.wrap{max-width:740px;margin:0 auto;padding:48px 24px 96px}a{color:#7dd3fc}.nav{color:#64748b;font-size:.95rem;margin-bottom:24px}h1{font-size:2.1rem;margin:0 0 8px}h2{color:#f8fafc;margin-top:40px}h3{color:#cbd5e1}.lede{color:#94a3b8;font-size:1.1rem}code,pre{background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:2px 6px;font-size:.95em}pre{padding:14px;overflow-x:auto}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #1e293b;padding:8px 10px;text-align:left}th{background:#0f172a}.cta{display:inline-block;background:#3b82f6;color:#fff;padding:12px 22px;border-radius:8px;margin-top:8px;font-weight:600}.cta:hover{background:#2563eb}.box{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;margin:20px 0}.tag{display:inline-block;color:#7dd3fc;font-size:.85rem;background:#0f172a;border:1px solid #1e293b;border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav"><a href="/">FundSim</a> &rsaquo; <a href="/learn/">Learn</a> &rsaquo; Waterfall</div>
+<span class="tag">Private Equity</span><span class="tag">12 min read</span>
+<h1>How a private equity waterfall works</h1>
+<p class="lede">If you've ever been asked "walk me through how GPs get paid" in an interview and stalled out somewhere around the word "hurdle," this is for you.</p>
+
+<p>A waterfall is just the rulebook for who gets which dollar of profit, and in what order, when a private equity fund returns money to its investors. There are two main flavors — European and American — and the difference matters more than people give it credit for.</p>
+
+<h2>The four tiers (European waterfall)</h2>
+
+<p>Almost every European waterfall has the same four tiers. Money flows down each one in order. Whatever doesn't get used at one tier keeps going.</p>
+
+<h3>1. Return of Capital</h3>
+<p>LPs get back every dollar they put in. All of it. Before anyone talks about profit, the fund first has to make the LPs whole on their original contribution. If you committed $10M and the fund has distributed back $7M so far, this tier eats the next $3M of proceeds before anything else happens.</p>
+
+<h3>2. Preferred Return (the "hurdle")</h3>
+<p>LPs get a minimum compounding return on their capital — usually 8% per year — before the GP sees a cent of carry. This is the hurdle. It's not a guarantee; it's a threshold. If the fund returns less than 8% annualized, the GP gets nothing on carry, even if the fund made money in absolute terms.</p>
+
+<h3>3. GP Catch-up</h3>
+<p>Once LPs have their hurdle, the GP "catches up." The fund pays the GP at an accelerated rate — often 100% of distributions until the GP has effectively received 20% of the total profits earned so far. This is the tier that confuses people. It exists so that once the catch-up is complete, the split going forward looks like the headline number (e.g. 80/20) on <em>all</em> profits, not just profits above the hurdle.</p>
+
+<h3>4. Carried Interest split</h3>
+<p>Now we're past the hurdle and past the catch-up. The remaining profits split, typically 80% to LPs and 20% to GPs. This is the carry everyone talks about.</p>
+
+<h2>European vs American — what actually differs</h2>
+
+<table>
+<tr><th>&nbsp;</th><th>European</th><th>American</th></tr>
+<tr><td>Calculation level</td><td>Whole fund</td><td>Deal by deal</td></tr>
+<tr><td>When GP gets carry</td><td>After LPs are made whole on every dollar across the entire fund</td><td>As soon as a single deal clears the hurdle on its own</td></tr>
+<tr><td>GP cash timing</td><td>Slower</td><td>Faster</td></tr>
+<tr><td>LP friendliness</td><td>Higher</td><td>Lower (usually balanced by a clawback)</td></tr>
+</table>
+
+<p>European is the default in Europe (shocker) and increasingly in newer US funds. American is the legacy structure on Wall Street. The American version is faster cash for GPs but introduces clawback risk: if early winners pay GPs carry and later deals underperform, GPs have to give some of it back.</p>
+
+<h2>A small worked example</h2>
+
+<div class="box">
+<p><strong>Fund:</strong> $100M committed. <strong>Hurdle:</strong> 8%. <strong>Split:</strong> 80/20. <strong>Exits</strong> at $250M after 7 years.</p>
+<ol>
+<li><strong>Return of capital:</strong> First $100M to LPs.</li>
+<li><strong>Hurdle:</strong> 8% compounded for 7 years on $100M ≈ $71M. LPs get the next $71M.</li>
+<li><strong>Catch-up:</strong> GP needs to be at 20% of the $71M of profits distributed so far. That's about $18M to the GP.</li>
+<li><strong>Carry split:</strong> Remaining $250M − $100M − $71M − $18M = $61M, split 80/20. LPs get $48.8M. GPs get $12.2M.</li>
+</ol>
+<p><strong>Totals:</strong> LPs get $219.8M (2.20× MOIC). GPs get $30.2M in carry.</p>
+</div>
+
+<p>The numbers shift dramatically when you change the hurdle, the catch-up structure (full catch-up vs partial), or the carry %. That's the part you can't really feel until you start moving the levers.</p>
+
+<h2>Try it</h2>
+
+<p>FundSim's PE simulator has both waterfalls built in. Change the fund size, hurdle, carry, exit multiple, and waterfall type. The tier-by-tier distribution table updates as you type. You can also flip on the American mode to see how a deal-by-deal payout affects GP cash timing.</p>
+
+<p><a class="cta" href="/#pe">Open the PE simulator &rsaquo;</a></p>
+
+<h2>Common interview questions on waterfalls</h2>
+
+<ol>
+<li><strong>Why does the catch-up exist?</strong> So that once it's done, the headline split applies to total profits, not just profits above the hurdle. Without it, GPs would only get 20% of incremental profits, which feels lower than the advertised carry.</li>
+<li><strong>What's a clawback?</strong> A mechanism in American-style waterfalls where GPs have to return excess carry if later losses pull the lifetime fund performance below what they were paid for.</li>
+<li><strong>Soft vs hard hurdle?</strong> A hard hurdle means the GP only gets carry on profits <em>above</em> the hurdle. A soft hurdle means once you clear the hurdle, the GP gets carry on <em>all</em> profits (with a catch-up making them whole on prior profits). Almost every modern fund uses a soft hurdle.</li>
+<li><strong>Does the hurdle compound?</strong> Yes, almost always. Most LPAs quote it as a compounded annualized rate.</li>
+</ol>
+
+<h2>Related guides</h2>
+<p>
+  <a href="/learn/lbo-model-explained.html">The LBO model, in 5 minutes</a> ·
+  <a href="/learn/j-curve-private-equity.html">What the J-curve actually means</a> ·
+  <a href="/learn/cap-table-dilution.html">Cap table dilution explained</a>
+</p>
+
+<p style="margin-top:48px;color:#64748b;font-size:.9rem">FundSim is a free, browser-based finance education simulator. No signup. No paywall. Just a place to run the numbers until they make sense.</p>
+</div>
+</body>
+</html>

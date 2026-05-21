@@ -18,6 +18,7 @@ import { IBLanding } from "./IBLanding";
 import { ProGate } from "../ProGate";
 import { Card, SectionHeader, Sub, Stat } from "./shared/primitives";
 import { fmtM, fmtN, fmtPct } from "./shared/format";
+import { captureEvent } from "../../lib/posthog";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const A = {
@@ -1523,6 +1524,9 @@ export function IBSimulator() {
           <ProGate feature="Excel model download">
             <button
               onClick={async () => {
+                captureEvent("ib_excel_exported", {
+                  dealType: inputs.dealType || "unknown",
+                });
                 const { exportIBModelToExcel } =
                   await import("../../lib/excelExport");
                 exportIBModelToExcel(inputs, C);
@@ -1690,7 +1694,12 @@ export function IBSimulator() {
                     return (
                       <button
                         key={p.key}
-                        onClick={() => setInputs(PRESETS[p.key])}
+                        onClick={() => {
+                          captureEvent("ib_preset_applied", {
+                            preset: p.key as string,
+                          });
+                          setInputs(PRESETS[p.key]);
+                        }}
                         className="p-2.5 rounded-lg text-left"
                         style={{
                           background: active ? A.dim : "#111827",

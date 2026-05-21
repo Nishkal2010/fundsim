@@ -468,7 +468,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <TabBar
                 simulator="pe"
                 active={activePETab}
-                onChange={(t) => setActivePETab(t as PETabId)}
+                onChange={(t) => {
+                  setActivePETab(t as PETabId);
+                  captureEvent("pe_tab_changed", { tab: t as string });
+                }}
                 onBack={() => setActiveSimulator(null)}
               />
               <div className="flex-1">
@@ -502,7 +505,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <TabBar
                 simulator="vc"
                 active={activeVCTab}
-                onChange={(t) => setActiveVCTab(t as VCTabId)}
+                onChange={(t) => {
+                  setActiveVCTab(t as VCTabId);
+                  captureEvent("vc_tab_changed", { tab: t as string });
+                }}
                 onBack={() => setActiveSimulator(null)}
               />
               <div className="flex-1">

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The LBO Model in 5 Minutes — Free Interactive Walkthrough — FundSim</title>
+<meta name="description" content="A no-Excel walkthrough of the leveraged buyout model: entry EV, debt schedule, FCF sweep, exit. Try every input in the free FundSim LBO simulator." />
+<link rel="canonical" href="https://fundsimulate.com/learn/lbo-model-explained.html" />
+<meta property="og:title" content="The LBO Model in 5 Minutes — FundSim" />
+<meta property="og:description" content="Entry EV, debt schedule, exit equity, value creation bridge. Free interactive LBO." />
+<meta property="og:url" content="https://fundsimulate.com/learn/lbo-model-explained.html" />
+<meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;line-height:1.75}.wrap{max-width:740px;margin:0 auto;padding:48px 24px 96px}a{color:#7dd3fc}.nav{color:#64748b;font-size:.95rem;margin-bottom:24px}h1{font-size:2.1rem;margin:0 0 8px}h2{color:#f8fafc;margin-top:40px}.lede{color:#94a3b8;font-size:1.1rem}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #1e293b;padding:8px 10px;text-align:left}th{background:#0f172a}.cta{display:inline-block;background:#3b82f6;color:#fff;padding:12px 22px;border-radius:8px;margin-top:8px;font-weight:600}.box{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;margin:20px 0}.tag{display:inline-block;color:#7dd3fc;font-size:.85rem;background:#0f172a;border:1px solid #1e293b;border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav"><a href="/">FundSim</a> &rsaquo; <a href="/learn/">Learn</a> &rsaquo; LBO</div>
+<span class="tag">Investment Banking</span><span class="tag">PE</span><span class="tag">8 min</span>
+<h1>The LBO model, in 5 minutes</h1>
+<p class="lede">If you can explain the LBO model in 5 minutes, you can probably get through most of an interview. Most candidates can't, not because it's hard, but because nobody tells them which parts are the actual mechanics and which parts are decoration.</p>
+
+<p>An LBO is one company buying another using a small amount of equity and a lot of borrowed money. The borrowed money sits on the target's balance sheet after the deal. You hold the company, use its cash to pay down debt, then sell it. The math is built from four pieces.</p>
+
+<h2>1. Entry: what you're paying</h2>
+<p>Start with the entry enterprise value: <code>EBITDA × entry multiple</code>. Subtract net debt and you get the equity check. That equity check splits into <strong>sponsor equity</strong> (the PE firm's money) and <strong>new debt</strong> (what the lenders put in).</p>
+
+<div class="box">
+$50M EBITDA × 10x = $500M EV. New debt = 6× = $300M. Sponsor equity = $500M − $300M = $200M (ignoring fees and cash on hand for the simple version).
+</div>
+
+<h2>2. The debt schedule</h2>
+<p>This is the heart of the model. Each year:</p>
+<ul>
+<li>Company generates EBITDA.</li>
+<li>Subtract interest, taxes, capex, working capital. Whatever's left is <strong>free cash flow</strong>.</li>
+<li>That FCF gets swept against the debt — paying it down.</li>
+<li>Next year's interest is lower because the debt balance is lower.</li>
+</ul>
+<p>This is the part interviewers love. They want to see you carry numbers down a column without losing track of what's beginning balance vs ending balance.</p>
+
+<h2>3. The exit</h2>
+<p>Five years later, you sell. Exit EV = <code>exit EBITDA × exit multiple</code>. Subtract remaining debt to get exit equity. That equity belongs to the sponsor.</p>
+
+<h2>4. Returns</h2>
+<table>
+<tr><th>Metric</th><th>Formula</th></tr>
+<tr><td>MOIC (cash-on-cash)</td><td>Exit equity ÷ entry equity</td></tr>
+<tr><td>IRR</td><td>Annualized return over the hold period</td></tr>
+</table>
+<p>3.0× MOIC over 5 years is about a 25% IRR. 2.5× over 5 is about 20%. Memorize a few of these and you can sanity-check your model in your head.</p>
+
+<h2>Where the value comes from</h2>
+<p>People love to draw the value creation bridge. There are three sources:</p>
+<ol>
+<li><strong>EBITDA growth</strong> — the company is bigger when you sell.</li>
+<li><strong>Multiple expansion</strong> — the market values the company higher (sometimes). Don't underwrite to this. Interviewers will roll their eyes.</li>
+<li><strong>Debt paydown</strong> — the company has less debt at exit, so more of the EV becomes equity.</li>
+</ol>
+
+<h2>Try it</h2>
+<p>FundSim's LBO tab gives you all of this on one screen. You set EBITDA, entry multiple, debt %, growth rate, exit multiple, and hold period. The model builds the debt schedule, computes exit equity, and shows the value creation bridge. There's also a sensitivity grid showing IRR across entry multiple × exit multiple — the chart every MD asks you to walk through.</p>
+<p><a class="cta" href="/#pe">Open the LBO simulator &rsaquo;</a></p>
+
+<h2>Common interview gotchas</h2>
+<ul>
+<li><strong>"Walk me through a paper LBO."</strong> Start at entry equity. Compound EBITDA. Apply exit multiple. Add back debt paydown. State the IRR. Don't draw a schedule unless they hand you paper.</li>
+<li><strong>"What's a good leverage ratio?"</strong> Historically 5–7× EBITDA for sponsor deals. 6× is the safe verbal answer.</li>
+<li><strong>"What's a cash sweep?"</strong> Mandatory prepayment of debt from excess cash. Speeds up the IRR.</li>
+<li><strong>"Why is debt paydown an IRR driver?"</strong> Because every dollar of debt repaid becomes a dollar of sponsor equity at exit.</li>
+</ul>
+
+<h2>Related</h2>
+<p>
+  <a href="/learn/private-equity-waterfall.html">PE waterfall explained</a> ·
+  <a href="/learn/j-curve-private-equity.html">J-curve</a> ·
+  <a href="/learn/cap-table-dilution.html">Cap table dilution</a>
+</p>
+</div>
+</body>
+</html>

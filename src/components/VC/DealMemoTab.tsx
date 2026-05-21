@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Copy, CheckCircle, Download, FileText } from "lucide-react";
+import { captureEvent } from "../../lib/posthog";
 
 const SECTORS = [
   "FinTech",
@@ -232,6 +233,7 @@ export function DealMemoTab() {
   }
 
   function handleDownload() {
+    captureEvent("deal_memo_downloaded");
     const blob = new Blob([memoText], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

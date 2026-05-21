@@ -216,3 +216,32 @@ input[type="range"]:focus-visible {
     max-width: 100% !important;
   }
 }
+
+:root {
+  --bg-app: #0a0f1c;
+  --bg-header: #111827;
+  --bg-card: #1f2937;
+  --border: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.35);
+}
+
+html.light {
+  --bg-app: #f8fafc;
+  --bg-header: #ffffff;
+  --bg-card: #f1f5f9;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --border-active: #6366f1;
+}
+
+html.light body {
+  background: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+}
