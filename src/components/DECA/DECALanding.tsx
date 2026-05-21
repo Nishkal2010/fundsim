@@ -1,10 +1,40 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { EVENT_CONFIG } from "./config/eventConfig";
 
 interface Props {
   onStart: () => void;
 }
+
+const PRACTICE_QS = [
+  {
+    id: "lbo-ev",
+    topic: "LBO Entry Valuation",
+    q: "A PE firm acquires a company at 8x EBITDA. The company generates $40M EBITDA. What is the total enterprise value?",
+    options: ["A) $280M", "B) $320M", "C) $360M"],
+    correct: 1,
+    explanation:
+      "EV = Entry Multiple × EBITDA = 8 × $40M = $320M. Entry multiples in PE mid-market typically range 7–12x EBITDA depending on sector and growth profile.",
+  },
+  {
+    id: "vc-dilution",
+    topic: "VC Dilution",
+    q: "A founder owns 80% of their company before Series A. A VC takes 25% of the company in the round. What is the founder's post-money ownership?",
+    options: ["A) 55%", "B) 60%", "C) 65%"],
+    correct: 1,
+    explanation:
+      "Founder post-money = 80% × (1 − 25%) = 80% × 0.75 = 60%. This is why founders track dilution carefully across rounds — seed, Series A, and B can take founders from 100% to ~25%.",
+  },
+  {
+    id: "breakeven",
+    topic: "Break-Even Analysis",
+    q: "A business has $10,000/month in fixed costs and a 40% contribution margin. What monthly revenue is needed to break even?",
+    options: ["A) $20,000", "B) $25,000", "C) $40,000"],
+    correct: 1,
+    explanation:
+      "Break-even revenue = Fixed Costs ÷ Contribution Margin = $10,000 ÷ 0.40 = $25,000. Judges expect you to know this calculation cold — it shows you understand unit economics.",
+  },
+];
 
 const features = [
   {
@@ -42,6 +72,20 @@ const FEATURED_EVENTS = (
 ).map((code) => EVENT_CONFIG[code]);
 
 export function DECALanding({ onStart }: Props) {
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+
+  function toggleReveal(id: string) {
+    setRevealed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -329,6 +373,95 @@ export function DECALanding({ onStart }: Props) {
                   <span style={{ color: "#d4af37", fontFamily: "monospace" }}>
                     {evt.financialPointsWritten}pts
                   </span>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Practice Questions */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="max-w-2xl mx-auto w-full px-6 pb-16 mt-10"
+        >
+          <p
+            className="text-xs font-semibold tracking-widest mb-5 text-center"
+            style={{ color: "#4B5563" }}
+          >
+            PRACTICE QUESTIONS
+          </p>
+          <div className="flex flex-col gap-3">
+            {PRACTICE_QS.map((q) => {
+              const show = revealed.has(q.id);
+              return (
+                <div
+                  key={q.id}
+                  style={{
+                    background: "#111827",
+                    border: "1px solid #1F2937",
+                    borderRadius: 10,
+                    padding: "14px 16px",
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: "#818CF8" }}
+                    >
+                      {q.topic}
+                    </span>
+                  </div>
+                  <p className="text-sm mb-3" style={{ color: "#D1D5DB" }}>
+                    {q.q}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {q.options.map((opt, i) => (
+                      <span
+                        key={opt}
+                        className="text-xs px-3 py-1 rounded-lg"
+                        style={{
+                          background:
+                            show && i === q.correct
+                              ? "rgba(16,185,129,0.15)"
+                              : "rgba(255,255,255,0.04)",
+                          border:
+                            show && i === q.correct
+                              ? "1px solid #10B981"
+                              : "1px solid #374151",
+                          color:
+                            show && i === q.correct
+                              ? "#10B981"
+                              : "rgba(255,255,255,0.5)",
+                          fontWeight: show && i === q.correct ? 600 : 400,
+                        }}
+                      >
+                        {opt}
+                      </span>
+                    ))}
+                  </div>
+                  {show && (
+                    <p
+                      className="text-xs leading-relaxed mb-3"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      {q.explanation}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => toggleReveal(q.id)}
+                    className="text-xs"
+                    style={{
+                      color: "#6B7280",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    {show ? "Hide answer" : "Show answer"}
+                  </button>
                 </div>
               );
             })}

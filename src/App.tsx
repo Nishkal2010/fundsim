@@ -19,6 +19,7 @@ import {
   safeStorageSet,
   safeStorageRemove,
 } from "./lib/storage";
+import { SharedScenarioBanner } from "./components/SharedScenarioBanner";
 import { FinFoxProvider } from "./components/FinFox/FinFoxProvider";
 import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
@@ -148,7 +149,7 @@ const ScenarioCompare = React.lazy(() =>
     default: m.ScenarioCompare,
   })),
 );
-import { captureEvent } from "./lib/posthog";
+import { captureEvent, identifyUser, resetUser } from "./lib/posthog";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -547,6 +548,9 @@ function AppContent({ user, onLogout }: AppContentProps) {
 function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [sharedLoaded, setSharedLoaded] = useState(() =>
+    new URLSearchParams(window.location.search).has("model"),
+  );
 
   useEffect(() => {
     const timeout = setTimeout(() => setAuthChecked(true), 5000);
@@ -560,7 +564,9 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setUser(mapSupabaseUser(session.user));
+        const mapped = mapSupabaseUser(session.user);
+        setUser(mapped);
+        identifyUser(mapped.id!, { name: mapped.name, email: mapped.email });
         safeStorageRemove("fundsim_auth");
       } else {
         // No Supabase session — check for a demo user in localStorage
@@ -601,6 +607,7 @@ function App() {
     }
     safeStorageRemove("fundsim_auth");
     setUser(null);
+    resetUser();
   }
 
   function handleDemoLogin(u: AuthUser) {
@@ -642,6 +649,10 @@ function App() {
         <AppContent user={user} onLogout={handleLogout} />
         <Analytics />
       </FundModelContext.Provider>
+      <SharedScenarioBanner
+        visible={sharedLoaded}
+        onDismiss={() => setSharedLoaded(false)}
+      />
     </FinFoxProvider>
   );
 }

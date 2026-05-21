@@ -22,6 +22,7 @@ const MAX_CACHE_HIT_EVENTS = 5;
 let cacheHitEventCount = 0;
 
 const QUICK_CHIPS: Record<string, string[]> = {
+  // sim-screen compound keys (highest priority)
   "vc-captable": [
     "What's pre-money?",
     "How does dilution work?",
@@ -45,6 +46,73 @@ const QUICK_CHIPS: Record<string, string[]> = {
   "pe-lbo": ["What's a good debt ratio?", "Explain LBO", "What's EBITDA?"],
   "pe-gplp": ["What is 2 and 20?", "Explain carry", "What's DPI vs TVPI?"],
   "ib-main": ["M&A vs IPO?", "What are comps?", "Explain accretion/dilution"],
+  // screen-only keys (fallback when no sim prefix matches)
+  lbo: [
+    "Walk me through an LBO model",
+    "How does debt paydown create equity value?",
+    "What's a typical LBO leverage ratio?",
+  ],
+  waterfall: [
+    "How does a PE waterfall work?",
+    "What is the catch-up provision?",
+    "European vs American waterfall — what's the difference?",
+  ],
+  jcurve: [
+    "What is the J-curve in PE?",
+    "Why do PE funds show negative early returns?",
+    "What does DPI vs TVPI mean?",
+  ],
+  performance: [
+    "What is PME?",
+    "How do GPs calculate net IRR?",
+    "What's a good MOIC for a PE fund?",
+  ],
+  portfolio: [
+    "How do PE firms build a portfolio?",
+    "What is loss ratio in PE?",
+    "What's a typical PE fund's number of investments?",
+  ],
+  captable: [
+    "How does a cap table work?",
+    "What is pro-rata rights?",
+    "How does a SAFE convert in a priced round?",
+  ],
+  termsheet: [
+    "What are the key VC term sheet terms?",
+    "What is a liquidation preference?",
+    "What does 1x non-participating mean?",
+  ],
+  safe: [
+    "What is a SAFE note?",
+    "How does a SAFE valuation cap work?",
+    "SAFE vs convertible note — which is better?",
+  ],
+  lifecycle: [
+    "What is a fund's investment period?",
+    "How do management fees work?",
+    "What is GP commitment?",
+  ],
+  valuation: [
+    "How do you value a startup?",
+    "What is a DCF?",
+    "How do VCs set pre-money valuation?",
+  ],
+  main: [
+    "What does an investment banker do?",
+    "How does M&A accretion work?",
+    "What is a fairness opinion?",
+  ],
+  debt: [
+    "What is leveraged finance?",
+    "How is DSCR calculated?",
+    "What's a typical LBO debt structure?",
+  ],
+  // generic fallback
+  "": [
+    "What is an LBO?",
+    "How does carried interest work?",
+    "What's the difference between IRR and MOIC?",
+  ],
 };
 
 const GREETINGS: Record<string, string> = {
@@ -57,13 +125,14 @@ const GREETINGS: Record<string, string> = {
 
 function getChips(sim: string | null, screen: string): string[] {
   if (sim && screen) {
-    const key = `${sim}-${screen}`;
-    if (QUICK_CHIPS[key]) return QUICK_CHIPS[key];
+    const compoundKey = `${sim}-${screen}`;
+    if (QUICK_CHIPS[compoundKey]) return QUICK_CHIPS[compoundKey];
   }
+  if (screen && QUICK_CHIPS[screen]) return QUICK_CHIPS[screen];
   if (sim === "vc") return QUICK_CHIPS["vc-captable"];
   if (sim === "pe") return QUICK_CHIPS["pe-lifecycle"];
   if (sim === "ib") return QUICK_CHIPS["ib-main"];
-  return ["What's pre-money?", "Explain carry", "What is an LBO?"];
+  return QUICK_CHIPS[""];
 }
 
 interface Message {

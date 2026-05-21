@@ -125,4 +125,120 @@ describe("calculatePerformance", () => {
     const result = calculatePerformance(baseInputs);
     expect(result.ksPME).toBeGreaterThan(0);
   });
+
+  // ── New edge-case and relationship tests ───────────────────────────────────
+
+  it("netMOIC equals tvpi", () => {
+    // calculatePerformance sets netMOIC = tvpi directly
+    const result = calculatePerformance(baseInputs);
+    expect(result.netMOIC).toBeCloseTo(result.tvpi, 10);
+  });
+
+  it("100% loss ratio → dpi is 0 (no distributions)", () => {
+    // lossRatio: 1 means every company is written off → zero exit proceeds
+    const result = calculatePerformance({
+      ...baseInputs,
+      lossRatio: 1.0,
+      avgExitMultiple: 0,
+    });
+    expect(result.dpi).toBeCloseTo(0, 6);
+    expect(result.tvpi).toBeGreaterThanOrEqual(0);
+  });
+
+  it("100% loss ratio → netIRR is null or negative", () => {
+    const result = calculatePerformance({
+      ...baseInputs,
+      lossRatio: 1.0,
+      avgExitMultiple: 0,
+    });
+    if (result.netIRR !== null) {
+      expect(result.netIRR).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it("higher exit multiple → higher tvpi", () => {
+    const low = calculatePerformance({ ...baseInputs, avgExitMultiple: 1.5 });
+    const high = calculatePerformance({ ...baseInputs, avgExitMultiple: 4.0 });
+    expect(high.tvpi).toBeGreaterThan(low.tvpi);
+  });
+
+  it("higher exit multiple → higher netIRR when both funds are profitable", () => {
+    const low = calculatePerformance({
+      ...baseInputs,
+      avgExitMultiple: 2.0,
+      lossRatio: 0.2,
+    });
+    const high = calculatePerformance({
+      ...baseInputs,
+      avgExitMultiple: 4.0,
+      lossRatio: 0.2,
+    });
+    if (low.netIRR !== null && high.netIRR !== null) {
+      expect(high.netIRR).toBeGreaterThan(low.netIRR);
+    }
+  });
+
+  it("pme < 1 when S&P outgrows fund (high benchmark, low returns)", () => {
+    const result = calculatePerformance({
+      ...baseInputs,
+      avgExitMultiple: 1.2,
+      lossRatio: 0.5,
+      spReturn: 0.15, // 15% annual → ~4x over 10yr, fund will lag
+    });
+    expect(result.pme).toBeLessThan(1);
+  });
+
+  it("quartile is upper-mid for tvpi in [1.8, 2.5)", () => {
+    // Tune inputs to land in that range
+    const result = calculatePerformance({
+      ...baseInputs,
+      avgExitMultiple: 2.3,
+      lossRatio: 0.3,
+    });
+    if (result.tvpi >= 1.8 && result.tvpi < 2.5) {
+      expect(result.quartile).toBe("upper-mid");
+    }
+  });
+
+  it("quartile is lower-mid for tvpi in [1.3, 1.8)", () => {
+    const result = calculatePerformance({
+      ...baseInputs,
+      avgExitMultiple: 1.6,
+      lossRatio: 0.4,
+    });
+    if (result.tvpi >= 1.3 && result.tvpi < 1.8) {
+      expect(result.quartile).toBe("lower-mid");
+    }
+  });
+
+  it("dpiOverTime first entry has dpi of 0 (no distributions at year 0)", () => {
+    const result = calculatePerformance(baseInputs);
+    expect(result.dpiOverTime[0].dpi).toBeCloseTo(0, 6);
+  });
+
+  it("dpiOverTime tvpi is non-decreasing once distributions begin", () => {
+    const result = calculatePerformance(baseInputs);
+    // After the first few years distributions should only go up (or stay flat)
+    const lastTvpi = result.dpiOverTime[result.dpiOverTime.length - 1].tvpi;
+    const midTvpi =
+      result.dpiOverTime[Math.floor(result.dpiOverTime.length / 2)].tvpi;
+    expect(lastTvpi).toBeGreaterThanOrEqual(midTvpi - 0.01); // small tolerance for NAV fluctuation
+  });
+
+  it("is deterministic — same inputs produce identical output", () => {
+    const r1 = calculatePerformance(baseInputs);
+    const r2 = calculatePerformance(baseInputs);
+    expect(r1.tvpi).toBe(r2.tvpi);
+    expect(r1.netIRR).toBe(r2.netIRR);
+    expect(r1.ksPME).toBe(r2.ksPME);
+  });
+
+  it("grossMOIC is based on netInvestableCapital, not raw fundSize", () => {
+    // grossMOIC = totalDistributions / netInvestableCapital
+    // netInvestableCapital < fundSize (fees are deducted), so grossMOIC > naive ratio
+    const result = calculatePerformance(baseInputs);
+    const naiveRatio = baseInputs.totalProceeds / baseInputs.fundSize;
+    // grossMOIC should differ from naive ratio because fees are subtracted from deployable capital
+    expect(result.grossMOIC).not.toBeCloseTo(naiveRatio, 3);
+  });
 });

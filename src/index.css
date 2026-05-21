@@ -175,3 +175,44 @@ input[type="range"]:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: #4b5563;
 }
+
+@media print {
+  @page {
+    margin: 1in;
+    size: A4 landscape;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body::before {
+    content: "FundSim — fundsimulate.com";
+    display: block;
+    font-size: 10pt;
+    color: #666;
+    margin-bottom: 0.5in;
+  }
+
+  .sticky,
+  header,
+  footer,
+  button,
+  .finfox-trigger,
+  [data-finfox],
+  nav,
+  [class*="tab-bar"],
+  [class*="GlobalInputs"],
+  [class*="global-inputs"] {
+    display: none !important;
+  }
+
+  canvas,
+  table,
+  .recharts-wrapper,
+  [class*="chart"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
