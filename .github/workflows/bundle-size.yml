@@ -1,0 +1,53 @@
+name: Bundle Size
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+
+      - name: Report chunk sizes
+        run: |
+          echo "## Bundle size report" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Chunk | Size (KB) | Gzip (KB) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-----------|-----------|" >> "$GITHUB_STEP_SUMMARY"
+          find dist/assets -name "*.js" -not -name "*.map" | sort | while read -r f; do
+            size=$(wc -c < "$f")
+            gzip_size=$(gzip -c "$f" | wc -c)
+            kb=$(echo "scale=1; $size/1024" | bc)
+            gkb=$(echo "scale=1; $gzip_size/1024" | bc)
+            name=$(basename "$f")
+            printf "| %s | %s | %s |\n" "$name" "$kb" "$gkb" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Fail if any chunk > 1 MB gzipped
+        run: |
+          FAILED=0
+          while IFS= read -r f; do
+            gzip_size=$(gzip -c "$f" | wc -c)
+            gkb=$((gzip_size / 1024))
+            if [ "$gkb" -gt 1000 ]; then
+              echo "OVERSIZED: $(basename "$f") is ${gkb} KB gzipped (limit 1000 KB)"
+              FAILED=1
+            fi
+          done < <(find dist/assets -name "*.js" -not -name "*.map")
+          exit $FAILED
