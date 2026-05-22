@@ -53,6 +53,10 @@ export function NegotiationPanel({ config }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const exchangeCount = messages.filter((m) => m.role === "user").length;
   const isOver = dealDone || exchangeCount >= MAX_EXCHANGES;
 

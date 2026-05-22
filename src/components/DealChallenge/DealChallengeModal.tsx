@@ -93,6 +93,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const [hintVisible, setHintVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const eliminatedRef = useRef(false);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -103,6 +104,8 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
 
   const eliminate = useCallback(
     (reason: "strikes" | "timeout") => {
+      if (eliminatedRef.current) return;
+      eliminatedRef.current = true;
       stopTimer();
       setPhase("eliminated");
       captureEvent("challenge_eliminated", {
@@ -139,7 +142,9 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
 
     const q = WEEKLY_SCENARIO.questions[qIndex];
     const isCorrect =
-      Math.abs(userNum - q.answer) / Math.abs(q.answer) <= q.tolerance;
+      q.answer === 0
+        ? Math.abs(userNum) <= q.tolerance
+        : Math.abs(userNum - q.answer) / Math.abs(q.answer) <= q.tolerance;
 
     if (isCorrect) {
       setFlash("correct");

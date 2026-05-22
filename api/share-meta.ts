@@ -20,12 +20,15 @@ const CRAWLERS = [
   "SummaryBot",
 ];
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function handler(req: Request): Response {
   const url = new URL(req.url);
   const id = url.searchParams.get("id") ?? "";
   const origin = url.origin;
 
-  if (!id) {
+  if (!id || !UUID_RE.test(id)) {
     return Response.redirect(`${origin}/`, 302);
   }
 

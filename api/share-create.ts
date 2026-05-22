@@ -13,6 +13,7 @@ const ALLOWED_ORIGINS = new Set<string>([
   "http://127.0.0.1:5200",
 ]);
 const ALLOWED_ORIGIN_SUFFIX = ".vercel.app";
+const ALLOWED_ORIGIN_SUFFIX_SLUG = "fundsim";
 
 const ALLOWED_SIMULATORS = new Set(["pe", "vc", "ib"]);
 
@@ -77,7 +78,11 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
-    return new URL(origin).host.endsWith(ALLOWED_ORIGIN_SUFFIX);
+    const host = new URL(origin).host;
+    return (
+      host.endsWith(ALLOWED_ORIGIN_SUFFIX) &&
+      host.includes(ALLOWED_ORIGIN_SUFFIX_SLUG)
+    );
   } catch {
     return false;
   }
@@ -171,8 +176,10 @@ export default async function handler(req: any, res: any) {
   if (typeof simulator !== "string" || !ALLOWED_SIMULATORS.has(simulator)) {
     return res.status(400).json({ error: "Invalid simulator" });
   }
-  if (tab !== undefined && typeof tab !== "string") {
-    return res.status(400).json({ error: "Invalid tab" });
+  if (tab !== undefined) {
+    if (typeof tab !== "string" || !/^[a-z0-9_-]{0,32}$/.test(tab)) {
+      return res.status(400).json({ error: "Invalid tab" });
+    }
   }
   if (!inputs || typeof inputs !== "object" || Array.isArray(inputs)) {
     return res.status(400).json({ error: "inputs must be an object" });
@@ -250,7 +257,7 @@ export default async function handler(req: any, res: any) {
 
       if (!isNaN(myVal)) {
         const peersRes = await fetch(
-          `${supabaseUrl}/rest/v1/deal_shares?simulator=eq.${encodeURIComponent(simulator)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&select=summary`,
+          `${supabaseUrl}/rest/v1/deal_shares?simulator=eq.${encodeURIComponent(simulator)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&id=neq.${encodeURIComponent(id)}&select=summary&limit=500`,
           {
             headers: {
               apikey: serviceRoleKey,

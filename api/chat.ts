@@ -53,6 +53,7 @@ const ALLOWED_ORIGINS = new Set<string>([
 ]);
 // Vercel preview deploys: <hash>-<project>.vercel.app — match by suffix.
 const ALLOWED_ORIGIN_SUFFIX = ".vercel.app";
+const ALLOWED_ORIGIN_SUFFIX_SLUG = "fundsim";
 
 // Caps to keep a single request from blowing up the upstream call.
 const MAX_MESSAGES = 30;
@@ -151,7 +152,10 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const host = new URL(origin).host;
-    return host.endsWith(ALLOWED_ORIGIN_SUFFIX);
+    return (
+      host.endsWith(ALLOWED_ORIGIN_SUFFIX) &&
+      host.includes(ALLOWED_ORIGIN_SUFFIX_SLUG)
+    );
   } catch {
     return false;
   }
