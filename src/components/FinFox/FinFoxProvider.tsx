@@ -34,6 +34,7 @@ export interface FinFoxContextType {
   toggleDisabled: () => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const FinFoxContext = createContext<FinFoxContextType | null>(null);
 
 export function FinFoxProvider({ children }: { children: React.ReactNode }) {
@@ -66,7 +67,9 @@ export function FinFoxProvider({ children }: { children: React.ReactNode }) {
 
   // Use ref to always have fresh openChat in event listener
   const openChatRef = useRef(openChat);
-  openChatRef.current = openChat;
+  useEffect(() => {
+    openChatRef.current = openChat;
+  });
 
   useEffect(() => {
     const handler = (e: Event) => {

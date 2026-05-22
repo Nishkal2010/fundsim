@@ -76,6 +76,7 @@ const DARK_POPOVER_STYLE = `
 `;
 
 /** Call this from devtools to reset the tour: resetOnboardingTour() */
+// eslint-disable-next-line react-refresh/only-export-components
 export function resetOnboardingTour() {
   safeStorageRemove(TOUR_KEY);
 }

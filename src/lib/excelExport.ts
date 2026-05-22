@@ -168,9 +168,6 @@ function num(value: number, numFmt = "#,##0.0"): XLSX.CellObject {
 function dollar(value: number): XLSX.CellObject {
   return { t: "n", v: value, s: styleFor({ numFmt: '"$"#,##0.0"M"' }) };
 }
-function pctCell(fraction: number): XLSX.CellObject {
-  return { t: "n", v: fraction, s: styleFor({ numFmt: "0.0%" }) };
-}
 
 function setWs(
   ws: XLSX.WorkSheet,

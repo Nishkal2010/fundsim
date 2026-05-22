@@ -100,7 +100,7 @@ function calculateEuropeanWaterfall(
   // but targeting k·F (not k·prefPaid) is the correct nominal carry basis.
   // This ensures: effective carry ≡ carryPercentage over totalFundProfit.
   //
-  const totalFundProfit = Math.max(0, totalProceeds - inputs.fundSize);
+  // totalFundProfit = totalProceeds - fundSize (used in derivation comments above)
   const totalPrefPaid = preferredLP + preferredGP;
   let gpCatchUp = 0;
   let lpDuringCatchUp = 0;

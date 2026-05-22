@@ -180,13 +180,14 @@ const MOBILE_VISIBLE_FEATURES = 4;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 640,
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 639px)").matches,
   );
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener("change", handler);
-    setIsMobile(mq.matches);
     return () => mq.removeEventListener("change", handler);
   }, []);
   return isMobile;

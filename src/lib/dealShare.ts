@@ -34,7 +34,7 @@ export async function saveDealShare(
     const body = await res.json().catch(() => ({}));
     if (res.status === 429) {
       const err = new Error("Rate limit exceeded — try again in a minute.");
-      (err as any).status = 429;
+      (err as Error & { status?: number }).status = 429;
       throw err;
     }
     throw new Error(body.error ?? `share-create returned ${res.status}`);
