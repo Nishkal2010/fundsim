@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X, Target, Heart } from "lucide-react";
 import { captureEvent } from "../../lib/posthog";
+import { buildChallengeUrl } from "../../lib/dealShare";
 import { WEEKLY_SCENARIO } from "./weeklyScenario";
 
 type Phase = "intro" | "playing" | "eliminated" | "complete";
@@ -641,6 +642,54 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                     fontFamily: "inherit",
                   }}
                 />
+              </div>
+
+              <div style={{ width: "100%", textAlign: "left" }}>
+                <label
+                  style={{
+                    color: "#94A3B8",
+                    fontSize: 12,
+                    marginBottom: 6,
+                    display: "block",
+                  }}
+                >
+                  Challenge a friend
+                </label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    readOnly
+                    value={buildChallengeUrl()}
+                    style={{
+                      flex: 1,
+                      background: "#1E293B",
+                      border: "1px solid #334155",
+                      borderRadius: 8,
+                      color: "#E2E8F0",
+                      fontSize: 13,
+                      padding: "10px 12px",
+                      fontFamily: "monospace",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(buildChallengeUrl());
+                      captureEvent("challenge_invite_shared", {});
+                    }}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: 8,
+                      background: "rgba(99,102,241,0.15)",
+                      border: "1px solid rgba(99,102,241,0.35)",
+                      color: "#818CF8",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Copy link
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: "flex", gap: 10 }}>

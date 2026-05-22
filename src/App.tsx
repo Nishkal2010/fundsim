@@ -208,6 +208,15 @@ function AppContent({ user, onLogout }: AppContentProps) {
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
+    const hasChallengeParam =
+      new URLSearchParams(window.location.search).get("challenge") === "1";
+    const hasChallengeHash = window.location.hash === "#challenge";
+    if (hasChallengeParam || hasChallengeHash) {
+      setShowChallenge(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const onHash = () => {
       const h = window.location.hash.replace("#", "");
       setHash(h);

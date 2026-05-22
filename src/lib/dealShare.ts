@@ -57,6 +57,13 @@ export function buildShareUrl(id: string): string {
   return `${window.location.origin}/s/${encodeURIComponent(id)}`;
 }
 
+export function buildChallengeUrl(club?: string): string {
+  const params = new URLSearchParams({ challenge: "1" });
+  if (club)
+    params.set("club", club.slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, ""));
+  return `${window.location.origin}/?${params.toString()}`;
+}
+
 export function getShareIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get("share");
 }
