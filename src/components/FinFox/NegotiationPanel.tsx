@@ -68,12 +68,14 @@ export function NegotiationPanel({ config }: Props) {
     setExpression("thinking");
 
     try {
+      // The initial greeting is UI-only (assistant at index 0).
+      // api/chat.ts requires messages[0].role === "user", so strip it.
+      const apiMessages = newMessages
+        .filter((m, i) => !(i === 0 && m.role === "assistant"))
+        .map((m) => ({ role: m.role, content: m.content }));
       const answer = await callFinFox({
         mode: config.mode,
-        messages: newMessages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: apiMessages,
         systemPrompt: config.systemPrompt,
       });
 

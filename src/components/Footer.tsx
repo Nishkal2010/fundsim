@@ -56,11 +56,15 @@ export function Footer() {
         <span className="text-[10px] text-[#4B5563]">
           Built with React + TypeScript + Recharts
         </span>
-        <a href="https://fazier.com" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://fazier.com/launches/fundsim"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <img
-            src="https://fazier.com/api/v1/public/badges/launch_badges.svg?badge_type=launched&theme=light"
-            width="105"
-            alt="Launched on Fazier"
+            src="https://fazier.com/api/v1/public/badges/embed_image.svg?launch_id=8874&badge_type=daily&variant=2&theme=neutral"
+            width="220"
+            alt="#2 Product of the Day on Fazier"
           />
         </a>
       </div>
