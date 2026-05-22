@@ -233,6 +233,65 @@ export default async function handler(req: any, res: any) {
       return res.status(502).json({ error: "Failed to save share" });
     }
 
+    // Compute percentile_band for viral OG card ("Top 14% of PE deals this week").
+    // Best-effort — failures silently leave the column NULL.
+    try {
+      const sevenDaysAgo = new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const highlighted = Array.isArray(summary?.metrics)
+        ? (summary.metrics as { value: string; highlight?: boolean }[]).find(
+            (m) => m.highlight,
+          )
+        : null;
+      const myVal = highlighted
+        ? parseFloat(String(highlighted.value).replace(/[^0-9.-]/g, ""))
+        : NaN;
+
+      if (!isNaN(myVal)) {
+        const peersRes = await fetch(
+          `${supabaseUrl}/rest/v1/deal_shares?simulator=eq.${encodeURIComponent(simulator)}&created_at=gte.${encodeURIComponent(sevenDaysAgo)}&select=summary`,
+          {
+            headers: {
+              apikey: serviceRoleKey,
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+          },
+        );
+        if (peersRes.ok) {
+          const peers = (await peersRes.json()) as {
+            summary?: { metrics?: { value: string; highlight?: boolean }[] };
+          }[];
+          let lowerCount = 0;
+          for (const peer of peers) {
+            const ph = peer.summary?.metrics?.find((m) => m.highlight);
+            if (ph) {
+              const pv = parseFloat(String(ph.value).replace(/[^0-9.-]/g, ""));
+              if (!isNaN(pv) && pv < myVal) lowerCount++;
+            }
+          }
+          const percentileBand =
+            peers.length > 1
+              ? Math.round((lowerCount / peers.length) * 100)
+              : 99;
+          await fetch(
+            `${supabaseUrl}/rest/v1/deal_shares?id=eq.${encodeURIComponent(id)}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                apikey: serviceRoleKey,
+                Authorization: `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({ percentile_band: percentileBand }),
+            },
+          );
+        }
+      }
+    } catch {
+      // percentile_band stays NULL — not a blocking concern
+    }
+
     return res.status(201).json({ id });
   } catch (err: any) {
     // Log only name + message — the full err object can include the request

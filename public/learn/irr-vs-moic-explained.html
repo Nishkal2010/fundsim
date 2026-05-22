@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IRR vs MOIC: What's the Difference? (With Examples) — FundSim</title>
+<meta name="description" content="IRR vs MOIC explained for PE and VC interviews. When each metric matters, how to calculate both, and why a 3x MOIC over 5 years is ~25% IRR." />
+<link rel="canonical" href="https://fundsimulate.com/learn/irr-vs-moic-explained.html" />
+<meta property="og:title" content="IRR vs MOIC: What's the Difference? — FundSim" />
+<meta property="og:description" content="IRR vs MOIC explained for PE and VC interviews. When each metric matters, how to calculate both." />
+<meta property="og:url" content="https://fundsimulate.com/learn/irr-vs-moic-explained.html" />
+<meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;line-height:1.75}.wrap{max-width:740px;margin:0 auto;padding:48px 24px 96px}a{color:#7dd3fc}.nav{color:#64748b;font-size:.95rem;margin-bottom:24px}h1{font-size:2.1rem;margin:0 0 8px}h2{color:#f8fafc;margin-top:40px}.lede{color:#94a3b8;font-size:1.1rem}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #1e293b;padding:8px 10px;text-align:left}th{background:#0f172a}.cta{display:inline-block;background:#3b82f6;color:#fff;padding:12px 22px;border-radius:8px;margin-top:8px;font-weight:600}.box{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;margin:20px 0}.tag{display:inline-block;color:#7dd3fc;font-size:.85rem;background:#0f172a;border:1px solid #1e293b;border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav"><a href="/">FundSim</a> &rsaquo; <a href="/learn/">Learn</a> &rsaquo; IRR vs MOIC</div>
+<span class="tag">Private Equity</span><span class="tag">Returns</span><span class="tag">6 min</span>
+<h1>IRR vs MOIC: the two return metrics every PE interview will ask</h1>
+<p class="lede">PE interviews almost always ask about both. Most candidates know the definitions but can't explain when each one matters — or do the math on the spot. Here's what you actually need to know.</p>
+
+<h2>1. What MOIC means</h2>
+<p>MOIC stands for Multiple on Invested Capital. The formula is simple:</p>
+<div class="box">
+<strong>MOIC = Exit equity / Entry equity</strong><br /><br />
+Example: you put in $200M, you get back $600M. MOIC = 3.0x.
+</div>
+<p>That's it. MOIC tells you how many times you multiplied your money. It says nothing about how long it took. A 3x that took 3 years and a 3x that took 12 years are the same MOIC — which is why MOIC is a blunt instrument. It's useful for communicating returns to LPs in plain English ("we made 3x on that deal"), but it strips out time.</p>
+
+<h2>2. What IRR means</h2>
+<p>IRR — Internal Rate of Return — is the annualized return on your investment. It's the discount rate that makes the net present value of all cash flows equal to zero. In plain English: it converts your MOIC into a per-year number, accounting for how long the money was at work.</p>
+<p>IRR is harder to game than MOIC because it penalizes you for holding too long. A deal that returns 3x but takes 10 years to exit has a far lower IRR than one that returns 3x in 4 years. That's why IRR is the primary return metric for most PE funds — it captures time value of money, which MOIC ignores.</p>
+<div class="box">
+<strong>Rough IRR formula for a single cash flow:</strong><br />
+IRR ≈ (MOIC)^(1/years) − 1<br /><br />
+3x over 5 years: (3)^(1/5) − 1 = 1.246 − 1 = <strong>~24.6% IRR</strong>
+</div>
+
+<h2>3. MOIC × Hold Period → Approximate IRR</h2>
+<p>Memorize a handful of these. They come up in paper LBOs and sanity checks.</p>
+<table>
+<tr><th>MOIC</th><th>3 years</th><th>5 years</th><th>7 years</th></tr>
+<tr><td>2.0x</td><td>~26% IRR</td><td>~15% IRR</td><td>~10% IRR</td></tr>
+<tr><td>3.0x</td><td>~44% IRR</td><td>~25% IRR</td><td>~17% IRR</td></tr>
+<tr><td>4.0x</td><td>~59% IRR</td><td>~32% IRR</td><td>~22% IRR</td></tr>
+</table>
+<p>The pattern: doubling the hold period roughly halves the IRR for the same MOIC.</p>
+
+<h2>4. When PE firms care more about MOIC vs IRR</h2>
+<p>This depends on fund size and LP base:</p>
+<ul>
+<li><strong>Large buyout funds</strong> care most about IRR because their LPs (pensions, endowments) have capital efficiency targets. A 25% IRR that returns capital in 4 years lets them redeploy. A 15% IRR tied up for 8 years doesn't.</li>
+<li><strong>Small and mid-market funds</strong> sometimes lean on MOIC because their hold periods are less predictable and their LPs have longer horizons.</li>
+<li><strong>VC funds</strong> often cite MOIC first — "we returned 10x on that Series A" — because the timing of VC exits is lumpy and hard to predict at entry. IRR is still tracked, but it's less central to how GPs talk about wins.</li>
+</ul>
+
+<h2>5. The gotcha: a higher MOIC can mean a worse IRR</h2>
+<p>This is the trap candidates walk into. Assume two investments:</p>
+<div class="box">
+<strong>Deal A:</strong> 4x MOIC, 10-year hold → IRR = (4)^(1/10) − 1 ≈ <strong>14.9%</strong><br /><br />
+<strong>Deal B:</strong> 3x MOIC, 4-year hold → IRR = (3)^(1/4) − 1 ≈ <strong>31.6%</strong>
+</div>
+<p>Deal B has a lower MOIC — but more than double the IRR. If your fund's hurdle rate is 20% and you're judging deals on IRR, Deal A fails and Deal B clears easily. This is why LBO models always show both metrics and why sponsors set a target IRR (usually 20–25%) in addition to a MOIC floor (usually 2.5–3x).</p>
+
+<h2>Practice building the model behind these numbers</h2>
+<p>Knowing the formulas is one thing. Building the model — entry assumptions, debt schedule, exit — so the numbers fall out naturally is another. FundSim's LBO simulator gives you every input on one screen with instant feedback.</p>
+<p><a class="cta" href="/#pe">Practice building the model behind these numbers &rsaquo;</a></p>
+
+<h2>Related</h2>
+<p>
+  <a href="/learn/lbo-model-explained.html">LBO model explained</a> ·
+  <a href="/learn/lbo-interview-questions.html">LBO interview questions</a> ·
+  <a href="/learn/financial-modeling-practice.html">Financial modeling practice</a>
+</p>
+</div>
+</body>
+</html>

@@ -8,6 +8,7 @@ import {
   User,
   GraduationCap,
   Trophy,
+  Target,
   ChevronDown,
   Eye,
   EyeOff,
@@ -24,6 +25,8 @@ import { captureEvent } from "../lib/posthog";
 
 interface HeaderProps {
   onGlossaryOpen: () => void;
+  onLeaderboard?: () => void;
+  onChallenge?: () => void;
   userName?: string;
   userPicture?: string;
   onLogout?: () => void;
@@ -46,6 +49,8 @@ const btnBase: React.CSSProperties = {
 
 export function Header({
   onGlossaryOpen,
+  onLeaderboard,
+  onChallenge,
   userName,
   userPicture,
   onLogout,
@@ -128,6 +133,48 @@ export function Header({
           <Trophy size={13} aria-hidden="true" />
           YIS
         </button>
+
+        {/* Leaderboard */}
+        {onLeaderboard && (
+          <button
+            onClick={() => {
+              captureEvent("leaderboard_nav_clicked");
+              onLeaderboard();
+            }}
+            style={{
+              ...btnBase,
+              fontSize: "12px",
+              padding: "5px 10px",
+              color: "#F59E0B",
+              borderColor: "rgba(245,158,11,0.3)",
+            }}
+            title="Weekly Leaderboard"
+          >
+            <Trophy size={13} aria-hidden="true" />
+            Leaderboard
+          </button>
+        )}
+
+        {/* Deal Challenge */}
+        {onChallenge && (
+          <button
+            onClick={() => {
+              captureEvent("challenge_nav_clicked");
+              onChallenge();
+            }}
+            style={{
+              ...btnBase,
+              fontSize: "12px",
+              padding: "5px 10px",
+              color: "#818CF8",
+              borderColor: "rgba(99,102,241,0.3)",
+            }}
+            title="Weekly Deal Challenge"
+          >
+            <Target size={13} aria-hidden="true" />
+            Challenge
+          </button>
+        )}
 
         {/* FinFox dropdown */}
         <div ref={menuRef} style={{ position: "relative" }}>

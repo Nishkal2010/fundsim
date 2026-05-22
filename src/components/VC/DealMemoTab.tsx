@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { Copy, CheckCircle, Download, FileText } from "lucide-react";
 import { captureEvent } from "../../lib/posthog";
+import { EmailCaptureModal } from "../EmailCapture/EmailCaptureModal";
+import { useEmailCapture } from "../EmailCapture/useEmailCapture";
 
 const SECTORS = [
   "FinTech",
@@ -215,6 +217,8 @@ function Field({
 }
 
 export function DealMemoTab() {
+  const { showCapture, captureTrigger, triggerCapture, setShowCapture } =
+    useEmailCapture();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [copied, setCopied] = useState(false);
 
@@ -241,6 +245,7 @@ export function DealMemoTab() {
     a.download = `${form.companyName || "deal"}-memo.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    triggerCapture("deal_memo");
   }
 
   const isEmpty =
@@ -664,6 +669,13 @@ export function DealMemoTab() {
           )}
         </div>
       </div>
+
+      {showCapture && (
+        <EmailCaptureModal
+          trigger={captureTrigger}
+          onClose={() => setShowCapture(false)}
+        />
+      )}
     </div>
   );
 }

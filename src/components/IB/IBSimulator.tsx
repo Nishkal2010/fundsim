@@ -8,6 +8,8 @@ import { ProGate } from "../ProGate";
 import { Card, SectionHeader, Sub, Stat } from "./shared/primitives";
 import { fmtM, fmtN, fmtPct } from "./shared/format";
 import { captureEvent } from "../../lib/posthog";
+import { EmailCaptureModal } from "../EmailCapture/EmailCaptureModal";
+import { useEmailCapture } from "../EmailCapture/useEmailCapture";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const A = {
@@ -861,6 +863,8 @@ function NumInput({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function IBSimulator() {
+  const { showCapture, captureTrigger, triggerCapture, setShowCapture } =
+    useEmailCapture();
   const [showLanding, setShowLanding] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("setup");
   const [inputs, setInputs] = useState<DealInputs>(PRESETS.tech);
@@ -1468,6 +1472,7 @@ export function IBSimulator() {
                 const { exportIBModelToExcel } =
                   await import("../../lib/excelExport");
                 exportIBModelToExcel(inputs, C);
+                triggerCapture("excel_export");
               }}
               className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{
@@ -3808,6 +3813,13 @@ export function IBSimulator() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {showCapture && (
+        <EmailCaptureModal
+          trigger={captureTrigger}
+          onClose={() => setShowCapture(false)}
+        />
+      )}
     </div>
   );
 }

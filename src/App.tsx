@@ -152,6 +152,16 @@ const ScenarioCompare = React.lazy(() =>
 const PathFlowMap = React.lazy(
   () => import("./components/PathFlow/PathFlowMap"),
 );
+const LeaderboardPanel = React.lazy(() =>
+  import("./components/Leaderboard/LeaderboardPanel").then((m) => ({
+    default: m.LeaderboardPanel,
+  })),
+);
+const DealChallengeModal = React.lazy(() =>
+  import("./components/DealChallenge/DealChallengeModal").then((m) => ({
+    default: m.DealChallengeModal,
+  })),
+);
 import { usePathProgress } from "./hooks/usePathProgress";
 import { captureEvent, identifyUser, resetUser } from "./lib/posthog";
 import { supabase } from "./lib/supabase";
@@ -193,6 +203,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
   );
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showChallenge, setShowChallenge] = useState(false);
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
@@ -205,6 +217,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
         captureEvent("compare_opened");
       } else if (h === "scenarios") {
         captureEvent("scenarios_opened");
+      } else if (h === "leaderboard") {
+        setShowLeaderboard(true);
+        window.history.replaceState(null, "", window.location.pathname);
+        setHash("");
       }
     };
     window.addEventListener("hashchange", onHash);
@@ -348,6 +364,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
     >
       <Header
         onGlossaryOpen={() => setGlossaryOpen(true)}
+        onLeaderboard={() => setShowLeaderboard(true)}
+        onChallenge={() => setShowChallenge(true)}
         userName={user.name}
         userPicture={user.picture}
         onLogout={onLogout}
@@ -549,6 +567,16 @@ function AppContent({ user, onLogout }: AppContentProps) {
       <Glossary open={glossaryOpen} onClose={() => setGlossaryOpen(false)} />
       {shortcutsOpen && (
         <KeyboardShortcutsModal onClose={() => setShortcutsOpen(false)} />
+      )}
+      {showLeaderboard && (
+        <React.Suspense fallback={null}>
+          <LeaderboardPanel onClose={() => setShowLeaderboard(false)} />
+        </React.Suspense>
+      )}
+      {showChallenge && (
+        <React.Suspense fallback={null}>
+          <DealChallengeModal onClose={() => setShowChallenge(false)} />
+        </React.Suspense>
       )}
 
       {/* FinFox chatbot */}

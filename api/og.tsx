@@ -23,6 +23,7 @@ export default async function handler(req: Request) {
   let metrics: Array<{ label: string; value: string; highlight?: boolean }> =
     [];
   let simulator = "pe";
+  let percentileBand: number | null = null;
 
   if (id) {
     try {
@@ -53,6 +54,7 @@ export default async function handler(req: Request) {
               }>;
             };
             simulator?: string;
+            percentile_band?: number;
           }>;
           const row = rows[0];
           if (row?.summary) {
@@ -60,6 +62,10 @@ export default async function handler(req: Request) {
             subtitle = row.summary.subtitle ?? subtitle;
             metrics = row.summary.metrics ?? [];
             simulator = row.simulator ?? "pe";
+            percentileBand =
+              typeof row.percentile_band === "number"
+                ? row.percentile_band
+                : null;
           }
         }
       }
@@ -215,6 +221,28 @@ export default async function handler(req: Request) {
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Percentile badge */}
+      {percentileBand !== null && percentileBand >= 60 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "36px",
+            left: "60px",
+            fontSize: "13px",
+            color: accent,
+            background: `${accent}18`,
+            border: `1px solid ${accent}44`,
+            borderRadius: "999px",
+            padding: "4px 14px",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+          }}
+        >
+          Top {100 - percentileBand}% of {SIM_LABEL[simulator] ?? "deals"} this
+          week
         </div>
       )}
 
