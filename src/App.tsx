@@ -149,6 +149,10 @@ const ScenarioCompare = React.lazy(() =>
     default: m.ScenarioCompare,
   })),
 );
+const PathFlowMap = React.lazy(
+  () => import("./components/PathFlow/PathFlowMap"),
+);
+import { usePathProgress } from "./hooks/usePathProgress";
 import { captureEvent, identifyUser, resetUser } from "./lib/posthog";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -370,6 +374,16 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <div id="simulator-selector">
                 <SimulatorSelector onSelect={setActiveSimulator} />
               </div>
+              <React.Suspense fallback={null}>
+                <PathFlowMap
+                  onSelectSimulator={setActiveSimulator}
+                  onSelectPETab={(t) => setActivePETab(t as PETabId)}
+                  onSelectVCTab={(t) => setActiveVCTab(t as VCTabId)}
+                  onSelectIBView={(v) =>
+                    setIbView(v as "simulator" | "compare" | "roleplay")
+                  }
+                />
+              </React.Suspense>
             </motion.div>
           )}
 
@@ -557,6 +571,7 @@ function App() {
   const [sharedLoaded, setSharedLoaded] = useState(() =>
     new URLSearchParams(window.location.search).has("model"),
   );
+  const { resetProgress } = usePathProgress();
 
   useEffect(() => {
     const timeout = setTimeout(() => setAuthChecked(true), 5000);
@@ -614,6 +629,7 @@ function App() {
     safeStorageRemove("fundsim_auth");
     setUser(null);
     resetUser();
+    resetProgress();
   }
 
   function handleDemoLogin(u: AuthUser) {
