@@ -16,6 +16,7 @@
     "@sentry/react": "^10.53.1",
     "@supabase/supabase-js": "^2.102.1",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/og": "^0.11.1",
     "dotenv": "^16.4.5",
     "driver.js": "^1.4.0",
     "framer-motion": "^12.38.0",

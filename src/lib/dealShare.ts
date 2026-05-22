@@ -54,7 +54,7 @@ export async function getDealShare(id: string): Promise<DealShare | null> {
 }
 
 export function buildShareUrl(id: string): string {
-  return `${window.location.origin}?share=${id}`;
+  return `${window.location.origin}/s/${encodeURIComponent(id)}`;
 }
 
 export function getShareIdFromUrl(): string | null {
