@@ -1,7 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { X, Target, Heart } from "lucide-react";
+import { X, Target, Heart, Copy, Check, Share2 } from "lucide-react";
+
+function IconX() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
+function IconLinkedin() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  );
+}
 import { captureEvent } from "../../lib/posthog";
-import { buildChallengeUrl } from "../../lib/dealShare";
+import {
+  buildChallengeUrl,
+  buildShareUrl,
+  saveDealShare,
+} from "../../lib/dealShare";
 import { WEEKLY_SCENARIO } from "./weeklyScenario";
 
 type Phase = "intro" | "playing" | "eliminated" | "complete";
@@ -92,8 +112,12 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
   const [answer, setAnswer] = useState("");
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const [hintVisible, setHintVisible] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eliminatedRef = useRef(false);
+  const shareIdRef = useRef<string | null>(null);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -101,6 +125,49 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
       timerRef.current = null;
     }
   }, []);
+
+  const ensureShareId = useCallback(
+    async (
+      finalScore: number,
+      finalTimeLeft: number,
+    ): Promise<string | null> => {
+      if (shareIdRef.current) return shareIdRef.current;
+      setShareLoading(true);
+      try {
+        const id = await saveDealShare({
+          simulator: "pe",
+          tab: "challenge",
+          inputs: {
+            weekId: WEEKLY_SCENARIO.weekId,
+            score: finalScore,
+            totalQ: WEEKLY_SCENARIO.questions.length,
+            timeLeftS: finalTimeLeft,
+          },
+          summary: {
+            title: WEEKLY_SCENARIO.title,
+            subtitle: `Deal Challenge ${WEEKLY_SCENARIO.weekId}`,
+            metrics: [
+              {
+                label: "Score",
+                value: `${finalScore}/${WEEKLY_SCENARIO.questions.length}`,
+                highlight: true,
+              },
+              { label: "Time Left", value: formatTime(finalTimeLeft) },
+            ],
+          },
+        });
+        shareIdRef.current = id;
+        setShareId(id);
+        captureEvent("challenge_shared", { score: finalScore, shareId: id });
+        return id;
+      } catch {
+        return null;
+      } finally {
+        setShareLoading(false);
+      }
+    },
+    [],
+  );
 
   const eliminate = useCallback(
     (reason: "strikes" | "timeout") => {
@@ -137,7 +204,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
   }
 
   function submitAnswer() {
-    const userNum = parseFloat(answer.replace(/[^0-9.\-]/g, ""));
+    const userNum = parseFloat(answer.replace(/[^0-9.-]/g, ""));
     if (isNaN(userNum)) return;
 
     const q = WEEKLY_SCENARIO.questions[qIndex];
@@ -620,46 +687,126 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div style={{ width: "100%", textAlign: "left" }}>
-                <label
+                <div
                   style={{
                     color: "#94A3B8",
                     fontSize: 12,
-                    marginBottom: 6,
-                    display: "block",
+                    marginBottom: 10,
                   }}
                 >
                   Share your result
-                </label>
-                <textarea
-                  readOnly
-                  rows={3}
-                  value={`I just crushed the FundSim Deal Challenge (${WEEKLY_SCENARIO.weekId})!\n${score}/${WEEKLY_SCENARIO.questions.length} correct with ${formatTime(timeLeft)} left on the clock.\n\nTest your LBO skills: fundsimulate.com`}
-                  style={{
-                    width: "100%",
-                    background: "#1E293B",
-                    border: "1px solid #334155",
-                    borderRadius: 8,
-                    color: "#E2E8F0",
-                    fontSize: 13,
-                    padding: "10px 12px",
-                    resize: "none",
-                    boxSizing: "border-box",
-                    fontFamily: "inherit",
-                  }}
-                />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={async () => {
+                      const id = await ensureShareId(score, timeLeft);
+                      const url = id ? buildShareUrl(id) : buildChallengeUrl();
+                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge (${WEEKLY_SCENARIO.weekId}) with ${formatTime(timeLeft)} on the clock. Try to beat me:`;
+                      window.open(
+                        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                      captureEvent("challenge_share_twitter", { score });
+                    }}
+                    disabled={shareLoading}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: "rgba(29,161,242,0.12)",
+                      border: "1px solid rgba(29,161,242,0.3)",
+                      color: "#38BDF8",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: shareLoading ? "wait" : "pointer",
+                    }}
+                  >
+                    <IconX />
+                    Post on X
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const id = await ensureShareId(score, timeLeft);
+                      const url = id ? buildShareUrl(id) : buildChallengeUrl();
+                      window.open(
+                        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                      captureEvent("challenge_share_linkedin", { score });
+                    }}
+                    disabled={shareLoading}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: "rgba(10,102,194,0.12)",
+                      border: "1px solid rgba(10,102,194,0.3)",
+                      color: "#60A5FA",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: shareLoading ? "wait" : "pointer",
+                    }}
+                  >
+                    <IconLinkedin />
+                    LinkedIn
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const id = await ensureShareId(score, timeLeft);
+                      const url = id ? buildShareUrl(id) : buildChallengeUrl();
+                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge (${WEEKLY_SCENARIO.weekId}) with ${formatTime(timeLeft)} on the clock. Try to beat me: ${url}`;
+                      await navigator.clipboard.writeText(text);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                      captureEvent("challenge_share_copy", { score });
+                    }}
+                    disabled={shareLoading}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      borderRadius: 8,
+                      background: copied
+                        ? "rgba(16,185,129,0.12)"
+                        : "rgba(99,102,241,0.12)",
+                      border: copied
+                        ? "1px solid rgba(16,185,129,0.3)"
+                        : "1px solid rgba(99,102,241,0.3)",
+                      color: copied ? "#10B981" : "#818CF8",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: shareLoading ? "wait" : "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
               </div>
 
               <div style={{ width: "100%", textAlign: "left" }}>
-                <label
+                <div
                   style={{
                     color: "#94A3B8",
                     fontSize: 12,
-                    marginBottom: 6,
-                    display: "block",
+                    marginBottom: 10,
                   }}
                 >
                   Challenge a friend
-                </label>
+                </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     readOnly
@@ -692,7 +839,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                       cursor: "pointer",
                     }}
                   >
-                    Copy link
+                    Copy
                   </button>
                 </div>
               </div>
