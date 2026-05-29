@@ -1,26 +1,15 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import {
   BookOpen,
   Columns2,
-  ExternalLink,
-  HelpCircle,
   LogOut,
   User,
   GraduationCap,
   Trophy,
   Target,
-  ChevronDown,
-  Eye,
-  EyeOff,
   Layers,
-  Printer,
-  Sun,
-  Moon,
 } from "lucide-react";
-import { useFinFox } from "../hooks/useFinFox";
 import { FundSimLogo } from "./FundSimLogo";
-import { useHash } from "../hooks/useHash";
-import { useDarkMode } from "../hooks/useDarkMode";
 import { captureEvent } from "../lib/posthog";
 
 interface HeaderProps {
@@ -32,21 +21,6 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-const btnBase: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "6px",
-  padding: "6px 12px",
-  borderRadius: "8px",
-  fontSize: "13px",
-  fontWeight: 500,
-  cursor: "pointer",
-  border: "1px solid #374151",
-  background: "#1F2937",
-  color: "rgba(255,255,255,0.6)",
-  transition: "color 0.15s ease",
-};
-
 export function Header({
   onGlossaryOpen,
   onLeaderboard,
@@ -55,48 +29,29 @@ export function Header({
   userPicture,
   onLogout,
 }: HeaderProps) {
-  const [finfoxMenuOpen, setFinfoxMenuOpen] = useState(false);
-  const [currentHash] = useHash();
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { disabled, toggleDisabled } = useFinFox();
-  const { dark, toggle } = useDarkMode();
-
-  // Close menu when clicking outside
-  React.useEffect(() => {
-    if (!finfoxMenuOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setFinfoxMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [finfoxMenuOpen]);
-
   return (
     <header
       className="w-full px-6 py-4 flex items-center justify-between"
       style={{
-        background: "#111827",
-        borderBottom: "1px solid #1F2937",
+        background: "var(--bg-secondary)",
+        borderBottom: "1px solid var(--bg-tertiary)",
         position: "sticky",
         top: 0,
-        zIndex: 100,
+        zIndex: "var(--z-header)" as React.CSSProperties["zIndex"],
       }}
     >
       <div className="flex items-center gap-3">
-        {/* Logo mark */}
         <FundSimLogo size={28} />
         <div className="flex flex-col">
           <span
             className="font-serif leading-none tracking-tight"
-            style={{ fontSize: "22px", color: "#F9FAFB" }}
+            style={{ fontSize: "22px", color: "var(--text-primary)" }}
           >
             FundSim
           </span>
           <span
             className="text-xs mt-0.5"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+            style={{ color: "var(--text-muted)" }}
           >
             PE · VC · IB Simulator
           </span>
@@ -106,51 +61,41 @@ export function Header({
       <div className="flex items-center gap-2">
         {/* DECA */}
         <button
+          className="btn-nav"
           onClick={() => {
             window.location.hash = "deca";
           }}
-          style={{
-            ...btnBase,
-            fontSize: "12px",
-            padding: "5px 10px",
-          }}
         >
-          <GraduationCap size={13} aria-hidden="true" />
+          <GraduationCap size={14} aria-hidden="true" />
           DECA
         </button>
 
         {/* YIS */}
         <button
+          className="btn-nav"
           onClick={() => {
             window.location.hash = "yis";
           }}
-          style={{
-            ...btnBase,
-            fontSize: "12px",
-            padding: "5px 10px",
-          }}
         >
-          <Trophy size={13} aria-hidden="true" />
+          <Trophy size={14} aria-hidden="true" />
           YIS
         </button>
 
         {/* Leaderboard */}
         {onLeaderboard && (
           <button
+            className="btn-nav"
             onClick={() => {
               captureEvent("leaderboard_nav_clicked");
               onLeaderboard();
             }}
             style={{
-              ...btnBase,
-              fontSize: "12px",
-              padding: "5px 10px",
-              color: "#F59E0B",
+              color: "var(--accent-amber)",
               borderColor: "rgba(245,158,11,0.3)",
             }}
             title="Weekly Leaderboard"
           >
-            <Trophy size={13} aria-hidden="true" />
+            <Trophy size={14} aria-hidden="true" />
             Leaderboard
           </button>
         )}
@@ -158,132 +103,34 @@ export function Header({
         {/* Deal Challenge */}
         {onChallenge && (
           <button
+            className="btn-nav"
             onClick={() => {
               captureEvent("challenge_nav_clicked");
               onChallenge();
             }}
             style={{
-              ...btnBase,
-              fontSize: "12px",
-              padding: "5px 10px",
-              color: "#818CF8",
+              color: "var(--accent-indigo-light)",
               borderColor: "rgba(99,102,241,0.3)",
             }}
             title="Weekly Deal Challenge"
           >
-            <Target size={13} aria-hidden="true" />
+            <Target size={14} aria-hidden="true" />
             Challenge
           </button>
         )}
 
-        {/* FinFox dropdown */}
-        <div ref={menuRef} style={{ position: "relative" }}>
-          <button
-            onClick={() => setFinfoxMenuOpen((v) => !v)}
-            aria-expanded={finfoxMenuOpen}
-            aria-haspopup="true"
-            style={{
-              ...btnBase,
-              fontSize: "12px",
-              padding: "5px 10px",
-              color: disabled ? "rgba(255,255,255,0.35)" : "#10B981",
-              borderColor: disabled ? "#374151" : "#374151",
-            }}
-          >
-            {disabled ? (
-              <EyeOff size={13} aria-hidden="true" />
-            ) : (
-              <Eye size={13} aria-hidden="true" />
-            )}
-            FinFox
-            <ChevronDown
-              size={11}
-              style={{
-                opacity: 0.5,
-                transform: finfoxMenuOpen ? "rotate(180deg)" : "none",
-                transition: "transform 0.15s ease",
-              }}
-            />
-          </button>
-
-          {finfoxMenuOpen && (
-            <div
-              role="menu"
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                right: 0,
-                background: "#111827",
-                border: "1px solid #1F2937",
-                borderRadius: 8,
-                minWidth: 160,
-                zIndex: 200,
-                overflow: "hidden",
-              }}
-            >
-              <button
-                role="menuitem"
-                onClick={() => {
-                  toggleDisabled();
-                  setFinfoxMenuOpen(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  width: "100%",
-                  padding: "9px 14px",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "rgba(255,255,255,0.6)",
-                  fontSize: 13,
-                  textAlign: "left",
-                }}
-              >
-                {disabled ? (
-                  <Eye size={13} aria-hidden="true" />
-                ) : (
-                  <EyeOff size={13} aria-hidden="true" />
-                )}
-                {disabled ? "Show FinFox" : "Hide FinFox"}
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Glossary */}
-        <button onClick={onGlossaryOpen} style={btnBase}>
+        <button className="btn-nav" onClick={onGlossaryOpen}>
           <BookOpen size={14} />
           Glossary
         </button>
 
-        {/* Tour — only shown on the home view (no hash) */}
-        {!currentHash && (
-          <button
-            onClick={() => {
-              try {
-                sessionStorage.setItem("fundsim_tour_consumed", "1");
-              } catch {
-                // private mode — swallow
-              }
-              window.location.hash = "";
-              window.dispatchEvent(new Event("fundsim:start-tour"));
-            }}
-            style={btnBase}
-            title="Restart the onboarding tour"
-          >
-            <HelpCircle size={14} aria-hidden="true" />
-            Tour
-          </button>
-        )}
-
         {/* Compare */}
         <button
+          className="btn-nav"
           onClick={() => {
             window.location.hash = "compare";
           }}
-          style={btnBase}
         >
           <Columns2 size={14} />
           Compare
@@ -291,71 +138,27 @@ export function Header({
 
         {/* Scenarios — Bull / Base / Bear */}
         <button
+          className="btn-nav"
           onClick={() => {
             window.location.hash = "scenarios";
           }}
-          style={btnBase}
           title="Run Bull / Base / Bear scenarios on a single base case"
         >
           <Layers size={14} />
           Scenarios
         </button>
 
-        {/* Print */}
-        <button
-          onClick={() => {
-            const safePage = (currentHash || "home")
-              .slice(0, 64)
-              .replace(/[^a-zA-Z0-9_-]/g, "_");
-            captureEvent("print_triggered", { page: safePage });
-            window.print();
-          }}
-          style={btnBase}
-          title="Print / Export as PDF"
-        >
-          <Printer size={14} aria-hidden="true" />
-          Print
-        </button>
-
-        {/* Dark mode toggle */}
-        <button
-          onClick={toggle}
-          style={btnBase}
-          title={dark ? "Switch to light mode" : "Switch to dark mode"}
-        >
-          {dark ? (
-            <Sun size={14} aria-hidden="true" />
-          ) : (
-            <Moon size={14} aria-hidden="true" />
-          )}
-          {dark ? "Light" : "Dark"}
-        </button>
-
-        {/* GitHub */}
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            ...btnBase,
-            textDecoration: "none",
-          }}
-        >
-          <ExternalLink size={14} />
-          GitHub
-        </a>
-
         {/* User section */}
         {userName && (
           <div
             className="flex items-center gap-2 pl-3"
-            style={{ borderLeft: "1px solid #1F2937" }}
+            style={{ borderLeft: "1px solid var(--bg-tertiary)" }}
           >
             <div
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
               style={{
-                background: "#1F2937",
-                border: "1px solid #374151",
+                background: "var(--bg-tertiary)",
+                border: "1px solid var(--border)",
               }}
             >
               {userPicture && userPicture.startsWith("https://") ? (
@@ -368,15 +171,16 @@ export function Header({
               ) : (
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center"
-                  style={{ background: "#374151" }}
+                  style={{ background: "var(--border)" }}
                 >
                   <User size={12} color="rgba(255,255,255,0.5)" />
                 </div>
               )}
               <span
+                title={userName}
                 style={{
                   fontSize: "13px",
-                  color: "rgba(255,255,255,0.6)",
+                  color: "var(--text-secondary)",
                   maxWidth: "120px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -392,15 +196,8 @@ export function Header({
               onClick={onLogout}
               aria-label="Sign out"
               title="Sign out"
-              style={{
-                background: "none",
-                border: "none",
-                borderRadius: "8px",
-                padding: "6px",
-                cursor: "pointer",
-                color: "rgba(255,255,255,0.35)",
-                transition: "color 0.15s ease",
-              }}
+              className="btn-nav"
+              style={{ padding: "6px", background: "none", border: "none" }}
             >
               <LogOut size={15} aria-hidden="true" />
             </button>
