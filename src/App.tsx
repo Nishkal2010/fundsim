@@ -204,17 +204,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showChallenge, setShowChallenge] = useState(false);
-  const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
-
-  useEffect(() => {
+  const [showChallenge, setShowChallenge] = useState(() => {
     const hasChallengeParam =
       new URLSearchParams(window.location.search).get("challenge") === "1";
-    const hasChallengeHash = window.location.hash === "#challenge";
-    if (hasChallengeParam || hasChallengeHash) {
-      setShowChallenge(true);
-    }
-  }, []);
+    return hasChallengeParam || window.location.hash === "#challenge";
+  });
+  const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
 
   useEffect(() => {
     const onHash = () => {
@@ -584,7 +579,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
       )}
       {showChallenge && (
         <React.Suspense fallback={null}>
-          <DealChallengeModal onClose={() => setShowChallenge(false)} />
+          <DealChallengeModal
+            onClose={() => setShowChallenge(false)}
+            onViewLeaderboard={() => setShowLeaderboard(true)}
+          />
         </React.Suspense>
       )}
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { X, Target, Heart, Copy, Check, Share2 } from "lucide-react";
+import { X, Target, Heart, Copy, Check } from "lucide-react";
 
 function IconX() {
   return (
@@ -103,7 +103,13 @@ function InputsTable({ inputs }: { inputs: Record<string, number> }) {
   );
 }
 
-export function DealChallengeModal({ onClose }: { onClose: () => void }) {
+export function DealChallengeModal({
+  onClose,
+  onViewLeaderboard,
+}: {
+  onClose: () => void;
+  onViewLeaderboard?: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [qIndex, setQIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -112,12 +118,34 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
   const [answer, setAnswer] = useState("");
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const [hintVisible, setHintVisible] = useState(false);
-  const [shareId, setShareId] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eliminatedRef = useRef(false);
   const shareIdRef = useRef<string | null>(null);
+  const scoreRef = useRef(0);
+  const inviteInputRef = useRef<HTMLInputElement>(null);
+
+  // Strip the deep-link trigger from the URL on mount so a refresh — or a
+  // friend who opened a /?challenge=1 invite — doesn't get the modal wedged
+  // open forever. new URL() preserves any unrelated query params.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const hadParam = url.searchParams.has("challenge");
+    const hadHash = url.hash === "#challenge";
+    if (hadParam || hadHash) {
+      url.searchParams.delete("challenge");
+      url.searchParams.delete("club");
+      if (hadHash) url.hash = "";
+      window.history.replaceState(
+        null,
+        "",
+        url.pathname + url.search + url.hash,
+      );
+    }
+  }, []);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -157,8 +185,6 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
           },
         });
         shareIdRef.current = id;
-        setShareId(id);
-        captureEvent("challenge_shared", { score: finalScore, shareId: id });
         return id;
       } catch {
         return null;
@@ -176,11 +202,11 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
       stopTimer();
       setPhase("eliminated");
       captureEvent("challenge_eliminated", {
-        score,
+        score: scoreRef.current,
         reason,
       });
     },
-    [score, stopTimer],
+    [stopTimer],
   );
 
   useEffect(() => {
@@ -216,19 +242,29 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
     if (isCorrect) {
       setFlash("correct");
       const newScore = score + 1;
+      scoreRef.current = newScore;
       setScore(newScore);
+      const isFinal = qIndex + 1 >= WEEKLY_SCENARIO.questions.length;
+      // Stop the clock synchronously on the winning answer so the timer can't
+      // fire eliminate("timeout") during the 600ms flash and race the
+      // complete transition.
+      if (isFinal) stopTimer();
       setTimeout(() => {
         setFlash(null);
         setHintVisible(false);
         setAnswer("");
         const nextIndex = qIndex + 1;
         if (nextIndex >= WEEKLY_SCENARIO.questions.length) {
-          stopTimer();
+          if (eliminatedRef.current) return;
           setPhase("complete");
           captureEvent("challenge_completed", {
             score: newScore,
             timeRemainingS: timeLeft,
           });
+          // Persist the result immediately so the leaderboard (the only thing
+          // that reads deal_shares) reflects this run even if the player never
+          // clicks a Share button. Idempotent via shareIdRef.
+          void ensureShareId(newScore, timeLeft);
         } else {
           setQIndex(nextIndex);
         }
@@ -250,6 +286,21 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
     if (e.key === "Enter") submitAnswer();
   }
 
+  // Guard the exit only while actively playing — a misclick on the backdrop or
+  // the X shouldn't silently discard a timed run. Other phases dismiss freely.
+  function requestClose() {
+    if (phase === "playing") {
+      if (
+        !window.confirm(
+          "Quit the challenge? Your progress this run will be lost.",
+        )
+      )
+        return;
+      stopTimer();
+    }
+    onClose();
+  }
+
   const question = WEEKLY_SCENARIO.questions[qIndex];
 
   return (
@@ -265,7 +316,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
         padding: "16px",
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) requestClose();
       }}
     >
       <div
@@ -312,7 +363,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
             </span>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             style={{
               background: "none",
@@ -612,7 +663,8 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                 {strikes !== 1 ? "s" : ""}.
               </p>
               <p style={{ color: "#6B7280", fontSize: 13, margin: 0 }}>
-                Try again next week when a new scenario drops.
+                Sharpen your model and run it back — more challenges are on the
+                way.
               </p>
               <button
                 onClick={onClose}
@@ -701,7 +753,7 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                     onClick={async () => {
                       const id = await ensureShareId(score, timeLeft);
                       const url = id ? buildShareUrl(id) : buildChallengeUrl();
-                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge (${WEEKLY_SCENARIO.weekId}) with ${formatTime(timeLeft)} on the clock. Try to beat me:`;
+                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me:`;
                       window.open(
                         `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`,
                         "_blank",
@@ -764,11 +816,17 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                     onClick={async () => {
                       const id = await ensureShareId(score, timeLeft);
                       const url = id ? buildShareUrl(id) : buildChallengeUrl();
-                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge (${WEEKLY_SCENARIO.weekId}) with ${formatTime(timeLeft)} on the clock. Try to beat me: ${url}`;
-                      await navigator.clipboard.writeText(text);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                      captureEvent("challenge_share_copy", { score });
+                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me: ${url}`;
+                      try {
+                        await navigator.clipboard.writeText(text);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                        captureEvent("challenge_share_copy", { score });
+                      } catch {
+                        // Clipboard can reject (no focus / denied permission).
+                        setCopyFailed(true);
+                        setTimeout(() => setCopyFailed(false), 2500);
+                      }
                     }}
                     disabled={shareLoading}
                     style={{
@@ -789,10 +847,15 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                       fontWeight: 600,
                       cursor: shareLoading ? "wait" : "pointer",
                       transition: "all 0.2s",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {copied ? <Check size={15} /> : <Copy size={15} />}
-                    {copied ? "Copied!" : "Copy"}
+                    {copied
+                      ? "Copied!"
+                      : copyFailed
+                        ? "Press ⌘/Ctrl+C"
+                        : "Copy"}
                   </button>
                 </div>
               </div>
@@ -809,8 +872,10 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
+                    ref={inviteInputRef}
                     readOnly
                     value={buildChallengeUrl()}
+                    onFocus={(e) => e.currentTarget.select()}
                     style={{
                       flex: 1,
                       background: "#1E293B",
@@ -824,22 +889,42 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                     }}
                   />
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(buildChallengeUrl());
-                      captureEvent("challenge_invite_shared", {});
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(
+                          buildChallengeUrl(),
+                        );
+                        setInviteCopied(true);
+                        setTimeout(() => setInviteCopied(false), 2000);
+                        captureEvent("challenge_invite_shared", {});
+                      } catch {
+                        // Let the user copy manually if the clipboard is denied.
+                        inviteInputRef.current?.select();
+                      }
                     }}
                     style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
                       padding: "10px 16px",
                       borderRadius: 8,
-                      background: "rgba(99,102,241,0.15)",
-                      border: "1px solid rgba(99,102,241,0.35)",
-                      color: "#818CF8",
+                      background: inviteCopied
+                        ? "rgba(16,185,129,0.15)"
+                        : "rgba(99,102,241,0.15)",
+                      border: inviteCopied
+                        ? "1px solid rgba(16,185,129,0.35)"
+                        : "1px solid rgba(99,102,241,0.35)",
+                      color: inviteCopied ? "#10B981" : "#818CF8",
                       fontSize: 13,
                       fontWeight: 600,
                       cursor: "pointer",
+                      transition: "all 0.2s",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    Copy
+                    {inviteCopied ? <Check size={15} /> : <Copy size={15} />}
+                    {inviteCopied ? "Copied!" : "Copy"}
                   </button>
                 </div>
               </div>
@@ -848,7 +933,8 @@ export function DealChallengeModal({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => {
                     onClose();
-                    window.location.hash = "leaderboard";
+                    if (onViewLeaderboard) onViewLeaderboard();
+                    else window.location.hash = "leaderboard";
                   }}
                   style={{
                     padding: "10px 20px",

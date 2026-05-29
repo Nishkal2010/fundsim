@@ -68,7 +68,7 @@ export const WEEKLY_SCENARIO: WeeklyScenario = {
       id: "q5",
       question:
         "Approximately what MOIC does the sponsor earn? (assume minimal debt paydown for simplicity)",
-      answer: 3.4,
+      answer: 2.2,
       tolerance: 0.08,
       hint: "(Exit EV - entry debt) / entry equity",
       unit: "x",

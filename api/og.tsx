@@ -60,7 +60,9 @@ export default async function handler(req: Request) {
           if (row?.summary) {
             title = row.summary.title ?? title;
             subtitle = row.summary.subtitle ?? subtitle;
-            metrics = row.summary.metrics ?? [];
+            metrics = Array.isArray(row.summary.metrics)
+              ? row.summary.metrics
+              : [];
             simulator = row.simulator ?? "pe";
             percentileBand =
               typeof row.percentile_band === "number"

@@ -30,6 +30,7 @@ const TAB_LABELS: Record<string, string> = {
   "vc/termsheet": "Term Sheet",
   "ib/dcf": "DCF",
   "ib/main": "IB Deal",
+  "pe/challenge": "Deal Challenge",
 };
 
 function tabLabel(simulator: string, tab: string): string {
@@ -39,7 +40,10 @@ function tabLabel(simulator: string, tab: string): string {
 }
 
 function parseNumeric(value: string): number {
-  const cleaned = value.replace(/[^0-9.-]/g, "");
+  // Take the part before any "/" so a quiz score like "5/5" parses to 5, not
+  // 55 (the regex strip alone would concatenate both digits and fraudulently
+  // rank the row at the top of a board it shares with deal metrics).
+  const cleaned = value.split("/")[0].replace(/[^0-9.-]/g, "");
   const n = parseFloat(cleaned);
   return isNaN(n) ? 0 : n;
 }
@@ -120,7 +124,7 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
           label: string;
           value: string;
           highlight?: boolean;
-        }> = row.summary?.metrics ?? [];
+        }> = Array.isArray(row.summary?.metrics) ? row.summary.metrics : [];
         const highlight = metrics.find((m) => m.highlight) ?? metrics[0];
         return {
           ...row,

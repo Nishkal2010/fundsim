@@ -79,9 +79,14 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const host = new URL(origin).host;
+    // Only this project's own preview deployments — the production alias or a
+    // `fundsim-<hash>.vercel.app` build. A substring check would also admit
+    // attacker-controlled hosts like `evil-fundsim-x.vercel.app`.
     return (
-      host.endsWith(ALLOWED_ORIGIN_SUFFIX) &&
-      host.includes(ALLOWED_ORIGIN_SUFFIX_SLUG)
+      host === `fundsim${ALLOWED_ORIGIN_SUFFIX}` ||
+      new RegExp(
+        `^${ALLOWED_ORIGIN_SUFFIX_SLUG}-[a-z0-9-]+\\${ALLOWED_ORIGIN_SUFFIX}$`,
+      ).test(host)
     );
   } catch {
     return false;
@@ -186,6 +191,52 @@ export default async function handler(req: any, res: any) {
   }
   if (!summary || typeof summary !== "object" || Array.isArray(summary)) {
     return res.status(400).json({ error: "summary must be an object" });
+  }
+
+  // Shape + length validation. summary.title/subtitle/metrics render on the
+  // PUBLIC leaderboard, the /s/<id> share page, and the social OG card, so an
+  // unvalidated blob lets a submitter inject spam/slurs or a single giant
+  // string that overflows fixed-width UI. React/@vercel/og escape markup, so
+  // this guards content abuse + layout breakage, not script-XSS.
+  const stripCtrl = (s: string): string =>
+    Array.from(s)
+      .filter((ch) => ch.charCodeAt(0) >= 32)
+      .join("")
+      .trim();
+
+  if (typeof summary.title !== "string" || summary.title.trim().length === 0) {
+    return res.status(400).json({ error: "summary.title required" });
+  }
+  summary.title = stripCtrl(summary.title).slice(0, 120);
+  if (summary.subtitle !== undefined) {
+    if (typeof summary.subtitle !== "string") {
+      return res
+        .status(400)
+        .json({ error: "summary.subtitle must be a string" });
+    }
+    summary.subtitle = stripCtrl(summary.subtitle).slice(0, 120);
+  }
+  if (summary.metrics !== undefined) {
+    if (!Array.isArray(summary.metrics) || summary.metrics.length > 6) {
+      return res
+        .status(400)
+        .json({ error: "summary.metrics must be an array of ≤6 items" });
+    }
+    for (const m of summary.metrics) {
+      if (
+        !m ||
+        typeof m !== "object" ||
+        typeof m.label !== "string" ||
+        typeof m.value !== "string"
+      ) {
+        return res.status(400).json({ error: "invalid metric shape" });
+      }
+      m.label = stripCtrl(m.label).slice(0, 40);
+      m.value = stripCtrl(m.value).slice(0, 24);
+      if (m.highlight !== undefined && typeof m.highlight !== "boolean") {
+        return res.status(400).json({ error: "invalid metric.highlight" });
+      }
+    }
   }
 
   // Enforce the same 32 KB per-field cap that the DB constraint checks,
