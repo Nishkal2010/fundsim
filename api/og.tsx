@@ -1,11 +1,13 @@
 import { ImageResponse } from "@vercel/og";
 
-// @vercel/og requires the Edge runtime (it renders via WASM/Satori, and its
-// ImageResponse is a web Response). This is the ONLY edge function in the
-// project — api/health and api/share-meta are classic Node functions — so
-// Vercel can't merge @vercel/og into a shared edge bundle with them, which is
-// what flagged it as an "unsupported module" and broke every deploy.
-export const config = { runtime: "edge" };
+// Runs on the Node.js runtime. The Edge runtime build fails here — Vercel
+// bundles api/og into an edge namespace and rejects @vercel/og's WASM as an
+// "unsupported module" ("The Edge Function api/og is referencing unsupported
+// modules: @vercel/og"), which broke every production deploy. @vercel/og ships
+// a Node build (index.node.js) that renders the same ImageResponse and works
+// with this Web-standard (Request) => Response handler. The default homepage /
+// learn social card is a static public/og-image.png, so SEO/sharing does not
+// depend on this function — it only powers personalized /s/:id deal cards.
 
 const ACCENT: Record<string, string> = {
   pe: "#6366F1",

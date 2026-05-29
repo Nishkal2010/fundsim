@@ -3,7 +3,6 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/s/:id", "destination": "/api/share-meta?id=:id" },
-    { "source": "/og-image.png", "destination": "/api/og" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
