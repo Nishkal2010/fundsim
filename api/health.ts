@@ -4,8 +4,11 @@
 // Returns 200 with a JSON body whenever the function runs to completion;
 // individual checks may report `ok: false` inside the body. Callers should
 // treat HTTP 200 + `ok: true` as the only green state.
-
-export const config = { runtime: "edge" };
+//
+// Classic Node serverless function (NOT edge). Only api/og runs on the edge
+// runtime (for @vercel/og); keeping this on Node prevents Vercel from merging
+// it into a shared edge bundle with api/og — the merge is what flagged
+// @vercel/og as an unsupported module and failed every production deploy.
 
 const ANTHROPIC_PING_URL = "https://api.anthropic.com/v1/messages";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? "";
@@ -68,9 +71,9 @@ async function checkSupabase(): Promise<{
   }
 }
 
-export default async function handler(req: any) {
+export default async function handler(req: any, res: any) {
   // Same-origin or no-origin (curl, GH Actions) only. Mirrors /api/chat's posture.
-  const origin = req.headers?.get?.("origin") ?? "";
+  const origin = (req.headers?.origin as string) ?? "";
   const HEALTH_ALLOWED = new Set([
     "https://fundsimulate.com",
     "https://www.fundsimulate.com",
@@ -83,13 +86,9 @@ export default async function handler(req: any) {
     (origin.endsWith(".vercel.app") && origin.includes("fundsim")) ||
     origin.startsWith("http://localhost");
   if (origin && !allowed) {
-    return new Response(
-      JSON.stringify({ ok: false, error: "Origin not allowed" }),
-      {
-        status: 403,
-        headers: { "content-type": "application/json" },
-      },
-    );
+    res.statusCode = 403;
+    res.setHeader("content-type", "application/json");
+    return res.end(JSON.stringify({ ok: false, error: "Origin not allowed" }));
   }
 
   const [anthropic, supabase] = await Promise.all([
@@ -106,11 +105,8 @@ export default async function handler(req: any) {
     timestamp: new Date().toISOString(),
   };
 
-  return new Response(JSON.stringify(body, null, 2), {
-    status: 200,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store",
-    },
-  });
+  res.statusCode = 200;
+  res.setHeader("content-type", "application/json");
+  res.setHeader("cache-control", "no-store");
+  return res.end(JSON.stringify(body, null, 2));
 }

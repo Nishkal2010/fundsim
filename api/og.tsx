@@ -1,12 +1,11 @@
 import { ImageResponse } from "@vercel/og";
 
-// Runs on the Node.js runtime, NOT edge. When this function was on the edge
-// runtime, Vercel bundled it into a shared edge namespace with api/health and
-// api/share-meta, and @vercel/og's WASM got flagged as an "unsupported module"
-// for that combined bundle — which failed EVERY production deploy from the
-// commit this file was introduced onward. @vercel/og ships a Node build
-// (index.node.js) that renders the same ImageResponse; the Node runtime also
-// supports this Web-standard (Request) => Response handler signature.
+// @vercel/og requires the Edge runtime (it renders via WASM/Satori, and its
+// ImageResponse is a web Response). This is the ONLY edge function in the
+// project — api/health and api/share-meta are classic Node functions — so
+// Vercel can't merge @vercel/og into a shared edge bundle with them, which is
+// what flagged it as an "unsupported module" and broke every deploy.
+export const config = { runtime: "edge" };
 
 const ACCENT: Record<string, string> = {
   pe: "#6366F1",
@@ -24,8 +23,11 @@ export default async function handler(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id") ?? "";
 
-  let title = "FundSim Deal Analysis";
-  let subtitle = "Interactive PE · VC · IB Simulator";
+  // No id → this is the default brand card served at /og-image.png (see
+  // vercel.json rewrite). Keep the copy keyword-rich and brand-correct.
+  let title = "FundSim — Free Finance Simulator";
+  let subtitle =
+    "LBO · DCF · M&A · PE Waterfall · VC Cap Table — no Excel, no signup";
   let metrics: Array<{ label: string; value: string; highlight?: boolean }> =
     [];
   let simulator = "pe";
