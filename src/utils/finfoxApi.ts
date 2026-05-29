@@ -129,20 +129,53 @@ export function incrementQueryCount() {
   safeStorageSet(key, String(used + 1));
 }
 
-export async function callFinFox(opts: FinFoxApiOptions): Promise<string> {
+export async function callFinFox(
+  opts: FinFoxApiOptions,
+  onToken?: (token: string) => void,
+): Promise<string> {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(opts),
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(35000),
   });
 
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const data = await response.json();
-  return data.content ?? "";
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let fullText = "";
+
+  try {
+    outer: while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (raw === "[DONE]") break outer;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.t) {
+            fullText += evt.t;
+            onToken?.(evt.t);
+          }
+        } catch {
+          /* skip malformed events */
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return fullText;
 }
 
 // Pre-loaded common finance Q&As seeded into cache at startup

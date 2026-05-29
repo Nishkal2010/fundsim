@@ -160,82 +160,6 @@ function loadStoredMessages(): Message[] {
   }
 }
 
-// Simulates streaming by revealing text character by character
-function useStreamingText(
-  targetText: string,
-  active: boolean,
-  onDone: () => void,
-): string {
-  const [displayed, setDisplayed] = useState("");
-  const frameRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const indexRef = useRef(0);
-  const onDoneRef = useRef(onDone);
-
-  useEffect(() => {
-    onDoneRef.current = onDone;
-  }, [onDone]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- onDone read via ref to avoid restarting the typewriter on every parent render
-  useEffect(() => {
-    if (!active || !targetText) {
-      setDisplayed(targetText);
-      return;
-    }
-
-    indexRef.current = 0;
-    setDisplayed("");
-
-    const step = () => {
-      indexRef.current++;
-      const chunk = targetText.slice(0, indexRef.current);
-      setDisplayed(chunk);
-      if (indexRef.current < targetText.length) {
-        // Variable speed: faster for spaces, slower for end of sentences
-        const char = targetText[indexRef.current - 1];
-        const delay = char === "." || char === "?" ? 30 : char === " " ? 6 : 12;
-        frameRef.current = setTimeout(step, delay);
-      } else {
-        onDoneRef.current();
-      }
-    };
-
-    frameRef.current = setTimeout(step, 16);
-    return () => {
-      if (frameRef.current) clearTimeout(frameRef.current);
-    };
-  }, [targetText, active]);
-
-  return displayed;
-}
-
-function StreamingMessage({
-  content,
-  onDone,
-}: {
-  content: string;
-  onDone: () => void;
-}) {
-  const text = useStreamingText(content, true, onDone);
-  return (
-    <span>
-      {text}
-      {text.length < content.length && (
-        <span
-          style={{
-            display: "inline-block",
-            width: 2,
-            height: "1em",
-            background: "#10B981",
-            marginLeft: 1,
-            verticalAlign: "middle",
-            animation: "finfox-cursor-blink 0.7s steps(1) infinite",
-          }}
-        />
-      )}
-    </span>
-  );
-}
-
 export function ChatPanel() {
   const {
     chatOpen,
@@ -250,7 +174,6 @@ export function ChatPanel() {
     loadStoredMessages(),
   );
   const [loading, setLoading] = useState(false);
-  const [streamingIdx, setStreamingIdx] = useState<number | null>(null);
   const [remainingQueries, setRemainingQueries] = useState(
     getRemainingQueries(),
   );
@@ -327,57 +250,76 @@ export function ChatPanel() {
           trackEvent("finfox_cache_hit", { sim: activeSim ?? "general" });
           cacheHitEventCount++;
         }
-        const assistantIdx = newMessages.length;
         setMessages([
           ...newMessages,
-          { role: "assistant", content: cached, streaming: true },
+          { role: "assistant", content: cached, streaming: false },
         ]);
-        setStreamingIdx(assistantIdx);
         setLoading(false);
         setExpression("approving");
         setTimeout(() => setExpression("neutral"), 3000);
         return;
       }
 
+      // Add empty streaming message immediately — real tokens fill it in
+      const assistantIdx = newMessages.length;
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: "", streaming: true },
+      ]);
+      setExpression("approving");
+
+      let fullAnswer = "";
       try {
-        const answer = await callFinFox({
-          mode: "tutor",
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          sim: activeSim,
-          screen: coerceScreen(activeScreen),
-        });
+        fullAnswer = await callFinFox(
+          {
+            mode: "tutor",
+            messages: newMessages.map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+            sim: activeSim,
+            screen: coerceScreen(activeScreen),
+          },
+          (token) => {
+            setMessages((prev) => {
+              const updated = [...prev];
+              const msg = updated[assistantIdx];
+              if (msg)
+                updated[assistantIdx] = {
+                  ...msg,
+                  content: msg.content + token,
+                };
+              return updated;
+            });
+          },
+        );
 
         incrementQueryCount();
         const newCount = getRemainingQueries();
         setRemainingQueries(newCount);
-        setCachedAnswer(trimmed, answer);
+        setCachedAnswer(trimmed, fullAnswer);
         trackEvent("finfox_question_asked", {
           sim: activeSim ?? "general",
           screen: activeScreen ?? "",
           length: trimmed.length,
         });
-        const assistantIdx = newMessages.length;
-        setMessages([
-          ...newMessages,
-          { role: "assistant", content: answer, streaming: true },
-        ]);
-        setStreamingIdx(assistantIdx);
-        setExpression("approving");
         setTimeout(() => setExpression("neutral"), 3000);
       } catch {
         trackEvent("finfox_error", { sim: activeSim ?? "general" });
-        setMessages([
-          ...newMessages,
-          {
-            role: "assistant",
-            content: "Network error — try again in a moment.",
-          },
-        ]);
+        fullAnswer = "Network error — try again in a moment.";
         setExpression("neutral");
       } finally {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const msg = updated[assistantIdx];
+          if (msg?.streaming)
+            updated[assistantIdx] = {
+              role: "assistant",
+              content: fullAnswer || "Network error — try again in a moment.",
+              streaming: false,
+            };
+          return updated;
+        });
         setLoading(false);
       }
     },
@@ -402,19 +344,15 @@ export function ChatPanel() {
     // Glossary hit: inject directly without API call
     const glossEntry = finfoxGlossary[preloadedQuestion];
     if (glossEntry) {
-      setMessages((prev) => {
-        const next = [
-          ...prev,
-          { role: "user" as const, content: `Explain: ${preloadedQuestion}` },
-          {
-            role: "assistant" as const,
-            content: glossEntry.long,
-            streaming: true,
-          },
-        ];
-        setStreamingIdx(next.length - 1);
-        return next;
-      });
+      setMessages((prev) => [
+        ...prev,
+        { role: "user" as const, content: `Explain: ${preloadedQuestion}` },
+        {
+          role: "assistant" as const,
+          content: glossEntry.long,
+          streaming: false,
+        },
+      ]);
       scrollToBottom();
       return;
     }
@@ -430,7 +368,6 @@ export function ChatPanel() {
   const clearMessages = useCallback(() => {
     setMessages([]);
     sentRef.current.clear();
-    setStreamingIdx(null);
     setInput("");
     try {
       sessionStorage.removeItem(STORAGE_KEY);
@@ -627,13 +564,22 @@ export function ChatPanel() {
                       lineHeight: 1.65,
                     }}
                   >
-                    {msg.role === "assistant" &&
-                    msg.streaming &&
-                    streamingIdx === i ? (
-                      <StreamingMessage
-                        content={msg.content}
-                        onDone={() => setStreamingIdx(null)}
-                      />
+                    {msg.role === "assistant" && msg.streaming ? (
+                      <>
+                        {msg.content}
+                        <span
+                          style={{
+                            display: "inline-block",
+                            width: 2,
+                            height: "1em",
+                            background: "#10B981",
+                            marginLeft: 1,
+                            verticalAlign: "middle",
+                            animation:
+                              "finfox-cursor-blink 0.7s steps(1) infinite",
+                          }}
+                        />
+                      </>
                     ) : (
                       msg.content
                     )}
