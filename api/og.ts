@@ -65,7 +65,9 @@ const el = (
 };
 
 export default async function handler(req: Request): Promise<Response> {
-  const { searchParams } = new URL(req.url);
+  // On the Vercel Node runtime req.url is a relative path ("/api/og?id=..."),
+  // so a base is required or `new URL` throws "Invalid URL".
+  const { searchParams } = new URL(req.url, "http://localhost");
   const id = searchParams.get("id") ?? "";
 
   let title = "FundSim — Free Finance Simulator";
