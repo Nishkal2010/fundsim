@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Free DCF Calculator — Discounted Cash Flow Valuation, No Excel — FundSim</title>
+<meta name="description" content="A free online DCF calculator and walkthrough: project free cash flow, discount at WACC, add terminal value, and get enterprise and equity value. Try every input live in the FundSim discounted cash flow simulator — no Excel, no signup." />
+<meta name="keywords" content="DCF calculator, free DCF calculator, discounted cash flow calculator, DCF valuation, DCF model, online DCF calculator, terminal value calculator, enterprise value calculator" />
+<link rel="canonical" href="https://fundsimulate.com/learn/dcf-calculator.html" />
+<meta property="og:title" content="Free DCF Calculator — Discounted Cash Flow Valuation — FundSim" />
+<meta property="og:description" content="Project FCF, discount at WACC, add terminal value, get enterprise value. Free interactive DCF — no Excel." />
+<meta property="og:url" content="https://fundsimulate.com/learn/dcf-calculator.html" />
+<meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "FundSim", "item": "https://fundsimulate.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Learn", "item": "https://fundsimulate.com/learn/" },
+    { "@type": "ListItem", "position": 3, "name": "DCF Calculator", "item": "https://fundsimulate.com/learn/dcf-calculator.html" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a DCF calculator?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A DCF (discounted cash flow) calculator estimates what a company is worth today by projecting its future free cash flows and discounting them back to the present at the weighted average cost of capital (WACC). FundSim offers a free, interactive DCF calculator that runs every step in your browser with no Excel or signup." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you calculate a DCF valuation?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Project unlevered free cash flow for 5 to 10 years, discount each year by 1 divided by (1 plus WACC) to the power n, estimate a terminal value using the Gordon growth or exit-multiple method, discount that too, and sum everything to get enterprise value. Subtract net debt to get equity value, then divide by shares for value per share." }
+    }
+  ]
+}
+</script>
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;line-height:1.75}.wrap{max-width:740px;margin:0 auto;padding:48px 24px 96px}a{color:#7dd3fc}.nav{color:#64748b;font-size:.95rem;margin-bottom:24px}h1{font-size:2.1rem;margin:0 0 8px}h2{color:#f8fafc;margin-top:40px}.lede{color:#94a3b8;font-size:1.1rem}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #1e293b;padding:8px 10px;text-align:left}th{background:#0f172a}.cta{display:inline-block;background:#3b82f6;color:#fff;padding:12px 22px;border-radius:8px;margin-top:8px;font-weight:600}.box{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;margin:20px 0}.tag{display:inline-block;color:#7dd3fc;font-size:.85rem;background:#0f172a;border:1px solid #1e293b;border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav"><a href="/">FundSim</a> &rsaquo; <a href="/learn/">Learn</a> &rsaquo; DCF Calculator</div>
+<span class="tag">Valuation</span><span class="tag">Investment Banking</span><span class="tag">6 min</span>
+<h1>The DCF calculator, explained</h1>
+<p class="lede">A discounted cash flow valuation answers one question: what is a company worth today, given the cash it will throw off in the future? Strip away the spreadsheet and it's four moving parts. Here's each one — and you can change every input live in the free FundSim DCF calculator.</p>
+
+<p>The logic: a dollar earned five years from now is worth less than a dollar today, because today's dollar can be invested and grow. A DCF takes a company's future cash, discounts each year back to present value, and adds it all up.</p>
+
+<h2>1. Project free cash flow</h2>
+<p>Start with unlevered free cash flow (FCF) — the cash the business generates before paying lenders. The standard build:</p>
+<div class="box">EBIT &times; (1 &minus; tax rate) + D&amp;A &minus; capex &minus; change in net working capital = unlevered FCF</div>
+<p>You project this forward, usually 5 to 10 years, off revenue-growth and margin assumptions.</p>
+
+<h2>2. Discount at WACC</h2>
+<p>Each year's FCF gets divided by <code>(1 + WACC)<sup>n</sup></code>, where <em>n</em> is the year number and WACC is the <a href="/learn/wacc-calculator.html">weighted average cost of capital</a>. Later years get discounted harder because the exponent grows.</p>
+
+<h2>3. Terminal value</h2>
+<p>You can't project forever, so after the explicit window you estimate a terminal value — the worth of every cash flow beyond it. Two common methods:</p>
+<table>
+<tr><th>Method</th><th>Formula</th></tr>
+<tr><td>Gordon growth</td><td>Final-year FCF &times; (1 + g) &divide; (WACC &minus; g)</td></tr>
+<tr><td>Exit multiple</td><td>Final-year EBITDA &times; an assumed EV/EBITDA multiple</td></tr>
+</table>
+<p>Terminal value usually makes up the majority of the total — which is why small WACC or growth changes swing the answer so much.</p>
+
+<h2>4. Sum to enterprise and equity value</h2>
+<p>Discount the terminal value back too, add it to the discounted FCFs, and you have enterprise value. Subtract net debt to get equity value; divide by shares outstanding for value per share.</p>
+
+<div class="box">
+<strong>Try it free.</strong> The FundSim investment-banking simulator includes an interactive DCF — adjust growth, margins, WACC, and terminal assumptions and watch enterprise value, equity value, and sensitivity update in real time. No Excel, no signup.
+<br/><br/>
+<a class="cta" href="https://fundsimulate.com/#ib">Open the free DCF calculator &rarr;</a>
+</div>
+
+<h2>Keep learning</h2>
+<ul>
+<li><a href="/learn/wacc-calculator.html">WACC calculator explained</a></li>
+<li><a href="/learn/irr-vs-moic-explained.html">IRR vs MOIC</a></li>
+<li><a href="/learn/lbo-model-explained.html">The LBO model in 5 minutes</a></li>
+<li><a href="/learn/finance-simulator.html">What is a finance simulator?</a></li>
+</ul>
+</div>
+</body>
+</html>

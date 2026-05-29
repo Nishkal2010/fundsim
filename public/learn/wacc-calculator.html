@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WACC Calculator Explained — Weighted Average Cost of Capital — FundSim</title>
+<meta name="description" content="What WACC is, the formula, and how to calculate the weighted average cost of capital step by step — then use it as the discount rate in a free DCF. No Excel, no signup." />
+<meta name="keywords" content="WACC calculator, weighted average cost of capital, WACC formula, how to calculate WACC, cost of equity, cost of debt, discount rate calculator, CAPM" />
+<link rel="canonical" href="https://fundsimulate.com/learn/wacc-calculator.html" />
+<meta property="og:title" content="WACC Calculator Explained — FundSim" />
+<meta property="og:description" content="The weighted average cost of capital formula, step by step — the discount rate behind every DCF. Free." />
+<meta property="og:url" content="https://fundsimulate.com/learn/wacc-calculator.html" />
+<meta property="og:image" content="https://fundsimulate.com/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "FundSim", "item": "https://fundsimulate.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Learn", "item": "https://fundsimulate.com/learn/" },
+    { "@type": "ListItem", "position": 3, "name": "WACC Calculator", "item": "https://fundsimulate.com/learn/wacc-calculator.html" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is WACC?",
+      "acceptedAnswer": { "@type": "Answer", "text": "WACC, the weighted average cost of capital, is the blended rate a company pays to finance itself across both equity and debt, weighted by how much of each it uses. It is the discount rate used to value future cash flows in a DCF." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the WACC formula?",
+      "acceptedAnswer": { "@type": "Answer", "text": "WACC = (E/V × cost of equity) + (D/V × cost of debt × (1 − tax rate)), where E is the market value of equity, D is the market value of debt, and V is E + D. Cost of equity is usually estimated with CAPM: risk-free rate + beta × equity risk premium." }
+    }
+  ]
+}
+</script>
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;line-height:1.75}.wrap{max-width:740px;margin:0 auto;padding:48px 24px 96px}a{color:#7dd3fc}.nav{color:#64748b;font-size:.95rem;margin-bottom:24px}h1{font-size:2.1rem;margin:0 0 8px}h2{color:#f8fafc;margin-top:40px}.lede{color:#94a3b8;font-size:1.1rem}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #1e293b;padding:8px 10px;text-align:left}th{background:#0f172a}.cta{display:inline-block;background:#3b82f6;color:#fff;padding:12px 22px;border-radius:8px;margin-top:8px;font-weight:600}.box{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:18px;margin:20px 0}.tag{display:inline-block;color:#7dd3fc;font-size:.85rem;background:#0f172a;border:1px solid #1e293b;border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav"><a href="/">FundSim</a> &rsaquo; <a href="/learn/">Learn</a> &rsaquo; WACC Calculator</div>
+<span class="tag">Valuation</span><span class="tag">Investment Banking</span><span class="tag">5 min</span>
+<h1>The WACC calculator, explained</h1>
+<p class="lede">WACC — the weighted average cost of capital — is the single number that powers a <a href="/learn/dcf-calculator.html">DCF valuation</a>. It's the rate you discount future cash flows by. Get it wrong and the whole valuation moves. Here's how it's built.</p>
+
+<p>A company funds itself with two kinds of money: equity (shareholders) and debt (lenders). Each has a cost. WACC blends them by how much of each the company uses.</p>
+
+<h2>The formula</h2>
+<div class="box">WACC = (E/V &times; cost of equity) + (D/V &times; cost of debt &times; (1 &minus; tax rate))</div>
+<p>Where <code>E</code> is the market value of equity, <code>D</code> is the market value of debt, and <code>V = E + D</code>. The <code>(1 − tax rate)</code> piece exists because interest on debt is tax-deductible — debt is cheaper than it looks.</p>
+
+<h2>Cost of equity (CAPM)</h2>
+<p>You usually estimate the cost of equity with the Capital Asset Pricing Model:</p>
+<div class="box">Cost of equity = risk-free rate + &beta; &times; equity risk premium</div>
+<p>Beta (&beta;) measures how much the stock moves relative to the market. A higher beta means more risk, so shareholders demand a higher return.</p>
+
+<h2>Cost of debt</h2>
+<p>This is the effective interest rate the company pays on its borrowings — typically the yield on its debt — then reduced by the tax shield.</p>
+
+<h2>Why it matters so much</h2>
+<table>
+<tr><th>If WACC...</th><th>Then valuation...</th></tr>
+<tr><td>goes up</td><td>goes down (future cash discounted harder)</td></tr>
+<tr><td>goes down</td><td>goes up (future cash worth more today)</td></tr>
+</table>
+<p>Because terminal value sits far in the future, a 1% change in WACC can swing a DCF dramatically — which is why analysts run a sensitivity table on it.</p>
+
+<div class="box">
+<strong>See WACC drive a real valuation.</strong> The FundSim investment-banking simulator lets you set the discount rate and watch enterprise value, equity value, and the sensitivity grid respond live. Free, no Excel.
+<br/><br/>
+<a class="cta" href="https://fundsimulate.com/#ib">Open the free DCF + WACC simulator &rarr;</a>
+</div>
+
+<h2>Keep learning</h2>
+<ul>
+<li><a href="/learn/dcf-calculator.html">DCF calculator explained</a></li>
+<li><a href="/learn/irr-vs-moic-explained.html">IRR vs MOIC</a></li>
+<li><a href="/learn/accretion-dilution-calculator.html">Accretion/dilution calculator</a></li>
+</ul>
+</div>
+</body>
+</html>
