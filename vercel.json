@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/og.ts": { "includeFiles": "api/_assets/**" }
+  },
   "rewrites": [
     { "source": "/s/:id", "destination": "/api/share-meta?id=:id" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
