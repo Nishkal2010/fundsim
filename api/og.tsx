@@ -1,6 +1,12 @@
 import { ImageResponse } from "@vercel/og";
 
-export const config = { runtime: "edge" };
+// Runs on the Node.js runtime, NOT edge. When this function was on the edge
+// runtime, Vercel bundled it into a shared edge namespace with api/health and
+// api/share-meta, and @vercel/og's WASM got flagged as an "unsupported module"
+// for that combined bundle — which failed EVERY production deploy from the
+// commit this file was introduced onward. @vercel/og ships a Node build
+// (index.node.js) that renders the same ImageResponse; the Node runtime also
+// supports this Web-standard (Request) => Response handler signature.
 
 const ACCENT: Record<string, string> = {
   pe: "#6366F1",
