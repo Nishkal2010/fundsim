@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import { readFileSync } from "node:fs";
@@ -64,9 +65,10 @@ const el = (
   };
 };
 
-export default async function handler(req: Request): Promise<Response> {
-  // On the Vercel Node runtime req.url is a relative path ("/api/og?id=..."),
-  // so a base is required or `new URL` throws "Invalid URL".
+// Classic Node (req, res) handler — returning a Web Response from this runtime
+// leaves the request hanging (Vercel never flushes it), so we write via res.end.
+export default async function handler(req: any, res: any): Promise<void> {
+  // req.url is a relative path ("/api/og?id=..."); base is required for new URL.
   const { searchParams } = new URL(req.url, "http://localhost");
   const id = searchParams.get("id") ?? "";
 
@@ -318,10 +320,11 @@ export default async function handler(req: Request): Promise<Response> {
     .render()
     .asPng();
 
-  return new Response(new Uint8Array(png), {
-    headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, immutable, no-transform, max-age=86400",
-    },
-  });
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "image/png");
+  res.setHeader(
+    "Cache-Control",
+    "public, immutable, no-transform, max-age=86400",
+  );
+  res.end(png);
 }
