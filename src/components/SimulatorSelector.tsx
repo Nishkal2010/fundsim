@@ -163,11 +163,14 @@ export function SimulatorSelector({ onSelect }: Props) {
       >
         <div className="flex items-center gap-2 mb-1">
           <CheckCircle size={13} color="#34D399" />
-          <p className="text-xs font-medium" style={{ color: "#6B7280" }}>
+          <p
+            className="text-xs font-medium"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Qualitative + Quantitative — the only simulator that scores both
           </p>
         </div>
-        <p className="text-xs" style={{ color: "#374151" }}>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           Used by students at finance programs worldwide &middot; Covers PE
           &middot; VC &middot; IB &middot; DECA &middot; YIS competitions
         </p>

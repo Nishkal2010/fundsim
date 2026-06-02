@@ -17,8 +17,6 @@ import {
   type ScenarioInputs,
   type ScenarioOutputs,
 } from "../../lib/ibScenarios";
-import { useProStatus } from "../../lib/useProStatus";
-import { supabase } from "../../lib/supabase";
 
 // LBO-flavored default tuned to ~15% IRR base case so all three scenarios land
 // in interpretable territory. Tgt price chosen so post-premium offer EV ≈ 10x
@@ -304,40 +302,6 @@ export function ScenarioCompare() {
 
   const tornado = useMemo(() => computeTornado(base, 0.2), [base]);
 
-  const { isPro } = useProStatus();
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState<string | null>(null);
-
-  async function handleUpgrade() {
-    setUpgradeLoading(true);
-    setUpgradeError(null);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setUpgradeError("Please sign in first.");
-      setUpgradeLoading(false);
-      return;
-    }
-    try {
-      const res = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, userEmail: user.email }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        setUpgradeError(data.error ?? "Could not start checkout.");
-        setUpgradeLoading(false);
-        return;
-      }
-      window.location.href = data.url;
-    } catch {
-      setUpgradeError("Network error — please try again.");
-      setUpgradeLoading(false);
-    }
-  }
-
   // Tornado chart data: positive bar = high IRR delta, negative = low IRR delta
   const tornadoChartData = tornado.map((t) => ({
     label: t.label,
@@ -400,82 +364,6 @@ export function ScenarioCompare() {
       </div>
 
       <div style={{ padding: 20, display: "grid", gap: 20 }}>
-        {/* Upgrade banner — non-pro only */}
-        {!isPro && (
-          <div
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(245,158,11,0.10), rgba(99,102,241,0.10))",
-              border: "1px solid rgba(245,158,11,0.35)",
-              borderRadius: 12,
-              padding: 16,
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ flex: "1 1 360px", minWidth: 280 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  color: "#F59E0B",
-                  fontWeight: 700,
-                  marginBottom: 4,
-                }}
-              >
-                FundSim Pro
-              </div>
-              <div
-                style={{
-                  color: "#F9FAFB",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Save scenarios, export to Excel, and unlock the full interview
-                question bank.
-              </div>
-              <div style={{ color: "#9CA3AF", fontSize: 12 }}>
-                Free tier: 1 saved scenario per model. Pro: unlimited scenarios,
-                Excel model with live formulas, and the full interview question
-                bank.
-              </div>
-              {upgradeError && (
-                <div
-                  style={{
-                    color: "#FCA5A5",
-                    fontSize: 12,
-                    marginTop: 8,
-                  }}
-                >
-                  {upgradeError}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleUpgrade}
-              disabled={upgradeLoading}
-              style={{
-                background: upgradeLoading ? "#92400E" : "#F59E0B",
-                color: "#000",
-                border: "none",
-                borderRadius: 8,
-                padding: "10px 20px",
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: upgradeLoading ? "wait" : "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {upgradeLoading ? "Redirecting…" : "Upgrade — $149 / yr"}
-            </button>
-          </div>
-        )}
-
         {/* Base inputs panel */}
         <div
           style={{

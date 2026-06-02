@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const IBScoreTab = React.lazy(() => import("./tabs/IBScoreTab"));
 const IBValuationTab = React.lazy(() => import("./tabs/IBValuationTab"));
 import { IBLanding } from "./IBLanding";
-import { ProGate } from "../ProGate";
 import { Card, SectionHeader, Sub, Stat } from "./shared/primitives";
 import { fmtM, fmtN, fmtPct } from "./shared/format";
 import { captureEvent } from "../../lib/posthog";
@@ -1127,7 +1126,6 @@ export function IBSimulator() {
       const repayment = Math.min(fcfYr * 0.7, _openDebt);
       const closeDebt = Math.max(0, _openDebt - repayment);
       const result = { yr, fcfYr, openDebt: _openDebt, repayment, closeDebt };
-      // eslint-disable-next-line react-hooks/immutability
       _openDebt = closeDebt;
       return result;
     });
@@ -1463,37 +1461,35 @@ export function IBSimulator() {
         </div>
 
         <div className="flex items-center gap-2">
-          <ProGate feature="Excel model download">
-            <button
-              onClick={async () => {
-                captureEvent("ib_excel_exported", {
-                  dealType: inputs.dealType || "unknown",
-                });
-                const { exportIBModelToExcel } =
-                  await import("../../lib/excelExport");
-                exportIBModelToExcel(inputs, C);
-                triggerCapture("excel_export");
-              }}
-              className="text-xs px-3 py-1.5 rounded-lg font-medium"
-              style={{
-                color: "#10B981",
-                background: "rgba(16,185,129,0.1)",
-                border: "1px solid rgba(16,185,129,0.3)",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "rgba(16,185,129,0.2)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  "rgba(16,185,129,0.1)";
-              }}
-              title="Download Excel model with all 4 sheets"
-            >
-              ↓ Excel
-            </button>
-          </ProGate>
+          <button
+            onClick={async () => {
+              captureEvent("ib_excel_exported", {
+                dealType: inputs.dealType || "unknown",
+              });
+              const { exportIBModelToExcel } =
+                await import("../../lib/excelExport");
+              exportIBModelToExcel(inputs, C);
+              triggerCapture("excel_export");
+            }}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium"
+            style={{
+              color: "#10B981",
+              background: "rgba(16,185,129,0.1)",
+              border: "1px solid rgba(16,185,129,0.3)",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(16,185,129,0.2)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(16,185,129,0.1)";
+            }}
+            title="Download Excel model with all 4 sheets"
+          >
+            ↓ Excel
+          </button>
           <a
             href="#"
             onClick={(e) => {

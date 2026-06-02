@@ -319,7 +319,6 @@ export function calculateVCCapTable(state: VCInputState): VCData {
         typeof process !== "undefined" &&
         process.env.NODE_ENV !== "production"
       ) {
-        // eslint-disable-next-line no-console
         console.warn(
           `[vcRound] NP-conversion fixed-point did not converge in ${MAX_ITERS} iterations at exitVal=${exitVal}; applying deterministic fallback.`,
         );

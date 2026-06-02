@@ -955,7 +955,7 @@ function buildLBOSheet(inputs: DealInputs, C: C): XLSX.WorkSheet {
     null,
     null,
   ]);
-  // 11 — Total Interest (also referenced by Overview row 24 — see ProGate / Returns mirror)
+  // 11 — Total Interest (also referenced by Overview row 24 — see Returns mirror)
   rows.push([
     lbl("Total Interest", true),
     fcell(
