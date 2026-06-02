@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1779327593536,
+  "lastScanned": 1780371340889,
   "projectRoot": "/Users/nishkaldachepelly/fundsim",
   "techStack": {
     "languages": [
@@ -87,45 +87,59 @@
       "path": "api",
       "purpose": "API routes",
       "fileCount": 5,
-      "lastAccessed": 1779327593507,
+      "lastAccessed": 1780371340803,
       "keyFiles": [
         "chat.ts",
-        "create-checkout.ts",
         "health.ts",
+        "og.ts",
         "share-create.ts",
-        "stripe-webhook.ts"
+        "share-meta.ts"
       ]
     },
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
-      "fileCount": 5,
-      "lastAccessed": 1779327593508,
+      "fileCount": 11,
+      "lastAccessed": 1780371340812,
       "keyFiles": [
         "favicon.svg",
         "icons.svg",
         "index.html",
-        "robots.txt",
-        "sitemap.xml"
+        "manifest.webmanifest",
+        "og-image.png"
       ]
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 1,
-      "lastAccessed": 1779327593512,
+      "fileCount": 7,
+      "lastAccessed": 1780371340816,
       "keyFiles": [
+        "AI-NATIVE-OPERATING-SYSTEM.md",
+        "DECISION_LOG.md",
+        "INSTRUMENTATION_PLAYBOOK.md",
+        "OPERATING_MODEL.md",
         "OVERNIGHT_AGENT.md"
+      ]
+    },
+    "marketing": {
+      "path": "marketing",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780371340818,
+      "keyFiles": [
+        "README.md"
       ]
     },
     "public": {
       "path": "public",
       "purpose": "Public files",
-      "fileCount": 4,
-      "lastAccessed": 1779327593513,
+      "fileCount": 6,
+      "lastAccessed": 1780371340822,
       "keyFiles": [
         "favicon.svg",
         "icons.svg",
+        "og-image.png",
         "robots.txt",
         "sitemap.xml"
       ]
@@ -134,18 +148,27 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 3,
-      "lastAccessed": 1779327593514,
+      "lastAccessed": 1780371340828,
       "keyFiles": [
         "overnight_agent.py",
         "post_digest.py",
         "requirements.txt"
       ]
     },
+    "shonen-slugger": {
+      "path": "shonen-slugger",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780371340834,
+      "keyFiles": [
+        "characters.js"
+      ]
+    },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 4,
-      "lastAccessed": 1779327593514,
+      "lastAccessed": 1780371340835,
       "keyFiles": [
         "App.css",
         "App.tsx",
@@ -157,7 +180,7 @@
       "path": "src_backup_20260421_200745",
       "purpose": null,
       "fileCount": 4,
-      "lastAccessed": 1779327593514,
+      "lastAccessed": 1780371340837,
       "keyFiles": [
         "App.css",
         "App.tsx",
@@ -169,25 +192,32 @@
       "path": "supabase",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1779327593515,
+      "lastAccessed": 1780371340837,
       "keyFiles": []
     },
     "dist/assets": {
       "path": "dist/assets",
       "purpose": "Static assets",
-      "fileCount": 54,
-      "lastAccessed": 1779327593516,
+      "fileCount": 60,
+      "lastAccessed": 1780371340846,
       "keyFiles": [
-        "ComparePage-CYWaYYd2.js",
-        "DECAFinanceSuite-BfF-FGdY.js",
-        "DealMemoTab-3yCeFWNf.js"
+        "ComparePage-BlGyys68.js",
+        "DECAFinanceSuite-CnHS6pvC.js",
+        "DealChallengeModal-CKlq9bth.js"
       ]
+    },
+    "marketing/assets": {
+      "path": "marketing/assets",
+      "purpose": "Static assets",
+      "fileCount": 0,
+      "lastAccessed": 1780371340846,
+      "keyFiles": []
     },
     "src/assets": {
       "path": "src/assets",
       "purpose": "Static assets",
       "fileCount": 3,
-      "lastAccessed": 1779327593516,
+      "lastAccessed": 1780371340853,
       "keyFiles": [
         "hero.png",
         "react.svg",
@@ -197,8 +227,8 @@
     "src/components": {
       "path": "src/components",
       "purpose": "UI components",
-      "fileCount": 24,
-      "lastAccessed": 1779327593517,
+      "fileCount": 25,
+      "lastAccessed": 1780371340854,
       "keyFiles": [
         "AppErrorBoundary.tsx",
         "ComparePage.tsx",
@@ -209,7 +239,7 @@
       "path": "src/data",
       "purpose": "Data files",
       "fileCount": 3,
-      "lastAccessed": 1779327593517,
+      "lastAccessed": 1780371340855,
       "keyFiles": [
         "finfoxGlossary.ts",
         "glossary.ts",
@@ -219,30 +249,19 @@
     "src/lib": {
       "path": "src/lib",
       "purpose": "Library code",
-      "fileCount": 7,
-      "lastAccessed": 1779327593517,
+      "fileCount": 10,
+      "lastAccessed": 1780371340855,
       "keyFiles": [
+        "analytics.ts",
         "dealShare.ts",
-        "excelExport.ts",
-        "ibScenarios.ts"
-      ]
-    },
-    "src/test": {
-      "path": "src/test",
-      "purpose": "Test files",
-      "fileCount": 4,
-      "lastAccessed": 1779327593518,
-      "keyFiles": [
-        "irr.test.ts",
-        "setup.ts",
-        "vcRound.test.ts"
+        "excelExport.ts"
       ]
     },
     "src_backup_20260421_200745/assets": {
       "path": "src_backup_20260421_200745/assets",
       "purpose": "Static assets",
       "fileCount": 3,
-      "lastAccessed": 1779327593518,
+      "lastAccessed": 1780371340857,
       "keyFiles": [
         "hero.png",
         "react.svg",
@@ -253,7 +272,7 @@
       "path": "src_backup_20260421_200745/components",
       "purpose": "UI components",
       "fileCount": 16,
-      "lastAccessed": 1779327593519,
+      "lastAccessed": 1780371340859,
       "keyFiles": [
         "ComparePage.tsx",
         "ComparePanel.tsx",
@@ -264,7 +283,7 @@
       "path": "src_backup_20260421_200745/data",
       "purpose": "Data files",
       "fileCount": 2,
-      "lastAccessed": 1779327593519,
+      "lastAccessed": 1780371340860,
       "keyFiles": [
         "glossary.ts",
         "scenarios.ts"
@@ -274,7 +293,7 @@
       "path": "src_backup_20260421_200745/lib",
       "purpose": "Library code",
       "fileCount": 1,
-      "lastAccessed": 1779327593519,
+      "lastAccessed": 1780371340862,
       "keyFiles": [
         "supabase.ts"
       ]
@@ -283,7 +302,7 @@
       "path": "src_backup_20260421_200745/test",
       "purpose": "Test files",
       "fileCount": 1,
-      "lastAccessed": 1779327593519,
+      "lastAccessed": 1780371340866,
       "keyFiles": [
         "setup.ts"
       ]
@@ -291,8 +310,8 @@
     "supabase/migrations": {
       "path": "supabase/migrations",
       "purpose": "Database migrations",
-      "fileCount": 4,
-      "lastAccessed": 1779327593520,
+      "fileCount": 5,
+      "lastAccessed": 1780371340867,
       "keyFiles": [
         "20260430_deal_shares.sql",
         "20260510_profiles_is_pro.sql",
@@ -302,303 +321,303 @@
   },
   "hotPaths": [
     {
-      "path": "src/components/IB/IBSimulator.tsx",
-      "accessCount": 300,
-      "lastAccessed": 1779325606988,
+      "path": "docs/AI-NATIVE-OPERATING-SYSTEM.md",
+      "accessCount": 28,
+      "lastAccessed": 1780374152213,
       "type": "file"
     },
     {
-      "path": "src/components/YIS/YISFinanceSuite.tsx",
-      "accessCount": 55,
-      "lastAccessed": 1776219294388,
+      "path": "src/components/Scenarios/ScenarioCompare.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1780119854016,
+      "type": "file"
+    },
+    {
+      "path": "docs/OPERATING_MODEL.md",
+      "accessCount": 12,
+      "lastAccessed": 1780374155433,
+      "type": "file"
+    },
+    {
+      "path": "docs/INSTRUMENTATION_PLAYBOOK.md",
+      "accessCount": 12,
+      "lastAccessed": 1780374157858,
+      "type": "file"
+    },
+    {
+      "path": "COMPANY.md",
+      "accessCount": 11,
+      "lastAccessed": 1780374158235,
+      "type": "file"
+    },
+    {
+      "path": ".claude/agents/growth-loop.md",
+      "accessCount": 10,
+      "lastAccessed": 1780119094691,
+      "type": "file"
+    },
+    {
+      "path": ".claude/commands/feature.md",
+      "accessCount": 10,
+      "lastAccessed": 1780119095540,
+      "type": "file"
+    },
+    {
+      "path": ".claude/agents/finance-engine-reviewer.md",
+      "accessCount": 10,
+      "lastAccessed": 1780374163732,
+      "type": "file"
+    },
+    {
+      "path": ".claude/agents/weekly-telemetry-review.md",
+      "accessCount": 9,
+      "lastAccessed": 1780119094219,
       "type": "file"
     },
     {
       "path": "src/App.tsx",
-      "accessCount": 47,
-      "lastAccessed": 1779328635061,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/jCurve.ts",
-      "accessCount": 33,
-      "lastAccessed": 1776019208009,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/waterfall.ts",
-      "accessCount": 33,
-      "lastAccessed": 1776019211969,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/performance.ts",
-      "accessCount": 29,
-      "lastAccessed": 1776019202635,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/fundLifecycle.ts",
-      "accessCount": 27,
-      "lastAccessed": 1776018854433,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/irr.ts",
-      "accessCount": 24,
-      "lastAccessed": 1776019167059,
-      "type": "file"
-    },
-    {
-      "path": "src/hooks/useFundModel.ts",
-      "accessCount": 21,
-      "lastAccessed": 1779328162755,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/steps/Step5_CashFlow.tsx",
-      "accessCount": 19,
-      "lastAccessed": 1776018828288,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Header.tsx",
-      "accessCount": 17,
-      "lastAccessed": 1779328778429,
-      "type": "file"
-    },
-    {
-      "path": "src/types/fund.ts",
-      "accessCount": 13,
-      "lastAccessed": 1779327929885,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/steps/Step7_ThreeYearPlan.tsx",
-      "accessCount": 12,
-      "lastAccessed": 1776219290332,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/DECAFinanceSuite.tsx",
-      "accessCount": 11,
-      "lastAccessed": 1776218876835,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Glossary.tsx",
       "accessCount": 9,
-      "lastAccessed": 1775793094342,
+      "lastAccessed": 1780162753874,
+      "type": "file"
+    },
+    {
+      "path": ".claude/context/architecture.md",
+      "accessCount": 8,
+      "lastAccessed": 1780162406337,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 7,
+      "lastAccessed": 1780265725363,
+      "type": "file"
+    },
+    {
+      "path": "docs/templates/feature-spec-template.md",
+      "accessCount": 5,
+      "lastAccessed": 1780117779176,
+      "type": "file"
+    },
+    {
+      "path": ".claude/context/README.md",
+      "accessCount": 5,
+      "lastAccessed": 1780119012869,
+      "type": "file"
+    },
+    {
+      "path": "docs/DECISION_LOG.md",
+      "accessCount": 4,
+      "lastAccessed": 1780374156048,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ProGate.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780118254064,
+      "type": "file"
+    },
+    {
+      "path": "src/components/IB/IBSimulator.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1780119754533,
+      "type": "file"
+    },
+    {
+      "path": "CODEBASE.md",
+      "accessCount": 2,
+      "lastAccessed": 1780117450070,
+      "type": "file"
+    },
+    {
+      "path": "vite.config.ts",
+      "accessCount": 2,
+      "lastAccessed": 1780265773906,
+      "type": "file"
+    },
+    {
+      "path": "docs/outreach/club-vp-email.md",
+      "accessCount": 2,
+      "lastAccessed": 1780374165487,
+      "type": "file"
+    },
+    {
+      "path": "docs/outreach/professor-email.md",
+      "accessCount": 2,
+      "lastAccessed": 1780374166544,
+      "type": "file"
+    },
+    {
+      "path": "docs/outreach/club-drip-sequence.md",
+      "accessCount": 2,
+      "lastAccessed": 1780374166731,
+      "type": "file"
+    },
+    {
+      "path": "docs/social/twitter-threads.md",
+      "accessCount": 2,
+      "lastAccessed": 1780374167242,
+      "type": "file"
+    },
+    {
+      "path": "docs/social/faq-content.md",
+      "accessCount": 2,
+      "lastAccessed": 1780374167962,
       "type": "file"
     },
     {
       "path": "src/main.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1778476262480,
-      "type": "file"
-    },
-    {
-      "path": "src/components/ComparePage.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1776018834239,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/JCurveChart.tsx",
-      "accessCount": 7,
-      "lastAccessed": 1776018859964,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/steps/Step9_BreakEven.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1776018829587,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/supabase.ts",
-      "accessCount": 6,
-      "lastAccessed": 1776018832818,
-      "type": "file"
-    },
-    {
-      "path": "src/components/LoginPage.tsx",
-      "accessCount": 6,
-      "lastAccessed": 1776018834129,
-      "type": "file"
-    },
-    {
-      "path": "src/utils/formatting.ts",
-      "accessCount": 6,
-      "lastAccessed": 1776018851766,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/DistributionTable.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1776019204357,
-      "type": "file"
-    },
-    {
-      "path": "src/components/GlobalInputs.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1778474857814,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/steps/Step8_CapitalNeeds.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018837927,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallTab.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018842640,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/JCurveTab.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018844999,
-      "type": "file"
-    },
-    {
-      "path": "src/components/JCurve/ScenarioComparison.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018845813,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/MetricsGrid.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018858156,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/TVPIChart.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1776018859026,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/FundLifecycleTab.tsx",
-      "accessCount": 4,
-      "lastAccessed": 1778360801815,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallDiagram.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018843528,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/PerformanceTab.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018843987,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/SensitivityTable.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018844421,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/DeploymentChart.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018860817,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/WaterfallBarChart.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018862538,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Waterfall/DealSliders.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776018862595,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Performance/QuartileScale.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1776019191159,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Hero.tsx",
-      "accessCount": 3,
-      "lastAccessed": 1778474757574,
-      "type": "file"
-    },
-    {
-      "path": "src/components/YIS/YISLanding.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775793081674,
-      "type": "file"
-    },
-    {
-      "path": "src/components/TabBar.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775793093400,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Footer.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775793093608,
-      "type": "file"
-    },
-    {
-      "path": "src/data/glossary.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775796271154,
-      "type": "file"
-    },
-    {
-      "path": ".env",
-      "accessCount": 2,
-      "lastAccessed": 1775796294417,
-      "type": "file"
-    },
-    {
-      "path": "src/components/Slider.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775860230312,
-      "type": "file"
-    },
-    {
-      "path": "src/components/FundLifecycle/FeeTable.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1776018861296,
-      "type": "file"
-    },
-    {
-      "path": "src/components/DECA/DECALanding.tsx",
       "accessCount": 1,
-      "lastAccessed": 1775666718825,
+      "lastAccessed": 1780117439148,
       "type": "file"
     },
     {
-      "path": "src/components/IB/IBLanding.tsx",
+      "path": "PRODUCT_STRATEGY.md",
       "accessCount": 1,
-      "lastAccessed": 1775709109480,
+      "lastAccessed": 1780117440000,
       "type": "file"
     },
     {
-      "path": "src/components/MetricCard.tsx",
+      "path": "src/test/vcRound.test.ts",
       "accessCount": 1,
-      "lastAccessed": 1775713997710,
+      "lastAccessed": 1780117448633,
       "type": "file"
     },
     {
-      "path": "src/components/Tooltip.tsx",
+      "path": "src/test/setup.ts",
       "accessCount": 1,
-      "lastAccessed": 1775713998500,
+      "lastAccessed": 1780117449941,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/__tests__/performance.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117450407,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/waterfall.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117450771,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/jCurve.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117450794,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/irr.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117450883,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/lbo.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117451089,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/fundLifecycle.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117456386,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/portfolio.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117456443,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/vcRound.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117456507,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/performance.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117456997,
+      "type": "file"
+    },
+    {
+      "path": "src/utils/marketSizing.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117457166,
+      "type": "file"
+    },
+    {
+      "path": "src/test/irr.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117460927,
+      "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1780117484994,
+      "type": "file"
+    },
+    {
+      "path": "supabase/migrations/20260521_deal_shares_throttle.sql",
+      "accessCount": 1,
+      "lastAccessed": 1780117485473,
+      "type": "file"
+    },
+    {
+      "path": "supabase/migrations/20260522_deal_shares_percentile.sql",
+      "accessCount": 1,
+      "lastAccessed": 1780117485986,
+      "type": "file"
+    },
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780117605347,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/posthog.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780118113675,
+      "type": "file"
+    },
+    {
+      "path": "api/create-checkout.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780118124267,
+      "type": "file"
+    },
+    {
+      "path": "docs/specs/posthog-revenue-funnel-events.md",
+      "accessCount": 1,
+      "lastAccessed": 1780118210245,
+      "type": "file"
+    },
+    {
+      "path": "src/test/proReturn.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780118213635,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/proReturn.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780118229604,
+      "type": "file"
+    },
+    {
+      "path": ".claude/launch.json",
+      "accessCount": 1,
+      "lastAccessed": 1780118378680,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/useProStatus.ts",
+      "accessCount": 1,
+      "lastAccessed": 1780119658139,
       "type": "file"
     }
   ],
