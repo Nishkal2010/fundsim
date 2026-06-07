@@ -20,6 +20,8 @@ import {
   formatMultiple,
   formatIRR,
 } from "../../utils/formatting";
+import { isFlagEnabled } from "../../lib/flags";
+import { runStressTest } from "../../utils/stressTest";
 import type { LBOInputs } from "../../types/fund";
 
 const DEFAULT_LBO: LBOInputs = {
@@ -63,6 +65,14 @@ export function LBOTab() {
   const [lbo, setLBO] = useState<LBOInputs>(DEFAULT_LBO);
 
   const result = useMemo(() => calculateLBO(lbo), [lbo]);
+
+  const [stressActive, setStressActive] = useState(false);
+  const showStress = isFlagEnabled("stressTest");
+
+  const stressResult = useMemo(() => {
+    if (!stressActive || !showStress) return null;
+    return runStressTest(lbo, result);
+  }, [stressActive, showStress, lbo, result]);
 
   const set = <K extends keyof LBOInputs>(k: K, v: LBOInputs[K]) =>
     setLBO((prev) => ({ ...prev, [k]: v }));
@@ -369,6 +379,197 @@ export function LBOTab() {
           </div>
         ))}
       </div>
+
+      {/* Downside Stress Test */}
+      {showStress && !stressActive && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={() => setStressActive(true)}
+            style={{
+              background: "rgba(248,113,113,0.1)",
+              border: "1px solid rgba(248,113,113,0.35)",
+              borderRadius: 8,
+              color: "#F87171",
+              padding: "8px 16px",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Run downside stress test
+          </button>
+        </div>
+      )}
+
+      {showStress && stressActive && stressResult && (
+        <div
+          className="rounded-xl p-5 space-y-4"
+          style={{
+            background: "rgba(248,113,113,0.05)",
+            border: "1px solid rgba(248,113,113,0.3)",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: "#F87171" }}
+              >
+                Downside Stress Test
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: "#9CA3AF" }}>
+                EBITDA −15% · Hold +2 yr · Exit multiple −1.0×
+              </p>
+            </div>
+            <button
+              onClick={() => setStressActive(false)}
+              style={{
+                background: "rgba(248,113,113,0.1)",
+                border: "1px solid rgba(248,113,113,0.25)",
+                borderRadius: 6,
+                color: "#9CA3AF",
+                padding: "4px 10px",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Reset to base
+            </button>
+          </div>
+
+          {/* 6-cell comparison grid */}
+          <div className="grid grid-cols-3 gap-3">
+            {(
+              [
+                {
+                  label: "Base IRR",
+                  value: formatIRR(result.grossIRR),
+                  color: "#9CA3AF",
+                },
+                {
+                  label: "Stressed IRR",
+                  value: formatIRR(stressResult.irr),
+                  color: "#F87171",
+                },
+                {
+                  label: "IRR Delta",
+                  value:
+                    stressResult.irrDelta !== null
+                      ? `${stressResult.irrDelta >= 0 ? "+" : ""}${(stressResult.irrDelta * 100).toFixed(1)}pp`
+                      : "N/A",
+                  color:
+                    stressResult.irrDelta === null || stressResult.irrDelta >= 0
+                      ? "#34D399"
+                      : "#F87171",
+                },
+                {
+                  label: "Base MOIC",
+                  value: `${result.grossMOIC.toFixed(2)}×`,
+                  color: "#9CA3AF",
+                },
+                {
+                  label: "Stressed MOIC",
+                  value: `${stressResult.moic.toFixed(2)}×`,
+                  color: "#F87171",
+                },
+                {
+                  label: "MOIC Delta",
+                  value: `${stressResult.moicDelta >= 0 ? "+" : ""}${stressResult.moicDelta.toFixed(2)}×`,
+                  color: stressResult.moicDelta >= 0 ? "#34D399" : "#F87171",
+                },
+              ] as const
+            ).map((cell) => (
+              <div
+                key={cell.label}
+                className="rounded-lg p-3"
+                style={{ background: "#0A0F1C", border: "1px solid #1F2937" }}
+              >
+                <div className="text-xs mb-0.5" style={{ color: "#6B7280" }}>
+                  {cell.label}
+                </div>
+                <div
+                  className="text-base font-bold"
+                  style={{ color: cell.color }}
+                >
+                  {cell.value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Biggest driver callout */}
+          <div
+            className="rounded-lg p-3 text-xs"
+            style={{
+              background: "rgba(245,158,11,0.07)",
+              border: "1px solid rgba(245,158,11,0.2)",
+              color: "#F59E0B",
+            }}
+          >
+            <strong>Biggest driver: </strong>
+            {stressResult.biggestDriver === "ebitda" && (
+              <>
+                EBITDA haircut moved IRR{" "}
+                {stressResult.driverImpacts.ebitda !== null
+                  ? `${(stressResult.driverImpacts.ebitda * 100).toFixed(1)}pp`
+                  : "N/A"}{" "}
+                alone
+              </>
+            )}
+            {stressResult.biggestDriver === "holdPeriod" && (
+              <>
+                Hold extension moved IRR{" "}
+                {stressResult.driverImpacts.holdPeriod !== null
+                  ? `${(stressResult.driverImpacts.holdPeriod * 100).toFixed(1)}pp`
+                  : "N/A"}{" "}
+                alone
+              </>
+            )}
+            {stressResult.biggestDriver === "exitMultiple" && (
+              <>
+                Exit multiple shock moved IRR{" "}
+                {stressResult.driverImpacts.exitMultiple !== null
+                  ? `${(stressResult.driverImpacts.exitMultiple * 100).toFixed(1)}pp`
+                  : "N/A"}{" "}
+                alone
+              </>
+            )}
+          </div>
+
+          {/* Stressed assumptions recap */}
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            {[
+              {
+                label: "Entry Multiple",
+                value: `${stressResult.stressedInputs.entryMultiple.toFixed(1)}×`,
+                sub: "+1.0× overpay",
+              },
+              {
+                label: "Hold Period",
+                value: `${stressResult.stressedInputs.holdYears} yr`,
+                sub: "+2 yr extension",
+              },
+              {
+                label: "Exit Multiple",
+                value: `${stressResult.stressedInputs.exitMultiple.toFixed(1)}×`,
+                sub: "−1.0× shock",
+              },
+            ].map((item) => (
+              <div key={item.label} style={{ color: "#6B7280" }}>
+                <div>{item.label}</div>
+                <div
+                  className="font-semibold mt-0.5"
+                  style={{ color: "#D1D5DB" }}
+                >
+                  {item.value}
+                </div>
+                <div style={{ color: "#4B5563" }}>{item.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

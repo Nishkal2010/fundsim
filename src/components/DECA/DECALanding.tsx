@@ -1,40 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { EVENT_CONFIG } from "./config/eventConfig";
+import {
+  callFinFox,
+  getCachedAnswer,
+  setCachedAnswer,
+  getRemainingQueries,
+  incrementQueryCount,
+  type ChatMessage,
+} from "../../utils/finfoxApi";
 
 interface Props {
   onStart: () => void;
 }
-
-const PRACTICE_QS = [
-  {
-    id: "lbo-ev",
-    topic: "LBO Entry Valuation",
-    q: "A PE firm acquires a company at 8x EBITDA. The company generates $40M EBITDA. What is the total enterprise value?",
-    options: ["A) $280M", "B) $320M", "C) $360M"],
-    correct: 1,
-    explanation:
-      "EV = Entry Multiple × EBITDA = 8 × $40M = $320M. Entry multiples in PE mid-market typically range 7–12x EBITDA depending on sector and growth profile.",
-  },
-  {
-    id: "vc-dilution",
-    topic: "VC Dilution",
-    q: "A founder owns 80% of their company before Series A. A VC takes 25% of the company in the round. What is the founder's post-money ownership?",
-    options: ["A) 55%", "B) 60%", "C) 65%"],
-    correct: 1,
-    explanation:
-      "Founder post-money = 80% × (1 − 25%) = 80% × 0.75 = 60%. This is why founders track dilution carefully across rounds — seed, Series A, and B can take founders from 100% to ~25%.",
-  },
-  {
-    id: "breakeven",
-    topic: "Break-Even Analysis",
-    q: "A business has $10,000/month in fixed costs and a 40% contribution margin. What monthly revenue is needed to break even?",
-    options: ["A) $20,000", "B) $25,000", "C) $40,000"],
-    correct: 1,
-    explanation:
-      "Break-even revenue = Fixed Costs ÷ Contribution Margin = $10,000 ÷ 0.40 = $25,000. Judges expect you to know this calculation cold — it shows you understand unit economics.",
-  },
-];
 
 const features = [
   {
@@ -71,19 +49,89 @@ const FEATURED_EVENTS = (
   ["EIB", "IBP", "EFB", "EBG", "ESB", "BOR"] as const
 ).map((code) => EVENT_CONFIG[code]);
 
-export function DECALanding({ onStart }: Props) {
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+// Socratic prompts that seed the first FinFox question per topic
+const SOCRATIC_SEEDS = [
+  "A PE firm acquires a company at 8x EBITDA with $40M EBITDA. What's the enterprise value, and what leverage ratio would a mid-market lender accept?",
+  "A founder owns 80% pre-Series A. After a VC takes 25%, what's the post-money ownership? And what happens if there's a 1x liquidation preference?",
+  "A business has $10,000/month fixed costs and 40% contribution margin. What's break-even revenue? How does that change if variable costs rise 5 points?",
+];
 
-  function toggleReveal(id: string) {
-    setRevealed((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+export function DECALanding({ onStart }: Props) {
+  // FinFox Socratic chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [streamingText, setStreamingText] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  // Guard setState calls if the component unmounts mid-fetch.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  function scrollChat() {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function sendMessage(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || chatLoading) return;
+
+    const remaining = getRemainingQueries();
+    if (remaining <= 0) {
+      setChatError("Daily question limit reached. Come back tomorrow.");
+      return;
+    }
+
+    const cached = getCachedAnswer(trimmed);
+    const userMsg: ChatMessage = { role: "user", content: trimmed };
+    const next = [...chatMessages, userMsg];
+    setChatMessages(next);
+    setChatInput("");
+    setChatError(null);
+
+    if (cached) {
+      setChatMessages([...next, { role: "assistant", content: cached }]);
+      setTimeout(scrollChat, 50);
+      return;
+    }
+
+    setChatLoading(true);
+    setStreamingText("");
+    try {
+      incrementQueryCount();
+      let accumulated = "";
+      await callFinFox(
+        { mode: "tutor", messages: next, screen: "deca" },
+        (token) => {
+          if (!mountedRef.current) return;
+          accumulated += token;
+          setStreamingText(accumulated);
+          scrollChat();
+        },
+      );
+      if (!mountedRef.current) return;
+      setCachedAnswer(trimmed, accumulated);
+      setChatMessages([...next, { role: "assistant", content: accumulated }]);
+      setStreamingText("");
+      setTimeout(scrollChat, 50);
+    } catch {
+      if (!mountedRef.current) return;
+      setChatError("FinFox is unavailable right now. Try again in a moment.");
+    } finally {
+      if (mountedRef.current) setChatLoading(false);
+    }
+  }
+
+  function handleChatKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void sendMessage(chatInput);
+    }
   }
 
   return (
@@ -130,33 +178,59 @@ export function DECALanding({ onStart }: Props) {
           </div>
         </div>
 
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            window.location.hash = "";
-          }}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
-          style={{
-            color: "#9CA3AF",
-            textDecoration: "none",
-            background: "rgba(55,65,81,0.5)",
-            border: "1px solid #374151",
-            cursor: "pointer",
-            transition: "all 0.18s ease",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "#F9FAFB";
-            (e.currentTarget as HTMLAnchorElement).style.background = "#374151";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
-            (e.currentTarget as HTMLAnchorElement).style.background =
-              "rgba(55,65,81,0.5)";
-          }}
-        >
-          ← Back to FundSim
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="#status"
+            className="text-xs px-2 py-1.5 rounded-lg"
+            style={{
+              color: "#6B7280",
+              textDecoration: "none",
+              border: "1px solid transparent",
+              transition: "all 0.18s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor =
+                "#374151";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#6B7280";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor =
+                "transparent";
+            }}
+            title="Service uptime and SLA"
+          >
+            Status
+          </a>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = "";
+            }}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
+            style={{
+              color: "#9CA3AF",
+              textDecoration: "none",
+              background: "rgba(55,65,81,0.5)",
+              border: "1px solid #374151",
+              cursor: "pointer",
+              transition: "all 0.18s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#F9FAFB";
+              (e.currentTarget as HTMLAnchorElement).style.background =
+                "#374151";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
+              (e.currentTarget as HTMLAnchorElement).style.background =
+                "rgba(55,65,81,0.5)";
+            }}
+          >
+            ← Back to FundSim
+          </a>
+        </div>
       </div>
 
       {/* Hero */}
@@ -379,93 +453,190 @@ export function DECALanding({ onStart }: Props) {
           </div>
         </motion.div>
 
-        {/* Practice Questions */}
+        {/* Socratic FinFox Practice — live AI tutor, not static reveal cards */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="max-w-2xl mx-auto w-full px-6 pb-16 mt-10"
         >
-          <p
-            className="text-xs font-semibold tracking-widest mb-5 text-center"
-            style={{ color: "#4B5563" }}
-          >
-            PRACTICE QUESTIONS
-          </p>
-          <div className="flex flex-col gap-3">
-            {PRACTICE_QS.map((q) => {
-              const show = revealed.has(q.id);
-              return (
+          <div className="flex items-center justify-between mb-4">
+            <p
+              className="text-xs font-semibold tracking-widest"
+              style={{ color: "#4B5563" }}
+            >
+              PRACTICE WITH FINFOX
+            </p>
+            <span className="text-xs" style={{ color: "#6B7280" }}>
+              {getRemainingQueries()} questions left today
+            </span>
+          </div>
+
+          {/* Seed questions — clicking one fires the question directly */}
+          <div className="flex flex-col gap-2 mb-4">
+            {SOCRATIC_SEEDS.map((seed, i) => (
+              <button
+                key={i}
+                onClick={() => void sendMessage(seed)}
+                disabled={chatLoading}
+                className="text-left px-4 py-3 rounded-lg text-xs"
+                style={{
+                  background: "#111827",
+                  border: "1px solid #1F2937",
+                  color: "#9CA3AF",
+                  cursor: chatLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!chatLoading) {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor =
+                      "rgba(99,102,241,0.3)";
+                    (e.currentTarget as HTMLButtonElement).style.color =
+                      "#D1D5DB";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor =
+                    "#1F2937";
+                  (e.currentTarget as HTMLButtonElement).style.color =
+                    "#9CA3AF";
+                }}
+              >
+                <span style={{ color: "#818CF8", marginRight: "6px" }}>→</span>
+                {seed}
+              </button>
+            ))}
+          </div>
+
+          {/* Chat thread */}
+          {(chatMessages.length > 0 || streamingText) && (
+            <div
+              className="rounded-xl mb-4 overflow-y-auto flex flex-col gap-3"
+              style={{
+                background: "#111827",
+                border: "1px solid #1F2937",
+                padding: "16px",
+                maxHeight: "320px",
+              }}
+            >
+              {chatMessages.map((msg, i) => (
                 <div
-                  key={q.id}
-                  style={{
-                    background: "#111827",
-                    border: "1px solid #1F2937",
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                  }}
+                  key={i}
+                  className={msg.role === "user" ? "text-right" : "text-left"}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <span
-                      className="text-xs font-semibold"
-                      style={{ color: "#818CF8" }}
-                    >
-                      {q.topic}
-                    </span>
-                  </div>
-                  <p className="text-sm mb-3" style={{ color: "#D1D5DB" }}>
-                    {q.q}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {q.options.map((opt, i) => (
-                      <span
-                        key={opt}
-                        className="text-xs px-3 py-1 rounded-lg"
-                        style={{
-                          background:
-                            show && i === q.correct
-                              ? "rgba(16,185,129,0.15)"
-                              : "rgba(255,255,255,0.04)",
-                          border:
-                            show && i === q.correct
-                              ? "1px solid #10B981"
-                              : "1px solid #374151",
-                          color:
-                            show && i === q.correct
-                              ? "#10B981"
-                              : "rgba(255,255,255,0.5)",
-                          fontWeight: show && i === q.correct ? 600 : 400,
-                        }}
-                      >
-                        {opt}
-                      </span>
-                    ))}
-                  </div>
-                  {show && (
-                    <p
-                      className="text-xs leading-relaxed mb-3"
-                      style={{ color: "#9CA3AF" }}
-                    >
-                      {q.explanation}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => toggleReveal(q.id)}
-                    className="text-xs"
+                  <span
+                    className="inline-block text-xs px-3 py-2 rounded-lg"
                     style={{
-                      color: "#6B7280",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
+                      background:
+                        msg.role === "user"
+                          ? "rgba(99,102,241,0.15)"
+                          : "rgba(255,255,255,0.04)",
+                      color: msg.role === "user" ? "#A5B4FC" : "#D1D5DB",
+                      border:
+                        msg.role === "user"
+                          ? "1px solid rgba(99,102,241,0.25)"
+                          : "1px solid #374151",
+                      maxWidth: "90%",
+                      display: "inline-block",
+                      lineHeight: "1.5",
+                      whiteSpace: "pre-wrap",
                     }}
                   >
-                    {show ? "Hide answer" : "Show answer"}
-                  </button>
+                    {msg.content}
+                  </span>
                 </div>
-              );
-            })}
+              ))}
+              {streamingText && (
+                <div className="text-left">
+                  <span
+                    className="inline-block text-xs px-3 py-2 rounded-lg"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      color: "#D1D5DB",
+                      border: "1px solid #374151",
+                      maxWidth: "90%",
+                      display: "inline-block",
+                      lineHeight: "1.5",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {streamingText}
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "6px",
+                        height: "12px",
+                        background: "#818CF8",
+                        marginLeft: "2px",
+                        verticalAlign: "text-bottom",
+                        animation: "blink 0.8s step-end infinite",
+                      }}
+                    />
+                  </span>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+          )}
+
+          {chatError && (
+            <p
+              className="text-xs mb-3 px-3 py-2 rounded-lg"
+              style={{
+                color: "#EF4444",
+                background: "rgba(239,68,68,0.08)",
+                border: "1px solid rgba(239,68,68,0.2)",
+              }}
+            >
+              {chatError}
+            </p>
+          )}
+
+          {/* Input */}
+          <div className="flex gap-2">
+            <textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={handleChatKey}
+              placeholder="Ask FinFox a finance question (Enter to send)…"
+              rows={2}
+              style={{
+                flex: 1,
+                background: "#111827",
+                border: "1px solid #1F2937",
+                borderRadius: "8px",
+                padding: "10px 12px",
+                color: "#D1D5DB",
+                fontSize: "13px",
+                resize: "none",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
+            <button
+              onClick={() => void sendMessage(chatInput)}
+              disabled={chatLoading || !chatInput.trim()}
+              className="px-4 rounded-lg text-xs font-semibold"
+              style={{
+                background:
+                  chatLoading || !chatInput.trim()
+                    ? "rgba(31,41,55,0.4)"
+                    : "linear-gradient(135deg, #6366F1, #818CF8)",
+                color: chatLoading || !chatInput.trim() ? "#4B5563" : "#fff",
+                border: "none",
+                cursor:
+                  chatLoading || !chatInput.trim() ? "not-allowed" : "pointer",
+                transition: "all 0.15s ease",
+                minWidth: "56px",
+              }}
+            >
+              {chatLoading ? "…" : "Ask"}
+            </button>
           </div>
+          <p className="text-xs mt-2" style={{ color: "#4B5563" }}>
+            FinFox will answer and then pose a follow-up stress question — just
+            like a DECA judge.
+          </p>
         </motion.div>
       </div>
     </div>

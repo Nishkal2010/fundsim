@@ -269,4 +269,6 @@ export interface FundModel {
   waterfall: WaterfallData;
   performance: PerformanceData;
   portfolio: PortfolioData;
+  /** Field keys locked by an assignment — inputs with these keys are read-only. */
+  lockedFields: ReadonlySet<string>;
 }

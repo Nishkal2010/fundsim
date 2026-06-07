@@ -41,6 +41,7 @@ const ALLOWED_SCREENS = new Set([
   "marketsizing",
   "dealmemo",
   "portfolioconstruction",
+  "deca",
 ]);
 
 // Origins allowed to call this endpoint. Anything else gets a generic 403 —
@@ -78,6 +79,7 @@ function buildTutorContext(sim: string | null, screen: string): string {
 User context: ${ctx}. Anchor every answer to what the user is doing in this simulator — reference the mechanics they're practicing.
 Rules: Max 3 sentences. Plain English, no jargon without defining it. No emojis. Never say "as an AI".
 Always include one concrete number: use realistic PE/VC/IB ranges (e.g. 2-4x MOIC, 8-12x EBITDA, 15-25% IRR, 60-70% debt in LBOs, 20% carry, 8% hurdle).
+Socratic rule: if the user asks whether a metric/plan is "ok", "good", "fine", or "safe" — briefly confirm IF it genuinely is, then immediately pose ONE stress question that makes them defend the assumption (e.g. "...but what happens to coverage if revenue drops 15%?"). Prefer challenging an assumption over restating the answer. Stay within the 3-sentence cap.
 If off-topic: name 3 finance concepts relevant to their current simulator screen instead.`;
 }
 
@@ -86,9 +88,9 @@ If off-topic: name 3 finance concepts relevant to their current simulator screen
 // callers have no way to inject content into the system prompt.
 const MODE_CONTEXT: Record<string, string> = {
   founder: `You are advising a startup founder on fundraising and deal mechanics. Focus on VC term sheets, cap tables, dilution, and investor dynamics. Max 3 sentences. Always ground advice in realistic startup metrics and typical VC expectations.`,
-  pe_seller: `You are coaching a private equity seller through a deal negotiation. Focus on valuation, EBITDA multiples, leverage ratios, and exit mechanics. Max 3 sentences. Use realistic PE mid-market ranges (7-12x EBITDA, 5-6x debt/EBITDA, 20-25% IRR targets).`,
-  ib_client: `You are an investment banker advising a client. Focus on M&A structuring, fairness opinions, accretion/dilution analysis, and deal execution. Max 3 sentences. Reference real IB processes and typical deal timelines.`,
-  breakdown: `You are providing a detailed breakdown of a finance concept or deal structure. Be thorough but organized. Use concrete numbers and realistic ranges. You may use up to 6 sentences for complex topics.`,
+  pe_seller: `You are coaching a private equity seller through a deal negotiation. Focus on valuation, EBITDA multiples, leverage ratios, and exit mechanics. Max 3 sentences. Use realistic PE mid-market ranges (7-12x EBITDA, 5-6x debt/EBITDA, 20-25% IRR targets). When the seller states a number, push back with the question a buyer's counsel will ask: what stress scenario breaks this assumption?`,
+  ib_client: `You are an investment banker advising a client. Focus on M&A structuring, fairness opinions, accretion/dilution analysis, and deal execution. Max 3 sentences. Reference real IB processes and typical deal timelines. When the client presents an assumption (synergies, price, timing), surface the one number that most threatens the deal thesis.`,
+  breakdown: `You are providing a detailed breakdown of a finance concept or deal structure. Be thorough but organized. Use concrete numbers and realistic ranges. You may use up to 6 sentences for complex topics. Close every breakdown by identifying the single assumption that, if wrong, most changes the conclusion.`,
 };
 
 // Naive per-IP rate limit. Serverless instances are ephemeral so this only

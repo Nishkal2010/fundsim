@@ -29,7 +29,8 @@ export type FinFoxScreen =
   | "qualitative"
   | "marketsizing"
   | "dealmemo"
-  | "portfolioconstruction";
+  | "portfolioconstruction"
+  | "deca";
 
 export const FINFOX_ALLOWED_SCREENS: ReadonlySet<FinFoxScreen> =
   new Set<FinFoxScreen>([
@@ -55,6 +56,7 @@ export const FINFOX_ALLOWED_SCREENS: ReadonlySet<FinFoxScreen> =
     "marketsizing",
     "dealmemo",
     "portfolioconstruction",
+    "deca",
   ]);
 
 export function coerceScreen(s: string | null | undefined): FinFoxScreen {

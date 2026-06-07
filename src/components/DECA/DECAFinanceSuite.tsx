@@ -373,6 +373,13 @@ export interface DECAContextValue {
     totalStartupCost: number;
     totalCapitalRaised: number;
   };
+  // Assignment Mode — set by instructor toggle in wizard header.
+  // When true, all assumption inputs are read-only and the print button
+  // requires a written defense before it enables.
+  assignmentMode: boolean;
+  setAssignmentMode: (v: boolean) => void;
+  parametersLocked: boolean;
+  setParametersLocked: (v: boolean) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -390,6 +397,8 @@ export function useDECA(): DECAContextValue {
 export function DECAFinanceSuite() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [showWizard, setShowWizard] = React.useState(false);
+  const [assignmentMode, setAssignmentMode] = React.useState(false);
+  const [parametersLocked, setParametersLocked] = React.useState(false);
 
   const amortRows = useMemo(
     () =>
@@ -511,12 +520,18 @@ export function DECAFinanceSuite() {
       totalStartupCost,
       totalCapitalRaised,
     },
+    assignmentMode,
+    setAssignmentMode,
+    parametersLocked,
+    setParametersLocked,
   };
 
   const handleStart = useCallback(() => setShowWizard(true), []);
   const handleBack = useCallback(() => {
     setShowWizard(false);
     dispatch({ type: "RESET" });
+    setAssignmentMode(false);
+    setParametersLocked(false);
   }, []);
 
   return (

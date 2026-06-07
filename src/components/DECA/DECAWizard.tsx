@@ -46,9 +46,20 @@ const STEP_COMPONENTS: Record<number, React.ComponentType> = {
 };
 
 export function DECAWizard({ onBackToLanding }: Props) {
-  const { state, dispatch, computed } = useDECA();
+  const {
+    state,
+    dispatch,
+    computed,
+    assignmentMode,
+    setAssignmentMode,
+    parametersLocked,
+    setParametersLocked,
+  } = useDECA();
   const { currentStep, eventCode } = state;
   const { validations } = computed;
+
+  // Defense text required before printing in assignment mode
+  const [defenseText, setDefenseText] = React.useState("");
 
   const visibleSteps = getVisibleSteps(eventCode);
   const currentIndex = visibleSteps.indexOf(currentStep);
@@ -155,8 +166,78 @@ export function DECAWizard({ onBackToLanding }: Props) {
           </div>
         </div>
 
-        {/* Right: validation status + exit */}
+        {/* Right: assignment mode + validation status + exit */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Assignment Mode toggle — instructor-facing */}
+          {!assignmentMode ? (
+            <button
+              onClick={() => setAssignmentMode(true)}
+              className="text-xs px-2 py-1 rounded-lg"
+              style={{
+                background: "rgba(245,158,11,0.08)",
+                color: "#F59E0B",
+                border: "1px solid rgba(245,158,11,0.25)",
+                cursor: "pointer",
+                transition: "all 0.18s ease",
+              }}
+              title="Enable Assignment Mode — locks parameters and requires written assumption defense before printing"
+            >
+              Instructor
+            </button>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span
+                className="text-xs px-2 py-1 rounded-lg font-bold"
+                style={{
+                  background: "rgba(245,158,11,0.15)",
+                  color: "#F59E0B",
+                  border: "1px solid rgba(245,158,11,0.4)",
+                }}
+              >
+                Assignment Mode
+              </span>
+              <button
+                onClick={() => {
+                  setParametersLocked(!parametersLocked);
+                }}
+                className="text-xs px-2 py-1 rounded-lg"
+                style={{
+                  background: parametersLocked
+                    ? "rgba(239,68,68,0.1)"
+                    : "rgba(16,185,129,0.08)",
+                  color: parametersLocked ? "#EF4444" : "#10B981",
+                  border: parametersLocked
+                    ? "1px solid rgba(239,68,68,0.3)"
+                    : "1px solid rgba(16,185,129,0.25)",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease",
+                }}
+                title={
+                  parametersLocked
+                    ? "Unlock parameters"
+                    : "Lock parameters so students cannot change them"
+                }
+              >
+                {parametersLocked ? "Locked" : "Lock Params"}
+              </button>
+              <button
+                onClick={() => {
+                  setAssignmentMode(false);
+                  setParametersLocked(false);
+                }}
+                className="text-xs px-2 py-1 rounded-lg"
+                style={{
+                  background: "rgba(55,65,81,0.4)",
+                  color: "#6B7280",
+                  border: "1px solid #374151",
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {errorCount > 0 && (
             <span
               className="text-xs px-2 py-1 rounded font-bold"
@@ -193,6 +274,29 @@ export function DECAWizard({ onBackToLanding }: Props) {
               ✓ {passedCount} checks passed
             </span>
           )}
+          <a
+            href="#status"
+            className="text-xs px-2 py-1 rounded-lg"
+            style={{
+              color: "#6B7280",
+              textDecoration: "none",
+              border: "1px solid transparent",
+              transition: "all 0.18s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#9CA3AF";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor =
+                "#374151";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLAnchorElement).style.color = "#6B7280";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor =
+                "transparent";
+            }}
+            title="Service uptime and SLA"
+          >
+            Status
+          </a>
           <button
             onClick={onBackToLanding}
             className="text-xs px-3 py-1.5 rounded-lg"
@@ -300,6 +404,57 @@ export function DECAWizard({ onBackToLanding }: Props) {
         </AnimatePresence>
       </div>
 
+      {/* ── Assignment Mode: defense gate shown above bottom nav at Review step ── */}
+      {assignmentMode && currentStep === 14 && (
+        <div
+          className="px-6 py-4"
+          style={{
+            background: "rgba(245,158,11,0.04)",
+            borderTop: "1px solid rgba(245,158,11,0.2)",
+          }}
+        >
+          <p
+            className="text-xs font-semibold mb-2"
+            style={{ color: "#F59E0B" }}
+          >
+            Assignment Mode — Written Assumption Defense Required
+          </p>
+          <p className="text-xs mb-2" style={{ color: "#9CA3AF" }}>
+            Before generating your print, explain in 2–3 sentences why your key
+            assumptions (revenue growth, COGS %, loan terms) are realistic for
+            your specific business. Judges ask this in the oral round.
+          </p>
+          <textarea
+            value={defenseText}
+            onChange={(e) => setDefenseText(e.target.value)}
+            placeholder="e.g. My 10% MoM growth rate is supported by the local market gap I identified in my competitive analysis. COGS at 30% reflects supplier quotes I obtained. The 7% loan rate matches current SBA loan averages for my state..."
+            rows={3}
+            style={{
+              width: "100%",
+              background: "#111827",
+              border: `1px solid ${defenseText.trim().length >= 80 ? "rgba(16,185,129,0.4)" : "rgba(245,158,11,0.3)"}`,
+              borderRadius: "8px",
+              padding: "10px 12px",
+              color: "#D1D5DB",
+              fontSize: "13px",
+              resize: "vertical",
+              outline: "none",
+              fontFamily: "inherit",
+            }}
+          />
+          <p
+            className="text-xs mt-1"
+            style={{
+              color: defenseText.trim().length >= 80 ? "#10B981" : "#6B7280",
+            }}
+          >
+            {defenseText.trim().length >= 80
+              ? "Defense complete — print enabled."
+              : `${defenseText.trim().length}/80 characters minimum`}
+          </p>
+        </div>
+      )}
+
       {/* ── Bottom nav ── */}
       <div
         className="sticky bottom-0 px-6 py-4 flex items-center justify-between"
@@ -328,22 +483,39 @@ export function DECAWizard({ onBackToLanding }: Props) {
         </span>
 
         {currentStep === 14 ? (
-          <button
-            onClick={() => {
-              window.print();
-            }}
-            className="px-6 py-2.5 rounded-lg text-sm font-bold"
-            style={{
-              background: "linear-gradient(135deg, #6366F1, #818CF8)",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              boxShadow: "0 0 20px rgba(99,102,241,0.3)",
-              transition: "all 0.18s ease",
-            }}
-          >
-            Print Financial Section
-          </button>
+          (() => {
+            // In assignment mode, print requires a written defense (≥80 chars).
+            const defenseReady =
+              !assignmentMode || defenseText.trim().length >= 80;
+            return (
+              <button
+                onClick={() => {
+                  if (defenseReady) window.print();
+                }}
+                disabled={!defenseReady}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold"
+                style={{
+                  background: defenseReady
+                    ? "linear-gradient(135deg, #6366F1, #818CF8)"
+                    : "rgba(31,41,55,0.3)",
+                  color: defenseReady ? "#fff" : "#4B5563",
+                  border: "none",
+                  cursor: defenseReady ? "pointer" : "not-allowed",
+                  boxShadow: defenseReady
+                    ? "0 0 20px rgba(99,102,241,0.3)"
+                    : "none",
+                  transition: "all 0.18s ease",
+                }}
+                title={
+                  !defenseReady
+                    ? "Complete the written assumption defense above to enable printing"
+                    : undefined
+                }
+              >
+                Print Financial Section
+              </button>
+            );
+          })()
         ) : (
           <button
             onClick={goNext}

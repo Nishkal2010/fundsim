@@ -6,11 +6,26 @@ export interface DealShareSummary {
   metrics: Array<{ label: string; value: string; highlight?: boolean }>;
 }
 
+export interface AssignmentField {
+  /** Field keys the student cannot change, e.g. ["carryPercentage","avgExitMultiple"] */
+  locked: string[];
+  /** Instructor's written question, max 500 chars */
+  prompt: string;
+  /** Student's written response, 80–120 words, present on submission rows only */
+  defense?: string;
+  /** ID of the originating assignment row — links submission back to assignment */
+  sourceId?: string;
+}
+
 export interface DealSharePayload {
   simulator: "pe" | "vc" | "ib";
   tab: string;
   inputs: Record<string, unknown>;
   summary: DealShareSummary;
+  /** Club identifier for club-scoped challenge submissions. Max 64 chars, alphanumeric/dash/underscore. */
+  clubTag?: string;
+  /** Assignment mode payload — present when this row is an instructor assignment or student submission */
+  assignment?: AssignmentField;
 }
 
 export interface DealShare extends DealSharePayload {
@@ -54,7 +69,7 @@ export async function getDealShare(id: string): Promise<DealShare | null> {
 }
 
 export function buildShareUrl(id: string): string {
-  return `${window.location.origin}/s/${encodeURIComponent(id)}`;
+  return `${window.location.origin}/?share=${encodeURIComponent(id)}`;
 }
 
 export function buildChallengeUrl(club?: string): string {

@@ -25,6 +25,7 @@ import { FinFoxMascot } from "./components/FinFox/FinFoxMascot";
 import { ChatPanel } from "./components/FinFox/ChatPanel";
 import { useFinFox } from "./hooks/useFinFox";
 import LoadingSkeleton from "./components/LoadingSkeleton";
+import { ShareView } from "./components/ShareView";
 const OnboardingTour = React.lazy(() =>
   import("./components/OnboardingTour").then((m) => ({
     default: m.OnboardingTour,
@@ -149,6 +150,9 @@ const ScenarioCompare = React.lazy(() =>
     default: m.ScenarioCompare,
   })),
 );
+const StatusPage = React.lazy(() =>
+  import("./components/StatusPage").then((m) => ({ default: m.StatusPage })),
+);
 const PathFlowMap = React.lazy(
   () => import("./components/PathFlow/PathFlowMap"),
 );
@@ -162,8 +166,19 @@ const DealChallengeModal = React.lazy(() =>
     default: m.DealChallengeModal,
   })),
 );
+const AssignmentBuilder = React.lazy(() =>
+  import("./components/Assignment/AssignmentBuilder").then((m) => ({
+    default: m.AssignmentBuilder,
+  })),
+);
+const StartHereMode = React.lazy(() =>
+  import("./components/StartHere/StartHereMode").then((m) => ({
+    default: m.StartHereMode,
+  })),
+);
 import { usePathProgress } from "./hooks/usePathProgress";
 import { captureEvent, identifyUser, resetUser } from "./lib/posthog";
+import { isFlagEnabled } from "./lib/flags";
 import { supabase } from "./lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -205,11 +220,23 @@ function AppContent({ user, onLogout }: AppContentProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showChallenge, setShowChallenge] = useState(() => {
+    if (!isFlagEnabled("clubChallenge")) return false;
     const hasChallengeParam =
       new URLSearchParams(window.location.search).get("challenge") === "1";
     return hasChallengeParam || window.location.hash === "#challenge";
   });
+  const [showAssignmentBuilder, setShowAssignmentBuilder] = useState(
+    () =>
+      isFlagEnabled("assignmentMode") &&
+      window.location.hash === "#assignment-builder",
+  );
   const [hash, setHash] = useState(() => window.location.hash.replace("#", ""));
+  const [showStartHere, setShowStartHere] = useState(
+    () => isFlagEnabled("startHere") && !localStorage.getItem("startHere_seen"),
+  );
+  // Holds a pending FinFox message to fire after React commits the new
+  // activeSimulator state — avoids the 400ms magic-number race in StartHereMode.
+  const pendingFinfoxMsg = React.useRef<string | null>(null);
 
   useEffect(() => {
     const onHash = () => {
@@ -225,6 +252,13 @@ function AppContent({ user, onLogout }: AppContentProps) {
         setShowLeaderboard(true);
         window.history.replaceState(null, "", window.location.pathname);
         setHash("");
+      } else if (
+        h === "assignment-builder" &&
+        isFlagEnabled("assignmentMode")
+      ) {
+        setShowAssignmentBuilder(true);
+        window.history.replaceState(null, "", window.location.pathname);
+        setHash("");
       }
     };
     window.addEventListener("hashchange", onHash);
@@ -233,7 +267,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
 
   // Sync simulator + active tab into FinFox so the chatbot's quick chips
   // and system prompt reflect exactly what the user is looking at.
-  const { setActiveSim, setActiveScreen } = useFinFox();
+  const { setActiveSim, setActiveScreen, openChat } = useFinFox();
   useEffect(() => {
     setActiveSim(activeSimulator);
     if (activeSimulator === null) {
@@ -250,6 +284,17 @@ function AppContent({ user, onLogout }: AppContentProps) {
   useEffect(() => {
     if (activeSimulator === "vc") setActiveScreen(activeVCTab);
   }, [activeSimulator, activeVCTab, setActiveScreen]);
+
+  // Fire the FinFox greeting that StartHere queued AFTER React has committed
+  // the new activeSimulator + tab state — this is the proper handshake that
+  // replaces the fragile 400ms setTimeout that lived inside StartHereMode.
+  useEffect(() => {
+    const msg = pendingFinfoxMsg.current;
+    if (msg && activeSimulator !== null) {
+      pendingFinfoxMsg.current = null;
+      openChat(msg);
+    }
+  }, [activeSimulator, openChat]);
 
   // Scroll to top whenever a simulator is entered or tab changes within a sim.
   // Without this, entering a simulator can land the user mid-page.
@@ -336,6 +381,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
         <ScenarioCompare />
       </React.Suspense>
     );
+  if (hash === "status")
+    return (
+      <React.Suspense fallback={lazyFallback}>
+        <StatusPage />
+      </React.Suspense>
+    );
 
   const peTabContent: Record<PETabId, React.ReactNode> = {
     lifecycle: <FundLifecycleTab />,
@@ -369,7 +420,16 @@ function AppContent({ user, onLogout }: AppContentProps) {
       <Header
         onGlossaryOpen={() => setGlossaryOpen(true)}
         onLeaderboard={() => setShowLeaderboard(true)}
-        onChallenge={() => setShowChallenge(true)}
+        onChallenge={
+          isFlagEnabled("clubChallenge")
+            ? () => setShowChallenge(true)
+            : undefined
+        }
+        onAssignment={
+          isFlagEnabled("assignmentMode")
+            ? () => setShowAssignmentBuilder(true)
+            : undefined
+        }
         userName={user.name}
         userPicture={user.picture}
         onLogout={onLogout}
@@ -393,6 +453,31 @@ function AppContent({ user, onLogout }: AppContentProps) {
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
               />
+              {isFlagEnabled("startHere") && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    padding: "0 1.5rem 1.25rem",
+                  }}
+                >
+                  <button
+                    onClick={() => setShowStartHere(true)}
+                    style={{
+                      background: "rgba(129,140,248,0.08)",
+                      border: "1px solid rgba(129,140,248,0.3)",
+                      borderRadius: 10,
+                      color: "#818CF8",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      padding: "10px 22px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    New here? Start here →
+                  </button>
+                </div>
+              )}
               <div id="simulator-selector">
                 <SimulatorSelector onSelect={setActiveSimulator} />
               </div>
@@ -577,11 +662,37 @@ function AppContent({ user, onLogout }: AppContentProps) {
           <LeaderboardPanel onClose={() => setShowLeaderboard(false)} />
         </React.Suspense>
       )}
-      {showChallenge && (
+      {isFlagEnabled("clubChallenge") && showChallenge && (
         <React.Suspense fallback={null}>
           <DealChallengeModal
             onClose={() => setShowChallenge(false)}
             onViewLeaderboard={() => setShowLeaderboard(true)}
+          />
+        </React.Suspense>
+      )}
+      {isFlagEnabled("assignmentMode") && showAssignmentBuilder && (
+        <React.Suspense fallback={null}>
+          <AssignmentBuilder onClose={() => setShowAssignmentBuilder(false)} />
+        </React.Suspense>
+      )}
+      {showStartHere && (
+        <React.Suspense fallback={null}>
+          <StartHereMode
+            onClose={() => {
+              localStorage.setItem("startHere_seen", "1");
+              setShowStartHere(false);
+            }}
+            onComplete={(sim, peTab, vcTab, ib, finfoxMsg) => {
+              localStorage.setItem("startHere_seen", "1");
+              setShowStartHere(false);
+              // Queue finfox message before setting simulator so the useEffect
+              // can pick it up on the same render cycle that commits the new tab.
+              if (finfoxMsg) pendingFinfoxMsg.current = finfoxMsg;
+              setActiveSimulator(sim);
+              if (peTab) setActivePETab(peTab);
+              if (vcTab) setActiveVCTab(vcTab);
+              if (ib) setIbView(ib);
+            }}
           />
         </React.Suspense>
       )}
@@ -694,6 +805,22 @@ function App() {
         />
       </div>
     );
+  }
+
+  // Status page is public — no login required so advisors and students can verify uptime
+  if (window.location.hash.replace(/^#/, "") === "status") {
+    return (
+      <React.Suspense fallback={null}>
+        <StatusPage />
+      </React.Suspense>
+    );
+  }
+
+  // Share/assignment view is public — students and instructors shouldn't need to log in
+  // to view a shared deal or an assignment link.
+  const shareId = new URLSearchParams(window.location.search).get("share");
+  if (shareId) {
+    return <ShareView id={shareId} />;
   }
 
   if (!user) {

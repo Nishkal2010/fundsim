@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, ExternalLink, AlertCircle, Loader2 } from "lucide-react";
 import { getDealShare } from "../lib/dealShare";
 import type { DealShare } from "../lib/dealShare";
+import { AssignmentView } from "./Assignment/AssignmentView";
 
 const SIMULATOR_LABELS: Record<string, string> = {
   pe: "Private Equity Fund Model",
@@ -57,6 +58,7 @@ export function ShareView({ id }: ShareViewProps) {
   }
 
   const { summary, simulator } = deal;
+  const assignment = deal.assignment;
   const metrics = Array.isArray(summary.metrics) ? summary.metrics : [];
   const highlightMetrics = metrics.filter((m) => m.highlight);
   const otherMetrics = metrics.filter((m) => !m.highlight);
@@ -104,6 +106,10 @@ export function ShareView({ id }: ShareViewProps) {
             {summary.title}
           </h1>
           <p className="text-gray-400 text-sm mb-8">{summary.subtitle}</p>
+
+          {/* Assignment banner — shown for assignment rows (no defense = student has not submitted yet)
+              and for submission rows (defense present = show student's reasoning) */}
+          {assignment && !assignment.defense && <AssignmentView deal={deal} />}
 
           {/* Highlight metrics */}
           {highlightMetrics.length > 0 && (
@@ -154,6 +160,9 @@ export function ShareView({ id }: ShareViewProps) {
               </div>
             </div>
           )}
+
+          {/* Student reasoning — shown on submission rows where defense is present */}
+          {assignment?.defense && <AssignmentView deal={deal} />}
 
           {/* CTA */}
           <div

@@ -49,10 +49,30 @@ const defaultInputs: FundInputs = {
 
 export const FundModelContext = createContext<FundModel | null>(null);
 
+// Parse the ?locked= param written by AssignmentView.buildSimulatorUrl().
+// Returns a Set of field key strings; an empty Set if the param is absent or invalid.
+function getLockedFieldsFromUrl(): ReadonlySet<string> {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("locked");
+    if (!raw) return new Set();
+    const decoded = atob(raw);
+    const keys = decoded
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => /^[a-zA-Z0-9_]+$/.test(k));
+    return new Set(keys);
+  } catch {
+    return new Set();
+  }
+}
+
 export function useFundModelState(
   userId: string | null | undefined,
 ): FundModel {
   const [inputs, setInputs] = useState<FundInputs>(defaultInputs);
+  // lockedFields is set once on mount from the URL and never mutated — it
+  // represents the instructor's locked assumptions for the current session.
+  const [lockedFields] = useState<ReadonlySet<string>>(getLockedFieldsFromUrl);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loaded = useRef(false);
   const userIdRef = useRef(userId);
@@ -165,14 +185,24 @@ export function useFundModelState(
   const performance = useMemo(() => calculatePerformance(inputs), [inputs]);
   const portfolio = useMemo(() => calculatePortfolio(inputs), [inputs]);
 
+  // Wrap setInput to enforce locked fields: silently drop writes to keys that
+  // the instructor has locked. This is the enforcement layer — the UI also
+  // renders locked inputs as disabled, but this ensures direct state writes
+  // (e.g. from ScenarioPresets) cannot bypass the lock either.
+  const setInputGuarded: FundModel["setInput"] = (key, value) => {
+    if (lockedFields.has(key as string)) return;
+    setInput(key, value);
+  };
+
   return {
     inputs,
-    setInput,
+    setInput: setInputGuarded,
     lifecycle,
     jCurve,
     waterfall,
     performance,
     portfolio,
+    lockedFields,
   };
 }
 

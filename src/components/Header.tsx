@@ -16,6 +16,7 @@ interface HeaderProps {
   onGlossaryOpen: () => void;
   onLeaderboard?: () => void;
   onChallenge?: () => void;
+  onAssignment?: () => void;
   userName?: string;
   userPicture?: string;
   onLogout?: () => void;
@@ -25,6 +26,7 @@ export function Header({
   onGlossaryOpen,
   onLeaderboard,
   onChallenge,
+  onAssignment,
   userName,
   userPicture,
   onLogout,
@@ -116,6 +118,24 @@ export function Header({
           >
             <Target size={14} aria-hidden="true" />
             Challenge
+          </button>
+        )}
+
+        {/* Assignment Mode — instructor entry point */}
+        {onAssignment && (
+          <button
+            className="btn-nav"
+            onClick={() => {
+              captureEvent("assignment_builder_nav_clicked");
+              onAssignment();
+            }}
+            style={{
+              color: "#F59E0B",
+              borderColor: "rgba(245,158,11,0.3)",
+            }}
+            title="Create Assignment"
+          >
+            Assign
           </button>
         )}
 

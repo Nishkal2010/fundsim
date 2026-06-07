@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X, Trophy } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { captureEvent } from "../../lib/posthog";
+import { WEEKLY_SCENARIO } from "../DealChallenge/weeklyScenario";
 
 interface LeaderboardRow {
   id: string;
@@ -104,22 +105,35 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      // Only fetch challenge submissions for the current week so regular deal
+      // shares don't pollute the ranking. The weekId is stored inside summary
+      // inputs, so we filter client-side after fetching challenge rows only.
       const { data, error } = await supabase
         .from("deal_shares")
         .select("id, created_at, simulator, tab, summary")
-        .gt(
-          "created_at",
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        )
+        .eq("tab", "challenge")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(500);
 
       if (error || !data) {
         setLoading(false);
         return;
       }
 
-      const processed: LeaderboardRow[] = data.map((row) => {
+      // Further scope to the current week's scenario. The subtitle is set to
+      // "Deal Challenge <weekId>" by DealChallengeModal, so a substring match is
+      // reliable. Rows that predate weekId tagging (no subtitle) are excluded —
+      // better to show an empty board than mix weeks.
+      const weekFiltered = data.filter((row) => {
+        const subtitle: unknown = (row.summary as Record<string, unknown>)
+          ?.subtitle;
+        return (
+          typeof subtitle === "string" &&
+          subtitle.includes(WEEKLY_SCENARIO.weekId)
+        );
+      });
+
+      const processed: LeaderboardRow[] = weekFiltered.map((row) => {
         const metrics: Array<{
           label: string;
           value: string;
@@ -134,6 +148,7 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
         };
       });
 
+      // Sort by score descending (the highlight metric for challenges is Score).
       processed.sort((a, b) => b.numericValue - a.numericValue);
 
       setRows(processed.slice(0, 25));
@@ -185,10 +200,10 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Trophy size={18} color="#F59E0B" />
             <span style={{ color: "#F9FAFB", fontWeight: 600, fontSize: 16 }}>
-              Weekly Leaderboard
+              Deal Challenge Leaderboard
             </span>
             <span style={{ color: "#6B7280", fontSize: 12 }}>
-              Rolling 7 days
+              {WEEKLY_SCENARIO.weekId}
             </span>
           </div>
           <button
@@ -222,8 +237,8 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
           }}
         >
           <span>#</span>
-          <span>Deal Type</span>
-          <span>Key Metric</span>
+          <span>Scenario</span>
+          <span>Score</span>
           <span style={{ textAlign: "right" }}>When</span>
         </div>
 
@@ -352,8 +367,7 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
             justifyContent: "flex-end",
           }}
         >
-          <a
-            href="/#pe"
+          <button
             onClick={onClose}
             style={{
               display: "inline-flex",
@@ -366,13 +380,12 @@ export function LeaderboardPanel({ onClose }: { onClose: () => void }) {
               color: "#818CF8",
               fontSize: 13,
               fontWeight: 500,
-              textDecoration: "none",
               cursor: "pointer",
             }}
           >
             <Trophy size={13} />
-            Share Your Deal
-          </a>
+            Play Challenge
+          </button>
         </div>
       </div>
     </div>

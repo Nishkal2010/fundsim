@@ -171,8 +171,8 @@ export function SimulatorSelector({ onSelect }: Props) {
           </p>
         </div>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Used by students at finance programs worldwide &middot; Covers PE
-          &middot; VC &middot; IB &middot; DECA &middot; YIS competitions
+          Used by students at finance programs worldwide &middot; Built for PE
+          &middot; VC &middot; IB — plus DECA &amp; YIS competition prep
         </p>
       </motion.div>
     </div>

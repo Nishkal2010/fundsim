@@ -44,6 +44,23 @@ export function Footer() {
             investment decisions. Past performance is not indicative of future
             results. Always consult a qualified financial professional.
           </p>
+          {/* Status link — prominent enough for a professor to paste in a syllabus */}
+          <a
+            href="/#status"
+            className="inline-flex items-center gap-1.5 mt-4 text-xs text-[#818CF8] hover:text-[#A5B4FC] transition-colors font-medium"
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#34D399",
+                display: "inline-block",
+                flexShrink: 0,
+              }}
+            />
+            System Status — fundsimulate.com/#status
+          </a>
         </div>
       </div>
       <div

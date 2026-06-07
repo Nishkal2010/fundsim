@@ -22,9 +22,9 @@ import {
   buildShareUrl,
   saveDealShare,
 } from "../../lib/dealShare";
-import { WEEKLY_SCENARIO } from "./weeklyScenario";
+import { getActiveScenario, type ChallengeQuestion } from "./weeklyScenario";
 
-type Phase = "intro" | "playing" | "eliminated" | "complete";
+type Phase = "onboarding" | "intro" | "playing" | "eliminated" | "complete";
 
 const TOTAL_SECONDS = 600; // 10:00
 const MAX_STRIKES = 3;
@@ -103,6 +103,292 @@ function InputsTable({ inputs }: { inputs: Record<string, number> }) {
   );
 }
 
+/** One-time onboarding screen: explains the LBO chain with a concrete labeled example. */
+function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
+  return (
+    <div
+      style={{
+        padding: 24,
+        display: "flex",
+        flexDirection: "column",
+        gap: 18,
+      }}
+    >
+      <div>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#6366F1",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            marginBottom: 6,
+          }}
+        >
+          START HERE — 1 min read
+        </div>
+        <h2
+          style={{
+            color: "#F9FAFB",
+            fontWeight: 700,
+            fontSize: 18,
+            margin: 0,
+            lineHeight: 1.3,
+          }}
+        >
+          What is an LBO and what are you about to calculate?
+        </h2>
+      </div>
+
+      <p
+        style={{ color: "#94A3B8", fontSize: 13, margin: 0, lineHeight: 1.65 }}
+      >
+        An <strong style={{ color: "#E2E8F0" }}>LBO (Leveraged Buyout)</strong>{" "}
+        is how a PE firm buys a company: they use mostly borrowed money (debt)
+        and a smaller equity check, then grow the business and sell it later —
+        aiming to get back far more than they put in.
+      </p>
+
+      {/* Walkthrough of the chain */}
+      <div
+        style={{
+          background: "#0F172A",
+          border: "1px solid #1E293B",
+          borderRadius: 10,
+          padding: "16px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            color: "#818CF8",
+            fontSize: 12,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+          }}
+        >
+          The 4-step chain you&apos;ll trace in this challenge
+        </div>
+
+        {[
+          {
+            step: "1",
+            label: "Entry Price (Enterprise Value)",
+            formula: "EBITDA × entry multiple",
+            example: "e.g. $45M × 8x = $360M",
+            color: "#818CF8",
+            note: "EBITDA = annual profit before interest, taxes, and non-cash charges. The multiple is what the market pays per dollar of that profit.",
+          },
+          {
+            step: "2",
+            label: "Equity Check",
+            formula: "Entry EV − debt borrowed",
+            example: "e.g. $360M − $247.5M = $112.5M",
+            color: "#34D399",
+            note: "The PE firm only writes a check for the part that isn't covered by debt. Smaller equity check = bigger potential return.",
+          },
+          {
+            step: "3",
+            label: "Exit Value",
+            formula: "Exit EBITDA × exit multiple",
+            example: "e.g. $66M × 7.5x = $495M",
+            color: "#F59E0B",
+            note: "EBITDA grows during the hold. Multiply that larger number by the exit multiple to get what you sell the company for.",
+          },
+          {
+            step: "4",
+            label: "MOIC (Return)",
+            formula: "(Exit EV − remaining debt) ÷ equity check",
+            example: "e.g. ($495M − $247M) ÷ $112M ≈ 2.2x",
+            color: "#F87171",
+            note: "MOIC = Multiple on Invested Capital. 2x means you doubled your money. 3x+ is a strong return.",
+          },
+        ].map((item) => (
+          <div
+            key={item.step}
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              style={{
+                minWidth: 22,
+                height: 22,
+                borderRadius: "50%",
+                background: `${item.color}22`,
+                border: `1px solid ${item.color}55`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 700,
+                color: item.color,
+                fontFamily: "monospace",
+                flexShrink: 0,
+                marginTop: 1,
+              }}
+            >
+              {item.step}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: "#F1F5F9", fontSize: 13, fontWeight: 600 }}>
+                {item.label}
+              </div>
+              <div
+                style={{
+                  color: item.color,
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  marginTop: 2,
+                }}
+              >
+                {item.formula}
+              </div>
+              <div style={{ color: "#6B7280", fontSize: 11, marginTop: 1 }}>
+                {item.example}
+              </div>
+              <div
+                style={{
+                  color: "#94A3B8",
+                  fontSize: 11,
+                  marginTop: 4,
+                  lineHeight: 1.5,
+                }}
+              >
+                {item.note}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div
+        style={{
+          background: "rgba(99,102,241,0.07)",
+          border: "1px solid rgba(99,102,241,0.18)",
+          borderRadius: 8,
+          padding: "10px 14px",
+          color: "#94A3B8",
+          fontSize: 12,
+          lineHeight: 1.6,
+        }}
+      >
+        <strong style={{ color: "#818CF8" }}>
+          What to watch when you drag a number:
+        </strong>{" "}
+        higher debt multiple = smaller equity check = bigger MOIC if it works
+        out (but more risk). Higher exit multiple = bigger exit EV = better
+        return.
+      </div>
+
+      <button
+        onClick={onContinue}
+        style={{
+          padding: "12px 24px",
+          borderRadius: 8,
+          background: "rgba(99,102,241,0.8)",
+          border: "1px solid rgba(99,102,241,0.5)",
+          color: "#fff",
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        Got it — show me the deal
+      </button>
+    </div>
+  );
+}
+
+function EliminatedAnswerReveal({
+  question,
+  questionNumber,
+}: {
+  question: ChallengeQuestion;
+  questionNumber: number;
+}) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        background: "rgba(239,68,68,0.07)",
+        border: "1px solid rgba(239,68,68,0.2)",
+        borderRadius: 10,
+        padding: "16px 18px",
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#EF4444",
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+          marginBottom: 6,
+        }}
+      >
+        Question {questionNumber} — where you got stuck
+      </div>
+      <p
+        style={{
+          color: "#F1F5F9",
+          fontSize: 13,
+          margin: "0 0 8px",
+          fontWeight: 500,
+        }}
+      >
+        {question.question}
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 6,
+        }}
+      >
+        <span style={{ color: "#6B7280", fontSize: 12 }}>Correct answer:</span>
+        <span
+          style={{
+            color: "#34D399",
+            fontSize: 14,
+            fontWeight: 700,
+            fontFamily: "monospace",
+          }}
+        >
+          {question.answer} {question.unit}
+        </span>
+      </div>
+      <p
+        style={{
+          color: "#94A3B8",
+          fontSize: 12,
+          margin: "0 0 4px",
+          lineHeight: 1.55,
+        }}
+      >
+        {question.explanation}
+      </p>
+      <p
+        style={{
+          color: "#818CF8",
+          fontSize: 12,
+          margin: 0,
+          fontStyle: "italic",
+        }}
+      >
+        Formula: {question.hint}
+      </p>
+    </div>
+  );
+}
+
 export function DealChallengeModal({
   onClose,
   onViewLeaderboard,
@@ -110,7 +396,14 @@ export function DealChallengeModal({
   onClose: () => void;
   onViewLeaderboard?: () => void;
 }) {
-  const [phase, setPhase] = useState<Phase>("intro");
+  // Use the active scenario (admin-pinnable via localStorage).
+  const scenario = getActiveScenario();
+
+  const [phase, setPhase] = useState<Phase>(() => {
+    // Skip onboarding if the user has seen it before.
+    const seen = localStorage.getItem("fundsim_challenge_onboarding_seen");
+    return seen ? "intro" : "onboarding";
+  });
   const [qIndex, setQIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [strikes, setStrikes] = useState(0);
@@ -122,15 +415,27 @@ export function DealChallengeModal({
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  // Track which question index caused elimination so we can show the answer.
+  const [eliminatedAtIndex, setEliminatedAtIndex] = useState<number | null>(
+    null,
+  );
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const eliminatedRef = useRef(false);
   const shareIdRef = useRef<string | null>(null);
   const scoreRef = useRef(0);
   const inviteInputRef = useRef<HTMLInputElement>(null);
 
-  // Strip the deep-link trigger from the URL on mount so a refresh — or a
-  // friend who opened a /?challenge=1 invite — doesn't get the modal wedged
-  // open forever. new URL() preserves any unrelated query params.
+  // Read club tag from URL on mount — members arrive via /?challenge=1&club=UTAFC.
+  // Store it so ensureShareId can attach it to the submission.
+  const _rawClub = new URLSearchParams(window.location.search).get("club");
+  const _initialClubTag: string | undefined = _rawClub
+    ? _rawClub.slice(0, 64).replace(/[^a-zA-Z0-9_-]/g, "") || undefined
+    : undefined;
+  const clubTagRef = useRef<string | undefined>(_initialClubTag);
+
+  // Strip the deep-link trigger from the URL on mount so a refresh or a
+  // friend who opened a /?challenge=1 invite doesn't get the modal wedged
+  // open forever.
   useEffect(() => {
     const url = new URL(window.location.href);
     const hadParam = url.searchParams.has("challenge");
@@ -165,19 +470,20 @@ export function DealChallengeModal({
         const id = await saveDealShare({
           simulator: "pe",
           tab: "challenge",
+          clubTag: clubTagRef.current,
           inputs: {
-            weekId: WEEKLY_SCENARIO.weekId,
+            weekId: scenario.weekId,
             score: finalScore,
-            totalQ: WEEKLY_SCENARIO.questions.length,
+            totalQ: scenario.questions.length,
             timeLeftS: finalTimeLeft,
           },
           summary: {
-            title: WEEKLY_SCENARIO.title,
-            subtitle: `Deal Challenge ${WEEKLY_SCENARIO.weekId}`,
+            title: scenario.title,
+            subtitle: `Deal Challenge ${scenario.weekId}`,
             metrics: [
               {
                 label: "Score",
-                value: `${finalScore}/${WEEKLY_SCENARIO.questions.length}`,
+                value: `${finalScore}/${scenario.questions.length}`,
                 highlight: true,
               },
               { label: "Time Left", value: formatTime(finalTimeLeft) },
@@ -192,14 +498,15 @@ export function DealChallengeModal({
         setShareLoading(false);
       }
     },
-    [],
+    [scenario],
   );
 
   const eliminate = useCallback(
-    (reason: "strikes" | "timeout") => {
+    (reason: "strikes" | "timeout", atIndex: number) => {
       if (eliminatedRef.current) return;
       eliminatedRef.current = true;
       stopTimer();
+      setEliminatedAtIndex(atIndex);
       setPhase("eliminated");
       captureEvent("challenge_eliminated", {
         score: scoreRef.current,
@@ -214,7 +521,7 @@ export function DealChallengeModal({
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          eliminate("timeout");
+          eliminate("timeout", qIndex);
           return 0;
         }
         return t - 1;
@@ -233,7 +540,7 @@ export function DealChallengeModal({
     const userNum = parseFloat(answer.replace(/[^0-9.-]/g, ""));
     if (isNaN(userNum)) return;
 
-    const q = WEEKLY_SCENARIO.questions[qIndex];
+    const q = scenario.questions[qIndex];
     const isCorrect =
       q.answer === 0
         ? Math.abs(userNum) <= q.tolerance
@@ -244,7 +551,7 @@ export function DealChallengeModal({
       const newScore = score + 1;
       scoreRef.current = newScore;
       setScore(newScore);
-      const isFinal = qIndex + 1 >= WEEKLY_SCENARIO.questions.length;
+      const isFinal = qIndex + 1 >= scenario.questions.length;
       // Stop the clock synchronously on the winning answer so the timer can't
       // fire eliminate("timeout") during the 600ms flash and race the
       // complete transition.
@@ -254,16 +561,15 @@ export function DealChallengeModal({
         setHintVisible(false);
         setAnswer("");
         const nextIndex = qIndex + 1;
-        if (nextIndex >= WEEKLY_SCENARIO.questions.length) {
+        if (nextIndex >= scenario.questions.length) {
           if (eliminatedRef.current) return;
           setPhase("complete");
           captureEvent("challenge_completed", {
             score: newScore,
             timeRemainingS: timeLeft,
           });
-          // Persist the result immediately so the leaderboard (the only thing
-          // that reads deal_shares) reflects this run even if the player never
-          // clicks a Share button. Idempotent via shareIdRef.
+          // Persist the result immediately so the leaderboard reflects this
+          // run even if the player never clicks a Share button.
           void ensureShareId(newScore, timeLeft);
         } else {
           setQIndex(nextIndex);
@@ -276,7 +582,7 @@ export function DealChallengeModal({
       setTimeout(() => {
         setFlash(null);
         if (newStrikes >= MAX_STRIKES) {
-          eliminate("strikes");
+          eliminate("strikes", qIndex);
         }
       }, 600);
     }
@@ -286,8 +592,7 @@ export function DealChallengeModal({
     if (e.key === "Enter") submitAnswer();
   }
 
-  // Guard the exit only while actively playing — a misclick on the backdrop or
-  // the X shouldn't silently discard a timed run. Other phases dismiss freely.
+  // Guard the exit only while actively playing.
   function requestClose() {
     if (phase === "playing") {
       if (
@@ -301,7 +606,7 @@ export function DealChallengeModal({
     onClose();
   }
 
-  const question = WEEKLY_SCENARIO.questions[qIndex];
+  const question = scenario.questions[qIndex];
 
   return (
     <div
@@ -359,8 +664,24 @@ export function DealChallengeModal({
                 fontFamily: "monospace",
               }}
             >
-              {WEEKLY_SCENARIO.weekId}
+              {scenario.weekId}
             </span>
+            {clubTagRef.current && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  background: "rgba(52,211,153,0.12)",
+                  color: "#34D399",
+                  border: "1px solid rgba(52,211,153,0.25)",
+                  fontFamily: "monospace",
+                }}
+              >
+                {clubTagRef.current}
+              </span>
+            )}
           </div>
           <button
             onClick={requestClose}
@@ -380,6 +701,16 @@ export function DealChallengeModal({
 
         {/* Body */}
         <div style={{ overflowY: "auto", flex: 1 }}>
+          {/* ONBOARDING — first-time only */}
+          {phase === "onboarding" && (
+            <OnboardingScreen
+              onContinue={() => {
+                localStorage.setItem("fundsim_challenge_onboarding_seen", "1");
+                setPhase("intro");
+              }}
+            />
+          )}
+
           {/* INTRO */}
           {phase === "intro" && (
             <div
@@ -399,7 +730,7 @@ export function DealChallengeModal({
                     margin: 0,
                   }}
                 >
-                  {WEEKLY_SCENARIO.title}
+                  {scenario.title}
                 </h2>
                 <p
                   style={{
@@ -409,11 +740,23 @@ export function DealChallengeModal({
                     lineHeight: 1.6,
                   }}
                 >
-                  {WEEKLY_SCENARIO.description}
+                  {scenario.description}
                 </p>
+                {scenario.teachingPoint && (
+                  <p
+                    style={{
+                      color: "#818CF8",
+                      fontSize: 13,
+                      marginTop: 6,
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Focus: {scenario.teachingPoint}
+                  </p>
+                )}
               </div>
 
-              <InputsTable inputs={WEEKLY_SCENARIO.inputs} />
+              <InputsTable inputs={scenario.inputs} />
 
               <div
                 style={{
@@ -428,8 +771,8 @@ export function DealChallengeModal({
               >
                 <strong style={{ color: "#818CF8" }}>Rules:</strong> 5
                 questions, 10 minutes, 3 strikes. Wrong answers cost a heart.
-                Run out of hearts or time and you're eliminated. Get all 5 right
-                to win.
+                Run out of hearts or time and you&apos;re eliminated. Get all 5
+                right to win.
               </div>
 
               <button
@@ -492,7 +835,7 @@ export function DealChallengeModal({
 
               {/* Progress */}
               <div style={{ display: "flex", gap: 4 }}>
-                {WEEKLY_SCENARIO.questions.map((_, i) => (
+                {scenario.questions.map((_, i) => (
                   <div
                     key={i}
                     style={{
@@ -510,7 +853,7 @@ export function DealChallengeModal({
                 ))}
               </div>
 
-              {/* Question */}
+              {/* Question — includes plain-English explanation */}
               <div
                 style={{
                   background:
@@ -541,7 +884,7 @@ export function DealChallengeModal({
                     letterSpacing: "0.05em",
                   }}
                 >
-                  Question {qIndex + 1} of {WEEKLY_SCENARIO.questions.length}
+                  Question {qIndex + 1} of {scenario.questions.length}
                 </div>
                 <p
                   style={{
@@ -554,6 +897,20 @@ export function DealChallengeModal({
                 >
                   {question.question}
                 </p>
+                {/* Plain-English explanation — always visible, not gated on hint */}
+                {question.explanation && (
+                  <p
+                    style={{
+                      color: "#64748B",
+                      fontSize: 12,
+                      marginTop: 10,
+                      marginBottom: 0,
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    {question.explanation}
+                  </p>
+                )}
                 {hintVisible && (
                   <p
                     style={{
@@ -626,7 +983,7 @@ export function DealChallengeModal({
                     padding: 0,
                   }}
                 >
-                  Show hint
+                  Show formula hint
                 </button>
               )}
             </div>
@@ -658,14 +1015,18 @@ export function DealChallengeModal({
               <p style={{ color: "#94A3B8", fontSize: 14, margin: 0 }}>
                 You answered{" "}
                 <strong style={{ color: "#F9FAFB" }}>{score}</strong> of{" "}
-                {WEEKLY_SCENARIO.questions.length} correctly with{" "}
-                <strong style={{ color: "#F9FAFB" }}>{strikes}</strong> strike
-                {strikes !== 1 ? "s" : ""}.
+                {scenario.questions.length} correctly.
               </p>
-              <p style={{ color: "#6B7280", fontSize: 13, margin: 0 }}>
-                Sharpen your model and run it back — more challenges are on the
-                way.
-              </p>
+
+              {/* Show the correct answer for the question that ended the run */}
+              {eliminatedAtIndex !== null &&
+                eliminatedAtIndex < scenario.questions.length && (
+                  <EliminatedAnswerReveal
+                    question={scenario.questions[eliminatedAtIndex]}
+                    questionNumber={eliminatedAtIndex + 1}
+                  />
+                )}
+
               <button
                 onClick={onClose}
                 style={{
@@ -717,7 +1078,7 @@ export function DealChallengeModal({
                       fontFamily: "monospace",
                     }}
                   >
-                    {score}/{WEEKLY_SCENARIO.questions.length}
+                    {score}/{scenario.questions.length}
                   </div>
                   <div style={{ color: "#6B7280", fontSize: 12 }}>Score</div>
                 </div>
@@ -753,7 +1114,7 @@ export function DealChallengeModal({
                     onClick={async () => {
                       const id = await ensureShareId(score, timeLeft);
                       const url = id ? buildShareUrl(id) : buildChallengeUrl();
-                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me:`;
+                      const text = `Scored ${score}/${scenario.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me:`;
                       window.open(
                         `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " " + url)}`,
                         "_blank",
@@ -816,7 +1177,7 @@ export function DealChallengeModal({
                     onClick={async () => {
                       const id = await ensureShareId(score, timeLeft);
                       const url = id ? buildShareUrl(id) : buildChallengeUrl();
-                      const text = `Scored ${score}/${WEEKLY_SCENARIO.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me: ${url}`;
+                      const text = `Scored ${score}/${scenario.questions.length} on FundSim's LBO Deal Challenge with ${formatTime(timeLeft)} on the clock. Try to beat me: ${url}`;
                       try {
                         await navigator.clipboard.writeText(text);
                         setCopied(true);
@@ -874,7 +1235,7 @@ export function DealChallengeModal({
                   <input
                     ref={inviteInputRef}
                     readOnly
-                    value={buildChallengeUrl()}
+                    value={buildChallengeUrl(clubTagRef.current)}
                     onFocus={(e) => e.currentTarget.select()}
                     style={{
                       flex: 1,
@@ -892,7 +1253,7 @@ export function DealChallengeModal({
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(
-                          buildChallengeUrl(),
+                          buildChallengeUrl(clubTagRef.current),
                         );
                         setInviteCopied(true);
                         setTimeout(() => setInviteCopied(false), 2000);

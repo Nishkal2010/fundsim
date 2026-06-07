@@ -176,7 +176,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const body = req.body ?? {};
-  const { simulator, tab, inputs, summary } = body;
+  const { simulator, tab, inputs, summary, assignment, clubTag } = body;
 
   if (typeof simulator !== "string" || !ALLOWED_SIMULATORS.has(simulator)) {
     return res.status(400).json({ error: "Invalid simulator" });
@@ -239,6 +239,52 @@ export default async function handler(req: any, res: any) {
     }
   }
 
+  // assignment mode (optional, flagged feature) — validate shape if present
+  let validatedAssignment: Record<string, unknown> | undefined;
+  if (assignment !== undefined) {
+    if (
+      typeof assignment !== "object" ||
+      assignment === null ||
+      Array.isArray(assignment)
+    ) {
+      return res.status(400).json({ error: "invalid assignment" });
+    }
+    const a = assignment as Record<string, unknown>;
+    if (!Array.isArray(a.locked)) {
+      return res.status(400).json({ error: "assignment.locked must be array" });
+    }
+    if (
+      typeof a.prompt !== "string" ||
+      a.prompt.length === 0 ||
+      a.prompt.length > 500
+    ) {
+      return res.status(400).json({ error: "assignment.prompt invalid" });
+    }
+    if (
+      a.defense !== undefined &&
+      (typeof a.defense !== "string" || a.defense.length > 2000)
+    ) {
+      return res.status(400).json({ error: "assignment.defense invalid" });
+    }
+    if (a.sourceId !== undefined && typeof a.sourceId !== "string") {
+      return res.status(400).json({ error: "assignment.sourceId invalid" });
+    }
+    // Sanitize locked array — only allow string values
+    const locked = (a.locked as unknown[])
+      .filter((k): k is string => typeof k === "string")
+      .slice(0, 20);
+    validatedAssignment = {
+      locked,
+      prompt: stripCtrl(a.prompt as string).slice(0, 500),
+      ...(a.defense !== undefined
+        ? { defense: stripCtrl(a.defense as string).slice(0, 2000) }
+        : {}),
+      ...(a.sourceId !== undefined
+        ? { sourceId: String(a.sourceId).slice(0, 64) }
+        : {}),
+    };
+  }
+
   // Enforce the same 32 KB per-field cap that the DB constraint checks,
   // so we catch oversized payloads before the round-trip.
   const inputsJson = JSON.stringify(inputs);
@@ -267,6 +313,16 @@ export default async function handler(req: any, res: any) {
         tab: tab ?? "",
         inputs,
         summary,
+        ...(validatedAssignment !== undefined
+          ? { assignment: validatedAssignment }
+          : {}),
+        ...(clubTag !== undefined
+          ? {
+              clubTag: String(clubTag)
+                .slice(0, 64)
+                .replace(/[^a-zA-Z0-9_-]/g, ""),
+            }
+          : {}),
       }),
     });
 

@@ -129,6 +129,16 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    // Stamped at build time; StatusPage reads this so "Last updated" is never stale
+    __BUILD_DATE__: JSON.stringify(
+      new Date().toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    ),
+  },
   server: {
     port: 5200,
     headers: securityHeaders,
