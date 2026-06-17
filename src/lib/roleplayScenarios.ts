@@ -22,6 +22,9 @@ import type { FinFoxSim } from "../components/FinFox/FinFoxProvider";
 
 export type RoleplayMode = "founder" | "pe_seller" | "ib_client";
 
+// Roleplay covers the deal tracks only — quant has no negotiation persona.
+export type RoleplaySim = Extract<FinFoxSim, "pe" | "vc" | "ib">;
+
 export interface RoleplayScenario {
   /** Asset-class id used by FinFox provider routing */
   sim: FinFoxSim;
@@ -288,12 +291,12 @@ Style: builder energy, direct, knows the math. Sometimes brings up the competing
 // Lookup by sim. RoleplayLanding + each tab's wrapper read from this map so
 // adding a new scenario is one entry + a route — no duplicated UI scaffolding.
 
-export const ROLEPLAY_SCENARIOS: Record<FinFoxSim, RoleplayScenario> = {
+export const ROLEPLAY_SCENARIOS: Record<RoleplaySim, RoleplayScenario> = {
   ib: IB_MANDATE,
   pe: PE_LBO,
   vc: VC_SEED,
 };
 
-export function getScenario(sim: FinFoxSim): RoleplayScenario {
+export function getScenario(sim: RoleplaySim): RoleplayScenario {
   return ROLEPLAY_SCENARIOS[sim];
 }

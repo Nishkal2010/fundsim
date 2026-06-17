@@ -3,11 +3,13 @@ import { X, Copy, Check } from "lucide-react";
 import { saveDealShare, buildShareUrl } from "../../lib/dealShare";
 import { captureEvent } from "../../lib/posthog";
 import { useFundModel } from "../../hooks/useFundModel";
-import type { SimulatorId } from "../SimulatorSelector";
+
+// Quant has no shareable deal schema, so assignments cover the deal tracks only.
+type AssignableSim = "pe" | "vc" | "ib";
 
 // Lockable field keys per simulator with human-readable labels
 const LOCKABLE_FIELDS: Record<
-  SimulatorId,
+  AssignableSim,
   Array<{ key: string; label: string }>
 > = {
   pe: [
@@ -42,7 +44,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
   // with these inputs and see the locked fields disabled.
   const { inputs: peInputs } = useFundModel();
 
-  const [simulator, setSimulator] = useState<SimulatorId>("pe");
+  const [simulator, setSimulator] = useState<AssignableSim>("pe");
   const [prompt, setPrompt] = useState("");
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<BuildStatus>("idle");
@@ -185,7 +187,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
           Simulator
         </label>
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-          {(["pe", "vc", "ib"] as SimulatorId[]).map((sim) => (
+          {(["pe", "vc", "ib"] as AssignableSim[]).map((sim) => (
             <button
               key={sim}
               onClick={() => {

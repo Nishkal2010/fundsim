@@ -17,6 +17,13 @@ import {
   Globe,
   ClipboardList,
   Swords,
+  Waves,
+  Dices,
+  LineChart,
+  Sigma,
+  Gauge,
+  Landmark,
+  BrainCircuit,
 } from "lucide-react";
 
 export type PETabId =
@@ -41,9 +48,22 @@ export type VCTabId =
   | "dealmemo"
   | "roleplay";
 
-export type TabId = PETabId | VCTabId;
+export type QuantTabId =
+  | "pricepaths"
+  | "montecarlo"
+  | "options"
+  | "greeks"
+  | "impliedvol"
+  | "frontier"
+  | "risk"
+  | "fixedincome"
+  | "backtest"
+  | "drills"
+  | "roleplay";
 
-type SimulatorId = "pe" | "vc" | "ib";
+export type TabId = PETabId | VCTabId | QuantTabId;
+
+type SimulatorId = "pe" | "vc" | "ib" | "quant";
 
 const peTabs: {
   id: PETabId;
@@ -89,8 +109,38 @@ const vcTabs: {
   { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
 ];
 
+const quantTabs: {
+  id: QuantTabId;
+  label: string;
+  icon: React.FC<{ size?: number }>;
+  group: string;
+}[] = [
+  { id: "pricepaths", label: "Random Walks", icon: Waves, group: "sim" },
+  { id: "montecarlo", label: "Monte Carlo", icon: Dices, group: "sim" },
+  { id: "options", label: "Options Lab", icon: LineChart, group: "options" },
+  { id: "greeks", label: "The Greeks", icon: Sigma, group: "options" },
+  { id: "impliedvol", label: "Implied Vol", icon: Activity, group: "options" },
+  { id: "frontier", label: "Optimizer", icon: PieChart, group: "portfolio" },
+  { id: "risk", label: "Risk Desk", icon: Gauge, group: "portfolio" },
+  {
+    id: "fixedincome",
+    label: "Fixed Income",
+    icon: Landmark,
+    group: "portfolio",
+  },
+  { id: "backtest", label: "Backtester", icon: BarChart3, group: "strategy" },
+  {
+    id: "drills",
+    label: "Quant Drills",
+    icon: BrainCircuit,
+    group: "strategy",
+  },
+  { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
+];
+
 const peColor = "#818CF8";
 const vcColor = "#34D399";
+const quantColor = "#5b9dff";
 
 interface TabBarProps {
   simulator: SimulatorId;
@@ -102,15 +152,23 @@ interface TabBarProps {
 export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
   const [hoveredTab, setHoveredTab] = useState<TabId | null>(null);
 
-  const accentColor = simulator === "pe" ? peColor : vcColor;
+  const accentColor =
+    simulator === "pe" ? peColor : simulator === "vc" ? vcColor : quantColor;
   const accentDim =
-    simulator === "pe" ? "rgba(99,102,241,0.05)" : "rgba(52,211,153,0.05)";
+    simulator === "pe"
+      ? "rgba(99,102,241,0.05)"
+      : simulator === "vc"
+        ? "rgba(52,211,153,0.05)"
+        : "rgba(91,157,255,0.06)";
   const gradient =
     simulator === "pe"
       ? "linear-gradient(90deg, #6366F1, #818CF8)"
-      : "linear-gradient(90deg, #10B981, #34D399)";
+      : simulator === "vc"
+        ? "linear-gradient(90deg, #10B981, #34D399)"
+        : "linear-gradient(90deg, #3b82f6, #5b9dff)";
 
-  const tabs = simulator === "pe" ? peTabs : vcTabs;
+  const tabs =
+    simulator === "pe" ? peTabs : simulator === "vc" ? vcTabs : quantTabs;
 
   const groups =
     simulator === "pe"
@@ -120,14 +178,24 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
           { key: "advanced", label: "Advanced" },
           { key: "roleplay", label: "FinFox" },
         ]
-      : [
-          { key: "core", label: "Core" },
-          { key: "fund", label: "Fund" },
-          { key: "edge", label: "Edge" },
-          { key: "roleplay", label: "FinFox" },
-        ];
+      : simulator === "vc"
+        ? [
+            { key: "core", label: "Core" },
+            { key: "fund", label: "Fund" },
+            { key: "edge", label: "Edge" },
+            { key: "roleplay", label: "FinFox" },
+          ]
+        : [
+            { key: "sim", label: "Simulate" },
+            { key: "options", label: "Options" },
+            { key: "portfolio", label: "Portfolio" },
+            { key: "strategy", label: "Strategy" },
+            { key: "roleplay", label: "FinFox" },
+          ];
 
-  const renderTab = (tab: (typeof peTabs)[0] | (typeof vcTabs)[0]) => {
+  const renderTab = (
+    tab: (typeof peTabs)[0] | (typeof vcTabs)[0] | (typeof quantTabs)[0],
+  ) => {
     const Icon = tab.icon;
     const isActive = tab.id === active;
     const isHovered = hoveredTab === tab.id;
@@ -219,9 +287,11 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
             background:
               simulator === "pe"
                 ? "rgba(99,102,241,0.12)"
-                : "rgba(52,211,153,0.12)",
+                : simulator === "vc"
+                  ? "rgba(52,211,153,0.12)"
+                  : "rgba(91,157,255,0.12)",
             color: accentColor,
-            border: `1px solid ${simulator === "pe" ? "rgba(99,102,241,0.3)" : "rgba(52,211,153,0.3)"}`,
+            border: `1px solid ${simulator === "pe" ? "rgba(99,102,241,0.3)" : simulator === "vc" ? "rgba(52,211,153,0.3)" : "rgba(91,157,255,0.3)"}`,
             fontFamily: "monospace",
           }}
         >

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Analytics, track } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
+import { QuantModelContext, useQuantModelState } from "./hooks/useQuantModel";
 import { Header } from "./components/Header";
 import { GlobalInputs } from "./components/GlobalInputs";
 import { TabBar } from "./components/TabBar";
-import type { PETabId, VCTabId } from "./components/TabBar";
+import type { PETabId, VCTabId, QuantTabId } from "./components/TabBar";
 import { Glossary } from "./components/Glossary";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
@@ -132,6 +133,61 @@ const IBRoleplayTab = React.lazy(() =>
     default: m.IBRoleplayTab,
   })),
 );
+const PricePathsTab = React.lazy(() =>
+  import("./components/Quant/PricePathsTab").then((m) => ({
+    default: m.PricePathsTab,
+  })),
+);
+const MonteCarloTab = React.lazy(() =>
+  import("./components/Quant/MonteCarloTab").then((m) => ({
+    default: m.MonteCarloTab,
+  })),
+);
+const OptionsLabTab = React.lazy(() =>
+  import("./components/Quant/OptionsLabTab").then((m) => ({
+    default: m.OptionsLabTab,
+  })),
+);
+const GreeksTab = React.lazy(() =>
+  import("./components/Quant/GreeksTab").then((m) => ({
+    default: m.GreeksTab,
+  })),
+);
+const ImpliedVolTab = React.lazy(() =>
+  import("./components/Quant/ImpliedVolTab").then((m) => ({
+    default: m.ImpliedVolTab,
+  })),
+);
+const EfficientFrontierTab = React.lazy(() =>
+  import("./components/Quant/EfficientFrontierTab").then((m) => ({
+    default: m.EfficientFrontierTab,
+  })),
+);
+const RiskTab = React.lazy(() =>
+  import("./components/Quant/RiskTab").then((m) => ({
+    default: m.RiskTab,
+  })),
+);
+const FixedIncomeTab = React.lazy(() =>
+  import("./components/Quant/FixedIncomeTab").then((m) => ({
+    default: m.FixedIncomeTab,
+  })),
+);
+const BacktestTab = React.lazy(() =>
+  import("./components/Quant/BacktestTab").then((m) => ({
+    default: m.BacktestTab,
+  })),
+);
+const DrillsTab = React.lazy(() =>
+  import("./components/Quant/DrillsTab").then((m) => ({
+    default: m.DrillsTab,
+  })),
+);
+const QuantRoleplayTab = React.lazy(() =>
+  import("./components/Quant/QuantRoleplayTab").then((m) => ({
+    default: m.QuantRoleplayTab,
+  })),
+);
 const DECAFinanceSuite = React.lazy(() =>
   import("./components/DECA/DECAFinanceSuite").then((m) => ({
     default: m.DECAFinanceSuite,
@@ -213,6 +269,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
   );
   const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
   const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
+  const [activeQuantTab, setActiveQuantTab] =
+    useState<QuantTabId>("pricepaths");
   const [ibView, setIbView] = useState<"simulator" | "roleplay" | "compare">(
     "simulator",
   );
@@ -285,6 +343,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
     if (activeSimulator === "vc") setActiveScreen(activeVCTab);
   }, [activeSimulator, activeVCTab, setActiveScreen]);
 
+  useEffect(() => {
+    if (activeSimulator === "quant") setActiveScreen(activeQuantTab);
+  }, [activeSimulator, activeQuantTab, setActiveScreen]);
+
   // Fire the FinFox greeting that StartHere queued AFTER React has committed
   // the new activeSimulator + tab state — this is the proper handshake that
   // replaces the fragile 400ms setTimeout that lived inside StartHereMode.
@@ -300,7 +362,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
   // Without this, entering a simulator can land the user mid-page.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [activeSimulator, activePETab, activeVCTab, ibView]);
+  }, [activeSimulator, activePETab, activeVCTab, activeQuantTab, ibView]);
 
   useKeyboardShortcuts([
     {
@@ -410,6 +472,20 @@ function AppContent({ user, onLogout }: AppContentProps) {
     marketsizing: <MarketSizingTab />,
     dealmemo: <DealMemoTab />,
     roleplay: <VCRoleplayTab />,
+  };
+
+  const quantTabContent: Record<QuantTabId, React.ReactNode> = {
+    pricepaths: <PricePathsTab />,
+    montecarlo: <MonteCarloTab />,
+    options: <OptionsLabTab />,
+    greeks: <GreeksTab />,
+    impliedvol: <ImpliedVolTab />,
+    frontier: <EfficientFrontierTab />,
+    risk: <RiskTab />,
+    fixedincome: <FixedIncomeTab />,
+    backtest: <BacktestTab />,
+    drills: <DrillsTab />,
+    roleplay: <QuantRoleplayTab />,
   };
 
   return (
@@ -650,6 +726,43 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <Footer />
             </motion.div>
           )}
+
+          {activeSimulator === "quant" && (
+            <motion.div
+              key="quant"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col flex-1"
+            >
+              <TabBar
+                simulator="quant"
+                active={activeQuantTab}
+                onChange={(t) => {
+                  setActiveQuantTab(t as QuantTabId);
+                  captureEvent("quant_tab_changed", { tab: t as string });
+                }}
+                onBack={() => setActiveSimulator(null)}
+              />
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeQuantTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <React.Suspense fallback={lazyFallback}>
+                      {quantTabContent[activeQuantTab]}
+                    </React.Suspense>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <Footer />
+            </motion.div>
+          )}
         </AnimatePresence>
       </React.Suspense>
 
@@ -785,6 +898,7 @@ function App() {
 
   // Pass the Supabase user id so useFundModelState can load/save — demo users have no id
   const model = useFundModelState(user?.id ?? null);
+  const quantModel = useQuantModelState();
 
   if (!authChecked) {
     return (
@@ -830,8 +944,10 @@ function App() {
   return (
     <FinFoxProvider>
       <FundModelContext.Provider value={model}>
-        <AppContent user={user} onLogout={handleLogout} />
-        <Analytics />
+        <QuantModelContext.Provider value={quantModel}>
+          <AppContent user={user} onLogout={handleLogout} />
+          <Analytics />
+        </QuantModelContext.Provider>
       </FundModelContext.Provider>
       <SharedScenarioBanner
         visible={sharedLoaded}

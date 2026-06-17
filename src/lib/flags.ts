@@ -11,13 +11,15 @@ export type FlagName =
   | "startHere"
   | "stressTest"
   | "clubChallenge"
-  | "assignmentMode";
+  | "assignmentMode"
+  | "quant";
 
 const DEFAULTS: Record<FlagName, boolean> = {
   startHere: true,
   stressTest: true,
   clubChallenge: false, // requires DB schema additions
   assignmentMode: false, // requires DB schema additions
+  quant: false, // Quant simulator track — ships dark until QA passes
 };
 
 function getUrlFlags(): Set<string> {

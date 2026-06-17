@@ -6,9 +6,11 @@ import {
   Briefcase,
   ArrowRight,
   CheckCircle,
+  Sigma,
 } from "lucide-react";
+import { isFlagEnabled } from "../lib/flags";
 
-export type SimulatorId = "pe" | "vc" | "ib";
+export type SimulatorId = "pe" | "vc" | "ib" | "quant";
 
 interface Props {
   onSelect: (sim: SimulatorId) => void;
@@ -98,9 +100,40 @@ const simulators = [
     stats: ["9 modules", "4 val methods", "8 deal presets", "100-pt score"],
     tagline: "Goldman · Morgan Stanley · JPMorgan",
   },
+  {
+    id: "quant" as SimulatorId,
+    label: "Quantitative Finance",
+    sublabel: "Quant Trading & Research",
+    icon: Sigma,
+    color: "#5b9dff",
+    dim: "rgba(91,157,255,0.08)",
+    border: "rgba(91,157,255,0.25)",
+    hoverBorder: "rgba(91,157,255,0.55)",
+    badge: "QT",
+    description:
+      "Step onto the quant desk. Simulate random price paths, price options with Black-Scholes and the Greeks, optimize portfolios on the efficient frontier, measure tail risk with VaR, and backtest systematic strategies — the interview-grade math behind Citadel, Jane Street, and Two Sigma.",
+    features: [
+      "Random Walks — GBM, Jump-Diffusion, Mean Reversion",
+      "Monte Carlo Engine with Antithetic Variates",
+      "Black-Scholes-Merton Pricing & Implied Vol",
+      "The Greeks — Delta, Gamma, Vega, Theta, Rho",
+      "Binomial Trees & Path-Dependent Options",
+      "Markowitz Efficient Frontier & Max-Sharpe",
+      "Risk Desk — VaR, CVaR, Drawdown, EWMA Vol",
+      "Fixed Income — Duration, Convexity, YTM",
+      "Strategy Backtester — Momentum & Mean Reversion",
+      "Quant Interview Drills — Probability & Pricing",
+    ],
+    stats: ["11 modules", "Black-Scholes", "Monte Carlo", "VaR + Greeks"],
+    tagline: "Citadel · Jane Street · Two Sigma",
+  },
 ];
 
 export function SimulatorSelector({ onSelect }: Props) {
+  const quantEnabled = isFlagEnabled("quant");
+  const visibleSimulators = simulators.filter(
+    (s) => s.id !== "quant" || quantEnabled,
+  );
   return (
     <div
       className="flex-1 flex flex-col items-center px-6 pt-8 pb-14"
@@ -137,8 +170,12 @@ export function SimulatorSelector({ onSelect }: Props) {
       </motion.div>
 
       {/* Simulator Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full max-w-6xl">
-        {simulators.map((sim, i) => {
+      <div
+        className={`grid grid-cols-1 gap-5 w-full max-w-6xl ${
+          quantEnabled ? "lg:grid-cols-2 xl:grid-cols-4" : "lg:grid-cols-3"
+        }`}
+      >
+        {visibleSimulators.map((sim, i) => {
           const Icon = sim.icon;
           return (
             <motion.div
