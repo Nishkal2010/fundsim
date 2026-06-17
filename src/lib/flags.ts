@@ -19,7 +19,7 @@ const DEFAULTS: Record<FlagName, boolean> = {
   stressTest: true,
   clubChallenge: false, // requires DB schema additions
   assignmentMode: false, // requires DB schema additions
-  quant: false, // Quant simulator track — ships dark until QA passes
+  quant: true, // Quant simulator track — live for all users (2026-06-17)
 };
 
 function getUrlFlags(): Set<string> {
