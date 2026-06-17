@@ -3,11 +3,14 @@ import { X, Copy, Check } from "lucide-react";
 import { saveDealShare, buildShareUrl } from "../../lib/dealShare";
 import { captureEvent } from "../../lib/posthog";
 import { useFundModel } from "../../hooks/useFundModel";
-import type { SimulatorId } from "../SimulatorSelector";
+
+// Assignments are only meaningful for the deal-making tracks, which share the
+// dealShare schema. The Quant track has no saved deal state, so it is excluded.
+type AssignableSim = "pe" | "vc" | "ib";
 
 // Lockable field keys per simulator with human-readable labels
 const LOCKABLE_FIELDS: Record<
-  SimulatorId,
+  AssignableSim,
   Array<{ key: string; label: string }>
 > = {
   pe: [
@@ -42,7 +45,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
   // with these inputs and see the locked fields disabled.
   const { inputs: peInputs } = useFundModel();
 
-  const [simulator, setSimulator] = useState<SimulatorId>("pe");
+  const [simulator, setSimulator] = useState<AssignableSim>("pe");
   const [prompt, setPrompt] = useState("");
   const [locked, setLocked] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<BuildStatus>("idle");
@@ -121,8 +124,8 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
     >
       <div
         style={{
-          background: "#111827",
-          border: "1px solid #1F2937",
+          background: "#141519",
+          border: "1px solid #1b1d22",
           borderRadius: 16,
           padding: 28,
           maxWidth: 520,
@@ -142,7 +145,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "#6B7280",
+            color: "#7d808a",
             display: "flex",
             alignItems: "center",
           }}
@@ -162,7 +165,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
         </p>
         <p
           style={{
-            color: "#9CA3AF",
+            color: "#a6a8b0",
             fontSize: 13,
             marginBottom: 24,
             lineHeight: 1.4,
@@ -176,7 +179,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
         <label
           style={{
             display: "block",
-            color: "#D1D5DB",
+            color: "#cfd1d6",
             fontSize: 13,
             fontWeight: 600,
             marginBottom: 8,
@@ -185,7 +188,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
           Simulator
         </label>
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-          {(["pe", "vc", "ib"] as SimulatorId[]).map((sim) => (
+          {(["pe", "vc", "ib"] as AssignableSim[]).map((sim) => (
             <button
               key={sim}
               onClick={() => {
@@ -195,10 +198,10 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
               style={{
                 padding: "6px 16px",
                 borderRadius: 8,
-                border: `1px solid ${simulator === sim ? "#6366F1" : "#374151"}`,
+                border: `1px solid ${simulator === sim ? "#c6a14b" : "#2b2d34"}`,
                 background:
-                  simulator === sim ? "rgba(99,102,241,0.15)" : "transparent",
-                color: simulator === sim ? "#818CF8" : "#9CA3AF",
+                  simulator === sim ? "rgba(198, 161, 75,0.15)" : "transparent",
+                color: simulator === sim ? "#d9be7a" : "#a6a8b0",
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: "pointer",
@@ -214,7 +217,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
         <label
           style={{
             display: "block",
-            color: "#D1D5DB",
+            color: "#cfd1d6",
             fontSize: 13,
             fontWeight: 600,
             marginBottom: 8,
@@ -230,8 +233,8 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
           maxLength={500}
           style={{
             width: "100%",
-            background: "#1F2937",
-            border: "1px solid #374151",
+            background: "#1b1d22",
+            border: "1px solid #2b2d34",
             borderRadius: 8,
             color: "#E5E7EB",
             fontSize: 13,
@@ -253,7 +256,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
           <span
             style={{
               fontSize: 12,
-              color: promptLen > 480 ? "#F59E0B" : "#6B7280",
+              color: promptLen > 480 ? "#e8913a" : "#7d808a",
             }}
           >
             {promptLen}/500
@@ -264,7 +267,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
         <label
           style={{
             display: "block",
-            color: "#D1D5DB",
+            color: "#cfd1d6",
             fontSize: 13,
             fontWeight: 600,
             marginBottom: 8,
@@ -289,9 +292,9 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
                 style={{
                   padding: "5px 12px",
                   borderRadius: 8,
-                  border: `1px solid ${active ? "rgba(245,158,11,0.5)" : "#374151"}`,
+                  border: `1px solid ${active ? "rgba(245,158,11,0.5)" : "#2b2d34"}`,
                   background: active ? "rgba(245,158,11,0.1)" : "transparent",
-                  color: active ? "#F59E0B" : "#9CA3AF",
+                  color: active ? "#e8913a" : "#a6a8b0",
                   fontSize: 13,
                   cursor: "pointer",
                   transition: "all 0.1s",
@@ -316,7 +319,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
           >
             <p
               style={{
-                color: "#34D399",
+                color: "#4bcb98",
                 fontSize: 12,
                 fontWeight: 600,
                 marginBottom: 8,
@@ -330,10 +333,10 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
                 value={assignmentUrl}
                 style={{
                   flex: 1,
-                  background: "#1F2937",
-                  border: "1px solid #374151",
+                  background: "#1b1d22",
+                  border: "1px solid #2b2d34",
                   borderRadius: 6,
-                  color: "#D1D5DB",
+                  color: "#cfd1d6",
                   fontSize: 12,
                   padding: "6px 10px",
                   outline: "none",
@@ -343,7 +346,7 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
               <button
                 onClick={handleCopy}
                 style={{
-                  background: copied ? "#34D399" : "#374151",
+                  background: copied ? "#4bcb98" : "#2b2d34",
                   border: "none",
                   borderRadius: 6,
                   color: "#fff",
@@ -375,10 +378,10 @@ export function AssignmentBuilder({ onClose }: AssignmentBuilderProps) {
             border: "none",
             background:
               status === "done"
-                ? "#34D399"
+                ? "#4bcb98"
                 : canCreate && status !== "saving"
-                  ? "linear-gradient(135deg,#6366F1,#8B5CF6)"
-                  : "#374151",
+                  ? "linear-gradient(135deg,#c6a14b,#c6a14b)"
+                  : "#2b2d34",
             color: "#fff",
             fontWeight: 600,
             fontSize: 14,

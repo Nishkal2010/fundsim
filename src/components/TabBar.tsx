@@ -17,6 +17,13 @@ import {
   Globe,
   ClipboardList,
   Swords,
+  Sigma,
+  Dices,
+  LineChart,
+  Gauge,
+  Waves,
+  Landmark,
+  BrainCircuit,
 } from "lucide-react";
 
 export type PETabId =
@@ -41,9 +48,22 @@ export type VCTabId =
   | "dealmemo"
   | "roleplay";
 
-export type TabId = PETabId | VCTabId;
+export type QuantTabId =
+  | "pricepaths"
+  | "montecarlo"
+  | "options"
+  | "greeks"
+  | "impliedvol"
+  | "frontier"
+  | "risk"
+  | "fixedincome"
+  | "backtest"
+  | "drills"
+  | "roleplay";
 
-type SimulatorId = "pe" | "vc" | "ib";
+export type TabId = PETabId | VCTabId | QuantTabId;
+
+type SimulatorId = "pe" | "vc" | "ib" | "quant";
 
 const peTabs: {
   id: PETabId;
@@ -89,8 +109,80 @@ const vcTabs: {
   { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
 ];
 
-const peColor = "#818CF8";
-const vcColor = "#34D399";
+const quantTabs: {
+  id: QuantTabId;
+  label: string;
+  icon: React.FC<{ size?: number }>;
+  group: string;
+}[] = [
+  { id: "pricepaths", label: "Random Walks", icon: Waves, group: "sim" },
+  { id: "montecarlo", label: "Monte Carlo", icon: Dices, group: "sim" },
+  { id: "options", label: "Options Lab", icon: LineChart, group: "options" },
+  { id: "greeks", label: "The Greeks", icon: Sigma, group: "options" },
+  { id: "impliedvol", label: "Implied Vol", icon: Activity, group: "options" },
+  { id: "frontier", label: "Optimizer", icon: PieChart, group: "portfolio" },
+  { id: "risk", label: "Risk Desk", icon: Gauge, group: "portfolio" },
+  {
+    id: "fixedincome",
+    label: "Fixed Income",
+    icon: Landmark,
+    group: "portfolio",
+  },
+  { id: "backtest", label: "Backtester", icon: BarChart3, group: "strategy" },
+  {
+    id: "drills",
+    label: "Quant Drills",
+    icon: BrainCircuit,
+    group: "strategy",
+  },
+  { id: "roleplay", label: "Role-Play", icon: Swords, group: "roleplay" },
+];
+
+const peColor = "#d9be7a";
+const vcColor = "#4bcb98";
+const quantColor = "#5b9dff";
+
+// Per-simulator accent config — generalizes the previous pe/vc ternaries so a
+// 3rd/4th track slots in by adding one entry.
+const SIM_ACCENT: Record<
+  SimulatorId,
+  {
+    color: string;
+    dim: string;
+    gradient: string;
+    badgeBg: string;
+    badgeBorder: string;
+  }
+> = {
+  pe: {
+    color: peColor,
+    dim: "rgba(198, 161, 75,0.05)",
+    gradient: "linear-gradient(90deg, #c6a14b, #d9be7a)",
+    badgeBg: "rgba(198, 161, 75,0.12)",
+    badgeBorder: "rgba(198, 161, 75,0.3)",
+  },
+  vc: {
+    color: vcColor,
+    dim: "rgba(52,211,153,0.05)",
+    gradient: "linear-gradient(90deg, #1fa971, #4bcb98)",
+    badgeBg: "rgba(52,211,153,0.12)",
+    badgeBorder: "rgba(52,211,153,0.3)",
+  },
+  ib: {
+    color: "#e8913a",
+    dim: "rgba(245,158,11,0.05)",
+    gradient: "linear-gradient(90deg, #d97f2a, #e8913a)",
+    badgeBg: "rgba(245,158,11,0.12)",
+    badgeBorder: "rgba(245,158,11,0.3)",
+  },
+  quant: {
+    color: quantColor,
+    dim: "rgba(91,157,255,0.06)",
+    gradient: "linear-gradient(90deg, #3b82f6, #5b9dff)",
+    badgeBg: "rgba(91,157,255,0.12)",
+    badgeBorder: "rgba(91,157,255,0.3)",
+  },
+};
 
 interface TabBarProps {
   simulator: SimulatorId;
@@ -102,15 +194,13 @@ interface TabBarProps {
 export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
   const [hoveredTab, setHoveredTab] = useState<TabId | null>(null);
 
-  const accentColor = simulator === "pe" ? peColor : vcColor;
-  const accentDim =
-    simulator === "pe" ? "rgba(99,102,241,0.05)" : "rgba(52,211,153,0.05)";
-  const gradient =
-    simulator === "pe"
-      ? "linear-gradient(90deg, #6366F1, #818CF8)"
-      : "linear-gradient(90deg, #10B981, #34D399)";
+  const accent = SIM_ACCENT[simulator];
+  const accentColor = accent.color;
+  const accentDim = accent.dim;
+  const gradient = accent.gradient;
 
-  const tabs = simulator === "pe" ? peTabs : vcTabs;
+  const tabs =
+    simulator === "pe" ? peTabs : simulator === "vc" ? vcTabs : quantTabs;
 
   const groups =
     simulator === "pe"
@@ -120,14 +210,24 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
           { key: "advanced", label: "Advanced" },
           { key: "roleplay", label: "FinFox" },
         ]
-      : [
-          { key: "core", label: "Core" },
-          { key: "fund", label: "Fund" },
-          { key: "edge", label: "Edge" },
-          { key: "roleplay", label: "FinFox" },
-        ];
+      : simulator === "vc"
+        ? [
+            { key: "core", label: "Core" },
+            { key: "fund", label: "Fund" },
+            { key: "edge", label: "Edge" },
+            { key: "roleplay", label: "FinFox" },
+          ]
+        : [
+            { key: "sim", label: "Simulate" },
+            { key: "options", label: "Options" },
+            { key: "portfolio", label: "Portfolio" },
+            { key: "strategy", label: "Strategy" },
+            { key: "roleplay", label: "FinFox" },
+          ];
 
-  const renderTab = (tab: (typeof peTabs)[0] | (typeof vcTabs)[0]) => {
+  const renderTab = (
+    tab: (typeof peTabs)[0] | (typeof vcTabs)[0] | (typeof quantTabs)[0],
+  ) => {
     const Icon = tab.icon;
     const isActive = tab.id === active;
     const isHovered = hoveredTab === tab.id;
@@ -143,7 +243,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
         onMouseLeave={() => setHoveredTab(null)}
         className="relative flex items-center gap-2 px-4 py-3 text-sm font-medium"
         style={{
-          color: isActive ? accentColor : isHovered ? "#D1D5DB" : "#6B7280",
+          color: isActive ? accentColor : isHovered ? "#cfd1d6" : "#7d808a",
           background: isHovered && !isActive ? accentDim : "transparent",
           transition: "color 0.18s ease, background 0.18s ease",
           borderRadius: "6px 6px 0 0",
@@ -178,7 +278,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
   return (
     <div
       className="w-full px-6"
-      style={{ background: "#111827", borderBottom: "1px solid #374151" }}
+      style={{ background: "#141519", borderBottom: "1px solid #2b2d34" }}
     >
       <div className="max-w-7xl mx-auto flex items-center gap-0 overflow-x-auto">
         {/* Back button */}
@@ -189,21 +289,21 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
           style={{
             background: "rgba(255,255,255,0.07)",
             border: "1px solid rgba(255,255,255,0.15)",
-            color: "#D1D5DB",
+            color: "#cfd1d6",
             cursor: "pointer",
             transition: "all 0.18s ease",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background =
               "rgba(255,255,255,0.13)";
-            (e.currentTarget as HTMLButtonElement).style.color = "#F9FAFB";
+            (e.currentTarget as HTMLButtonElement).style.color = "#ece9e2";
             (e.currentTarget as HTMLButtonElement).style.borderColor =
               "rgba(255,255,255,0.3)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background =
               "rgba(255,255,255,0.07)";
-            (e.currentTarget as HTMLButtonElement).style.color = "#D1D5DB";
+            (e.currentTarget as HTMLButtonElement).style.color = "#cfd1d6";
             (e.currentTarget as HTMLButtonElement).style.borderColor =
               "rgba(255,255,255,0.15)";
           }}
@@ -216,12 +316,9 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
         <span
           className="text-xs font-bold px-2 py-0.5 rounded mr-4 flex-shrink-0"
           style={{
-            background:
-              simulator === "pe"
-                ? "rgba(99,102,241,0.12)"
-                : "rgba(52,211,153,0.12)",
+            background: accent.badgeBg,
             color: accentColor,
-            border: `1px solid ${simulator === "pe" ? "rgba(99,102,241,0.3)" : "rgba(52,211,153,0.3)"}`,
+            border: `1px solid ${accent.badgeBorder}`,
             fontFamily: "monospace",
           }}
         >
@@ -241,7 +338,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
                   style={{
                     width: 1,
                     height: 20,
-                    background: "#374151",
+                    background: "#2b2d34",
                     margin: "0 8px",
                     flexShrink: 0,
                   }}
@@ -250,7 +347,7 @@ export function TabBar({ simulator, active, onChange, onBack }: TabBarProps) {
               <span
                 style={{
                   fontSize: 10,
-                  color: "#4B5563",
+                  color: "#3a3d45",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",

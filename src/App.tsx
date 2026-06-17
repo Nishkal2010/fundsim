@@ -5,7 +5,8 @@ import { FundModelContext, useFundModelState } from "./hooks/useFundModel";
 import { Header } from "./components/Header";
 import { GlobalInputs } from "./components/GlobalInputs";
 import { TabBar } from "./components/TabBar";
-import type { PETabId, VCTabId } from "./components/TabBar";
+import type { PETabId, VCTabId, QuantTabId } from "./components/TabBar";
+import { QuantModelContext, useQuantModelState } from "./hooks/useQuantModel";
 import { Glossary } from "./components/Glossary";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
@@ -176,6 +177,59 @@ const StartHereMode = React.lazy(() =>
     default: m.StartHereMode,
   })),
 );
+const PricePathsTab = React.lazy(() =>
+  import("./components/Quant/PricePathsTab").then((m) => ({
+    default: m.PricePathsTab,
+  })),
+);
+const MonteCarloTab = React.lazy(() =>
+  import("./components/Quant/MonteCarloTab").then((m) => ({
+    default: m.MonteCarloTab,
+  })),
+);
+const OptionsLabTab = React.lazy(() =>
+  import("./components/Quant/OptionsLabTab").then((m) => ({
+    default: m.OptionsLabTab,
+  })),
+);
+const GreeksTab = React.lazy(() =>
+  import("./components/Quant/GreeksTab").then((m) => ({
+    default: m.GreeksTab,
+  })),
+);
+const ImpliedVolTab = React.lazy(() =>
+  import("./components/Quant/ImpliedVolTab").then((m) => ({
+    default: m.ImpliedVolTab,
+  })),
+);
+const EfficientFrontierTab = React.lazy(() =>
+  import("./components/Quant/EfficientFrontierTab").then((m) => ({
+    default: m.EfficientFrontierTab,
+  })),
+);
+const RiskTab = React.lazy(() =>
+  import("./components/Quant/RiskTab").then((m) => ({ default: m.RiskTab })),
+);
+const FixedIncomeTab = React.lazy(() =>
+  import("./components/Quant/FixedIncomeTab").then((m) => ({
+    default: m.FixedIncomeTab,
+  })),
+);
+const BacktestTab = React.lazy(() =>
+  import("./components/Quant/BacktestTab").then((m) => ({
+    default: m.BacktestTab,
+  })),
+);
+const DrillsTab = React.lazy(() =>
+  import("./components/Quant/DrillsTab").then((m) => ({
+    default: m.DrillsTab,
+  })),
+);
+const QuantRoleplayTab = React.lazy(() =>
+  import("./components/Quant/QuantRoleplayTab").then((m) => ({
+    default: m.QuantRoleplayTab,
+  })),
+);
 import { usePathProgress } from "./hooks/usePathProgress";
 import { captureEvent, identifyUser, resetUser } from "./lib/posthog";
 import { isFlagEnabled } from "./lib/flags";
@@ -213,6 +267,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
   );
   const [activePETab, setActivePETab] = useState<PETabId>("lifecycle");
   const [activeVCTab, setActiveVCTab] = useState<VCTabId>("captable");
+  const [activeQuantTab, setActiveQuantTab] =
+    useState<QuantTabId>("pricepaths");
   const [ibView, setIbView] = useState<"simulator" | "roleplay" | "compare">(
     "simulator",
   );
@@ -285,6 +341,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
     if (activeSimulator === "vc") setActiveScreen(activeVCTab);
   }, [activeSimulator, activeVCTab, setActiveScreen]);
 
+  useEffect(() => {
+    if (activeSimulator === "quant") setActiveScreen(activeQuantTab);
+  }, [activeSimulator, activeQuantTab, setActiveScreen]);
+
   // Fire the FinFox greeting that StartHere queued AFTER React has committed
   // the new activeSimulator + tab state — this is the proper handshake that
   // replaces the fragile 400ms setTimeout that lived inside StartHereMode.
@@ -300,7 +360,7 @@ function AppContent({ user, onLogout }: AppContentProps) {
   // Without this, entering a simulator can land the user mid-page.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [activeSimulator, activePETab, activeVCTab, ibView]);
+  }, [activeSimulator, activePETab, activeVCTab, activeQuantTab, ibView]);
 
   useKeyboardShortcuts([
     {
@@ -412,10 +472,24 @@ function AppContent({ user, onLogout }: AppContentProps) {
     roleplay: <VCRoleplayTab />,
   };
 
+  const quantTabContent: Record<QuantTabId, React.ReactNode> = {
+    pricepaths: <PricePathsTab />,
+    montecarlo: <MonteCarloTab />,
+    options: <OptionsLabTab />,
+    greeks: <GreeksTab />,
+    impliedvol: <ImpliedVolTab />,
+    frontier: <EfficientFrontierTab />,
+    risk: <RiskTab />,
+    fixedincome: <FixedIncomeTab />,
+    backtest: <BacktestTab />,
+    drills: <DrillsTab />,
+    roleplay: <QuantRoleplayTab />,
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0A0F1C" }}
+      style={{ background: "#0c0d10" }}
     >
       <Header
         onGlossaryOpen={() => setGlossaryOpen(true)}
@@ -464,10 +538,10 @@ function AppContent({ user, onLogout }: AppContentProps) {
                   <button
                     onClick={() => setShowStartHere(true)}
                     style={{
-                      background: "rgba(129,140,248,0.08)",
-                      border: "1px solid rgba(129,140,248,0.3)",
+                      background: "rgba(217, 190, 122,0.08)",
+                      border: "1px solid rgba(217, 190, 122,0.3)",
                       borderRadius: 10,
-                      color: "#818CF8",
+                      color: "#d9be7a",
                       fontSize: 14,
                       fontWeight: 600,
                       padding: "10px 22px",
@@ -507,8 +581,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <div
                 className="px-6 py-2 flex items-center gap-3"
                 style={{
-                  background: "#111827",
-                  borderBottom: "1px solid #374151",
+                  background: "#141519",
+                  borderBottom: "1px solid #2b2d34",
                 }}
               >
                 <button
@@ -516,8 +590,8 @@ function AppContent({ user, onLogout }: AppContentProps) {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium"
                   style={{
                     background: "transparent",
-                    border: "1px solid #374151",
-                    color: "#6B7280",
+                    border: "1px solid #2b2d34",
+                    color: "#7d808a",
                     cursor: "pointer",
                   }}
                 >
@@ -527,14 +601,14 @@ function AppContent({ user, onLogout }: AppContentProps) {
                   className="text-xs font-bold px-2 py-0.5 rounded"
                   style={{
                     background: "rgba(245,158,11,0.12)",
-                    color: "#F59E0B",
+                    color: "#e8913a",
                     border: "1px solid rgba(245,158,11,0.3)",
                     fontFamily: "monospace",
                   }}
                 >
                   IB
                 </span>
-                <span className="text-xs" style={{ color: "#6B7280" }}>
+                <span className="text-xs" style={{ color: "#7d808a" }}>
                   Investment Banking · M&A Deal Simulator
                 </span>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
@@ -547,12 +621,12 @@ function AppContent({ user, onLogout }: AppContentProps) {
                           ibView === v
                             ? "rgba(245,158,11,0.15)"
                             : "transparent",
-                        border: `1px solid ${ibView === v ? "rgba(245,158,11,0.4)" : "#374151"}`,
+                        border: `1px solid ${ibView === v ? "rgba(245,158,11,0.4)" : "#2b2d34"}`,
                         borderRadius: 6,
                         padding: "3px 10px",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: ibView === v ? "#F59E0B" : "#6B7280",
+                        color: ibView === v ? "#e8913a" : "#7d808a",
                         cursor: "pointer",
                         textTransform: "capitalize",
                       }}
@@ -643,6 +717,43 @@ function AppContent({ user, onLogout }: AppContentProps) {
                   >
                     <React.Suspense fallback={lazyFallback}>
                       {vcTabContent[activeVCTab]}
+                    </React.Suspense>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <Footer />
+            </motion.div>
+          )}
+
+          {activeSimulator === "quant" && (
+            <motion.div
+              key="quant"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col flex-1"
+            >
+              <TabBar
+                simulator="quant"
+                active={activeQuantTab}
+                onChange={(t) => {
+                  setActiveQuantTab(t as QuantTabId);
+                  captureEvent("quant_tab_changed", { tab: t as string });
+                }}
+                onBack={() => setActiveSimulator(null)}
+              />
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeQuantTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <React.Suspense fallback={lazyFallback}>
+                      {quantTabContent[activeQuantTab]}
                     </React.Suspense>
                   </motion.div>
                 </AnimatePresence>
@@ -785,12 +896,13 @@ function App() {
 
   // Pass the Supabase user id so useFundModelState can load/save — demo users have no id
   const model = useFundModelState(user?.id ?? null);
+  const quantModel = useQuantModelState();
 
   if (!authChecked) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0A0F1C" }}
+        style={{ background: "#0c0d10" }}
       >
         <motion.div
           animate={{ rotate: 360 }}
@@ -798,8 +910,8 @@ function App() {
           style={{
             width: 32,
             height: 32,
-            border: "2px solid #374151",
-            borderTopColor: "#6366F1",
+            border: "2px solid #2b2d34",
+            borderTopColor: "#c6a14b",
             borderRadius: "50%",
           }}
         />
@@ -830,8 +942,10 @@ function App() {
   return (
     <FinFoxProvider>
       <FundModelContext.Provider value={model}>
-        <AppContent user={user} onLogout={handleLogout} />
-        <Analytics />
+        <QuantModelContext.Provider value={quantModel}>
+          <AppContent user={user} onLogout={handleLogout} />
+          <Analytics />
+        </QuantModelContext.Provider>
       </FundModelContext.Provider>
       <SharedScenarioBanner
         visible={sharedLoaded}
