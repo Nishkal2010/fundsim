@@ -79,7 +79,7 @@ const IB_MANDATE: RoleplayScenario = {
     "Other Pitches": "Goldman, Morgan Stanley",
     Timeline: "Decision in 2 weeks",
   },
-  accent: "#e8913a",
+  accent: "#F59E0B",
   ctaLabel: "Start Pitch",
   systemPrompt: `You are Marcus Webb, CFO of Apex Consumer Brands — a profitable, growing consumer brand. You are evaluating banks for a sell-side M&A advisory mandate. You have already taken pitches from Goldman Sachs and Morgan Stanley. The user is pitching for the mandate.
 
@@ -154,7 +154,7 @@ const PE_LBO: RoleplayScenario = {
     Auction: "2 other sponsor bids",
     Timeline: "Final bids in 3 weeks",
   },
-  accent: "#d9be7a",
+  accent: "#818CF8",
   ctaLabel: "Start Negotiation",
   systemPrompt: `You are Sarah Chen, CFO of Meridian Industrial — a $340M revenue, $50M EBITDA precision manufacturer growing 12% YoY. A PE firm is bidding to acquire the company in a competitive auction with 2 other sponsor bids. The user is the PE partner making the offer.
 
@@ -234,7 +234,7 @@ const VC_SEED: RoleplayScenario = {
     "Other TS": "2 competing term sheets",
     Stage: "Pre-Series A, post-PMF",
   },
-  accent: "#4bcb98",
+  accent: "#34D399",
   ctaLabel: "Start Negotiation",
   systemPrompt: `You are Alex Rivera, founder/CEO of NovaTech — a B2B SaaS company at $220K ARR growing 22% MoM. You are raising a $2M seed round. You have 2 other term sheets in hand and know NVCA standard terms cold. The user is a VC investor trying to lead.
 
@@ -288,17 +288,12 @@ Style: builder energy, direct, knows the math. Sometimes brings up the competing
 // Lookup by sim. RoleplayLanding + each tab's wrapper read from this map so
 // adding a new scenario is one entry + a route — no duplicated UI scaffolding.
 
-// Only the deal-making tracks have a negotiation counterparty. The Quant track
-// uses FinFox as a tutor, not a roleplay persona, so it is intentionally not
-// keyed here (and its modes are not in api/chat.ts ALLOWED_MODES).
-export type RoleplaySim = Extract<FinFoxSim, "pe" | "vc" | "ib">;
-
-export const ROLEPLAY_SCENARIOS: Record<RoleplaySim, RoleplayScenario> = {
+export const ROLEPLAY_SCENARIOS: Record<FinFoxSim, RoleplayScenario> = {
   ib: IB_MANDATE,
   pe: PE_LBO,
   vc: VC_SEED,
 };
 
-export function getScenario(sim: RoleplaySim): RoleplayScenario {
+export function getScenario(sim: FinFoxSim): RoleplayScenario {
   return ROLEPLAY_SCENARIOS[sim];
 }

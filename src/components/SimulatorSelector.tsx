@@ -6,11 +6,9 @@ import {
   Briefcase,
   ArrowRight,
   CheckCircle,
-  Sigma,
 } from "lucide-react";
-import { isFlagEnabled } from "../lib/flags";
 
-export type SimulatorId = "pe" | "vc" | "ib" | "quant";
+export type SimulatorId = "pe" | "vc" | "ib";
 
 interface Props {
   onSelect: (sim: SimulatorId) => void;
@@ -22,10 +20,10 @@ const simulators = [
     label: "Private Equity",
     sublabel: "Buyout Fund Simulator",
     icon: Building2,
-    color: "#d9be7a",
-    dim: "rgba(198, 161, 75,0.08)",
-    border: "rgba(198, 161, 75,0.25)",
-    hoverBorder: "rgba(217, 190, 122,0.55)",
+    color: "#818CF8",
+    dim: "rgba(99,102,241,0.08)",
+    border: "rgba(99,102,241,0.25)",
+    hoverBorder: "rgba(129,140,248,0.55)",
     badge: "PE",
     description:
       "Model institutional buyout fund economics end-to-end — from LP capital calls to final distributions. Master leverage, fee drag, waterfall distributions, and what actually drives PE returns.",
@@ -47,9 +45,9 @@ const simulators = [
     label: "Venture Capital",
     sublabel: "Startup Investing Simulator",
     icon: TrendingUp,
-    color: "#4bcb98",
-    dim: "rgba(31, 169, 113,0.08)",
-    border: "rgba(31, 169, 113,0.25)",
+    color: "#34D399",
+    dim: "rgba(16,185,129,0.08)",
+    border: "rgba(16,185,129,0.25)",
     hoverBorder: "rgba(52,211,153,0.55)",
     badge: "VC",
     description:
@@ -80,7 +78,7 @@ const simulators = [
     label: "Investment Banking",
     sublabel: "M&A Deal Simulator",
     icon: Briefcase,
-    color: "#e8913a",
+    color: "#F59E0B",
     dim: "rgba(245,158,11,0.08)",
     border: "rgba(245,158,11,0.25)",
     hoverBorder: "rgba(245,158,11,0.55)",
@@ -100,33 +98,6 @@ const simulators = [
     stats: ["9 modules", "4 val methods", "8 deal presets", "100-pt score"],
     tagline: "Goldman · Morgan Stanley · JPMorgan",
   },
-  {
-    id: "quant" as SimulatorId,
-    label: "Quantitative Finance",
-    sublabel: "Quant Trading & Research",
-    icon: Sigma,
-    color: "#5b9dff",
-    dim: "rgba(91,157,255,0.08)",
-    border: "rgba(91,157,255,0.25)",
-    hoverBorder: "rgba(91,157,255,0.55)",
-    badge: "QT",
-    description:
-      "Step onto the quant desk. Simulate random price paths, price options with Black-Scholes and the Greeks, optimize portfolios on the efficient frontier, measure tail risk with VaR, and backtest systematic strategies — the interview-grade math behind Citadel, Jane Street, and Two Sigma.",
-    features: [
-      "Random Walks — GBM, Jump-Diffusion, Mean Reversion",
-      "Monte Carlo Engine with Antithetic Variates",
-      "Black-Scholes-Merton Pricing & Implied Vol",
-      "The Greeks — Delta, Gamma, Vega, Theta, Rho",
-      "Binomial Trees & Path-Dependent Options",
-      "Markowitz Efficient Frontier & Max-Sharpe",
-      "Risk Desk — VaR, CVaR, Drawdown, EWMA Vol",
-      "Fixed Income — Duration, Convexity, YTM",
-      "Strategy Backtester — Momentum & Mean Reversion",
-      "Quant Interview Drills — Probability & Pricing",
-    ],
-    stats: ["11 modules", "Black-Scholes", "Monte Carlo", "VaR + Greeks"],
-    tagline: "Citadel · Jane Street · Two Sigma",
-  },
 ];
 
 export function SimulatorSelector({ onSelect }: Props) {
@@ -134,7 +105,7 @@ export function SimulatorSelector({ onSelect }: Props) {
     <div
       className="flex-1 flex flex-col items-center px-6 pt-8 pb-14"
       style={{
-        background: "linear-gradient(180deg, #0c0d10 0%, #0D1424 100%)",
+        background: "linear-gradient(180deg, #0A0F1C 0%, #0D1424 100%)",
       }}
     >
       {/* Tight headline — direct CTA, no marketing duplication.
@@ -149,46 +120,38 @@ export function SimulatorSelector({ onSelect }: Props) {
         <div
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4"
           style={{
-            background: "rgba(198, 161, 75,0.08)",
-            color: "#d9be7a",
-            border: "1px solid rgba(198, 161, 75,0.2)",
+            background: "rgba(99,102,241,0.08)",
+            color: "#818CF8",
+            border: "1px solid rgba(99,102,241,0.2)",
           }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
           PICK YOUR TRACK
         </div>
-        <h1 className="font-serif text-3xl md:text-4xl text-[#ece9e2] leading-tight">
+        <h1 className="font-serif text-3xl md:text-4xl text-[#F9FAFB] leading-tight">
           Three careers.{" "}
-          <span style={{ color: "#d9be7a", fontStyle: "italic" }}>
+          <span style={{ color: "#818CF8", fontStyle: "italic" }}>
             One platform.
           </span>
         </h1>
       </motion.div>
 
-      {/* Simulator Cards — the Quant track is flag-gated so it ships dark. */}
-      <div
-        className={`grid grid-cols-1 gap-5 w-full ${
-          isFlagEnabled("quant")
-            ? "lg:grid-cols-2 xl:grid-cols-4 max-w-7xl"
-            : "lg:grid-cols-3 max-w-6xl"
-        }`}
-      >
-        {simulators
-          .filter((sim) => sim.id !== "quant" || isFlagEnabled("quant"))
-          .map((sim, i) => {
-            const Icon = sim.icon;
-            return (
-              <motion.div
-                key={sim.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.22 + i * 0.08 }}
-                className="h-full"
-              >
-                <SimCard sim={sim} onSelect={onSelect} Icon={Icon} />
-              </motion.div>
-            );
-          })}
+      {/* Simulator Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full max-w-6xl">
+        {simulators.map((sim, i) => {
+          const Icon = sim.icon;
+          return (
+            <motion.div
+              key={sim.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.22 + i * 0.08 }}
+              className="h-full"
+            >
+              <SimCard sim={sim} onSelect={onSelect} Icon={Icon} />
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Social Proof Strip */}
@@ -199,7 +162,7 @@ export function SimulatorSelector({ onSelect }: Props) {
         className="flex flex-col items-center gap-2 mt-10"
       >
         <div className="flex items-center gap-2 mb-1">
-          <CheckCircle size={13} color="#4bcb98" />
+          <CheckCircle size={13} color="#34D399" />
           <p
             className="text-xs font-medium"
             style={{ color: "var(--text-secondary)" }}
@@ -268,7 +231,7 @@ function SimCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered ? "#141519" : "#0e1014",
+        background: hovered ? "#111827" : "#0D1220",
         border: `1px solid ${hovered ? sim.hoverBorder : sim.border}`,
         borderRadius: "14px",
         cursor: "pointer",
@@ -292,7 +255,7 @@ function SimCard({
         <div className="min-w-0 flex-1">
           <div
             className="font-serif text-xl leading-tight"
-            style={{ color: "#ece9e2" }}
+            style={{ color: "#F9FAFB" }}
           >
             {sim.label}
           </div>
@@ -321,7 +284,7 @@ function SimCard({
       </div>
 
       {/* Description */}
-      <p className="text-sm leading-relaxed mb-5" style={{ color: "#a6a8b0" }}>
+      <p className="text-sm leading-relaxed mb-5" style={{ color: "#9CA3AF" }}>
         {sim.description}
       </p>
 
@@ -340,7 +303,7 @@ function SimCard({
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{ background: sim.color, opacity: 0.7 }}
                 />
-                <span className="text-xs" style={{ color: "#cfd1d6" }}>
+                <span className="text-xs" style={{ color: "#D1D5DB" }}>
                   {f}
                 </span>
               </div>
@@ -395,7 +358,7 @@ function SimCard({
       </div>
 
       {/* Tagline — line-clamp-2 wraps to 2 lines; title omitted (invisible on touch) */}
-      <div className="text-xs mb-4 line-clamp-2" style={{ color: "#3a3d45" }}>
+      <div className="text-xs mb-4 line-clamp-2" style={{ color: "#4B5563" }}>
         Used at: {sim.tagline}
       </div>
 
@@ -410,11 +373,11 @@ function SimCard({
       >
         <span
           className="text-sm font-semibold"
-          style={{ color: hovered ? sim.color : "#7d808a" }}
+          style={{ color: hovered ? sim.color : "#6B7280" }}
         >
           Enter {sim.badge} Simulator
         </span>
-        <ArrowRight size={15} color={hovered ? sim.color : "#3a3d45"} />
+        <ArrowRight size={15} color={hovered ? sim.color : "#4B5563"} />
       </div>
     </div>
   );
