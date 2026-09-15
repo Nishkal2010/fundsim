@@ -80,10 +80,17 @@ export default async function handler(req: any, res: any) {
     "http://localhost:5200",
     "http://127.0.0.1:5200",
   ]);
+  // The wildcard here had the same hole as /api/chat's: *.vercel.app is a
+  // public namespace, so "fundsim-anything.vercel.app" is free to register and
+  // passed. Preview origins are now listed explicitly via ALLOWED_ORIGINS.
+  const extra = (process.env.ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((s: string) => s.trim())
+    .filter(Boolean);
   const allowed =
     !origin ||
     HEALTH_ALLOWED.has(origin) ||
-    (origin.endsWith(".vercel.app") && origin.includes("fundsim")) ||
+    extra.includes(origin) ||
     origin.startsWith("http://localhost");
   if (origin && !allowed) {
     res.statusCode = 403;
@@ -91,8 +98,25 @@ export default async function handler(req: any, res: any) {
     return res.end(JSON.stringify({ ok: false, error: "Origin not allowed" }));
   }
 
+  // The Anthropic probe is a real billed request to the project's key, and this
+  // endpoint answers any caller that omits an Origin header (verified live:
+  // `curl https://fundsimulate.com/api/health` returns 200 and the upstream
+  // call is made). A monitor can prove it is the monitor with HEALTH_TOKEN;
+  // everyone else gets the checks that cost nothing.
+  const healthToken = process.env.HEALTH_TOKEN;
+  const presented = req.headers?.["x-health-token"];
+  const deepProbeAllowed =
+    Boolean(healthToken) && presented === healthToken;
+
   const [anthropic, supabase] = await Promise.all([
-    checkAnthropic(),
+    deepProbeAllowed
+      ? checkAnthropic()
+      : Promise.resolve({
+          ok: true as boolean,
+          note: Boolean(process.env.ANTHROPIC_API_KEY)
+            ? "key configured; upstream probe skipped (no x-health-token)"
+            : "ANTHROPIC_API_KEY not set",
+        }),
     checkSupabase(),
   ]);
 

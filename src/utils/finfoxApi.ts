@@ -1,4 +1,5 @@
 import { safeStorageGet, safeStorageSet } from "../lib/storage";
+import { supabase } from "../lib/supabase";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -135,9 +136,27 @@ export async function callFinFox(
   opts: FinFoxApiOptions,
   onToken?: (token: string) => void,
 ): Promise<string> {
+  // The server counts signed-in callers per user id and everyone else per IP,
+  // with a larger daily allowance for the former. Without this header every
+  // signed-in user would be metered as an anonymous one sharing their NAT.
+  // Absent or expired sessions simply fall back to the anonymous allowance.
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers.authorization = `Bearer ${session.access_token}`;
+    }
+  } catch {
+    // Signed-out, or storage blocked. Anonymous allowance applies.
+  }
+
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(opts),
     signal: AbortSignal.timeout(35000),
   });

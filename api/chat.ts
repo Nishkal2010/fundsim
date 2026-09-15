@@ -52,9 +52,17 @@ const ALLOWED_ORIGINS = new Set<string>([
   "http://localhost:5200",
   "http://127.0.0.1:5200",
 ]);
-// Vercel preview deploys: <hash>-<project>.vercel.app — match by suffix.
-const ALLOWED_ORIGIN_SUFFIX = ".vercel.app";
-const ALLOWED_ORIGIN_SUFFIX_SLUG = "fundsim";
+// Preview deploys are listed explicitly via env, never matched by pattern.
+// The old rule was `host.endsWith(".vercel.app") && host.includes("fundsim")`,
+// and *.vercel.app is a public namespace: registering a project called
+// "fundsim-anything" is free and instant, which handed any stranger a passing
+// Origin. Verified live on 2026-09-15 — an Origin of
+// https://fundsim-attacker-test.vercel.app reached body validation (HTTP 400
+// "Invalid mode") instead of the 403 an unrelated origin gets.
+const EXTRA_ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 // Caps to keep a single request from blowing up the upstream call.
 const MAX_MESSAGES = 30;
@@ -149,18 +157,85 @@ function rateLimit(ip: string, mode: string): boolean {
   return bucket.count <= RATE_LIMIT_MAX;
 }
 
+/**
+ * Returns the Supabase user id when the caller presents a valid session, and
+ * null otherwise. The origin check above is NOT authentication: an Origin
+ * header is one curl flag, so before this existed the only thing between an
+ * anonymous stranger and an Opus-class call on the project's Anthropic key was
+ * a string the caller chose. The per-user quota also lived in the browser
+ * (src/utils/finfoxApi.ts writes it to localStorage), which means it bound
+ * nobody who was not using the UI.
+ */
+async function verifyUser(req: any): Promise<string | null> {
+  const auth = req.headers?.authorization;
+  if (typeof auth !== "string" || !auth.startsWith("Bearer ")) return null;
+  const url = process.env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  try {
+    const r = await fetch(`${url}/auth/v1/user`, {
+      headers: { authorization: auth, apikey: anonKey },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) return null;
+    const u = (await r.json()) as { id?: unknown };
+    return typeof u.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Durable daily ceiling, enforced in Postgres rather than in this process.
+ * The in-memory bucket above is per-instance by construction, so a burst
+ * simply lands on cold lambdas that each start empty.
+ *
+ * Fails CLOSED. There is no identity on this path, so if the counter cannot be
+ * reached the spend cannot be bounded and the call must not be made. Requires
+ * supabase/migrations/20260915_anon_spend_quota.sql to be applied; until it is,
+ * anonymous chat is refused rather than silently uncapped.
+ */
+async function consumeQuota(
+  req: any,
+  subject: string,
+  endpoint: string,
+): Promise<boolean> {
+  const url = process.env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    console.error("[chat] quota store unreachable: Supabase env not set");
+    return false;
+  }
+  try {
+    const r = await fetch(`${url}/rest/v1/rpc/consume_spend_quota`, {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        authorization: `Bearer ${anonKey}`,
+        "content-type": "application/json",
+      },
+      // The ceiling lives in the SQL function, never in these arguments, so a
+      // forged request cannot widen its own limit.
+      body: JSON.stringify({ p_subject: subject, p_endpoint: endpoint }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) {
+      console.error(`[chat] quota rpc ${r.status}; refusing to spend`);
+      return false;
+    }
+    const rows = (await r.json()) as Array<{ allowed?: unknown }>;
+    const row = Array.isArray(rows) ? rows[0] : undefined;
+    return typeof row?.allowed === "boolean" ? row.allowed : false;
+  } catch {
+    console.error("[chat] quota rpc threw; refusing to spend");
+    return false;
+  }
+}
+
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   if (ALLOWED_ORIGINS.has(origin)) return true;
-  try {
-    const host = new URL(origin).host;
-    return (
-      host.endsWith(ALLOWED_ORIGIN_SUFFIX) &&
-      host.includes(ALLOWED_ORIGIN_SUFFIX_SLUG)
-    );
-  } catch {
-    return false;
-  }
+  return EXTRA_ALLOWED_ORIGINS.includes(origin);
 }
 
 // Vercel sets x-real-ip to the actual edge-observed client IP. The leftmost
@@ -188,7 +263,7 @@ export default async function handler(req: any, res: any) {
     res.setHeader("Vary", "Origin");
   }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     return res.status(allowed ? 204 : 403).end();
@@ -204,6 +279,24 @@ export default async function handler(req: any, res: any) {
   if (!apiKey) {
     console.error("[chat] ANTHROPIC_API_KEY not configured");
     return res.status(500).json({ error: "Service unavailable" });
+  }
+
+  // Identity first, then a ceiling that survives a cold start. A signed-in
+  // caller is counted per user id and gets the larger allowance; everyone else
+  // is counted per IP and gets the smaller one. Both ceilings are defined in
+  // the SQL function, not here.
+  const userId = await verifyUser(req);
+  const withinQuota = await consumeQuota(
+    req,
+    userId ? `user:${userId}` : `ip:${getClientIp(req)}`,
+    userId ? "chat_user" : "chat_anon",
+  );
+  if (!withinQuota) {
+    return res.status(429).json({
+      error: userId
+        ? "You have reached today's question limit. It resets at midnight UTC."
+        : "Today's free question limit is used. Sign in for more.",
+    });
   }
 
   const body = req.body ?? {};
