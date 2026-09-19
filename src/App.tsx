@@ -12,7 +12,6 @@ import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import { SimulatorSelector } from "./components/SimulatorSelector";
 import type { SimulatorId } from "./components/SimulatorSelector";
-import { Hero } from "./components/Hero";
 import { KeyboardShortcutsModal } from "./components/KeyboardShortcutsModal";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import {
@@ -208,9 +207,6 @@ const ScenarioCompare = React.lazy(() =>
 );
 const StatusPage = React.lazy(() =>
   import("./components/StatusPage").then((m) => ({ default: m.StatusPage })),
-);
-const PathFlowMap = React.lazy(
-  () => import("./components/PathFlow/PathFlowMap"),
 );
 const LeaderboardPanel = React.lazy(() =>
   import("./components/Leaderboard/LeaderboardPanel").then((m) => ({
@@ -522,13 +518,6 @@ function AppContent({ user, onLogout }: AppContentProps) {
               transition={{ duration: 0.2 }}
               className="flex-1"
             >
-              <Hero
-                onStart={() => {
-                  document
-                    .getElementById("simulator-selector")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-              />
               {isFlagEnabled("startHere") && (
                 <div
                   style={{
@@ -557,16 +546,6 @@ function AppContent({ user, onLogout }: AppContentProps) {
               <div id="simulator-selector">
                 <SimulatorSelector onSelect={setActiveSimulator} />
               </div>
-              <React.Suspense fallback={null}>
-                <PathFlowMap
-                  onSelectSimulator={setActiveSimulator}
-                  onSelectPETab={(t) => setActivePETab(t as PETabId)}
-                  onSelectVCTab={(t) => setActiveVCTab(t as VCTabId)}
-                  onSelectIBView={(v) =>
-                    setIbView(v as "simulator" | "compare" | "roleplay")
-                  }
-                />
-              </React.Suspense>
             </motion.div>
           )}
 
