@@ -1,0 +1,17 @@
+00-cross-cutting.md
+01-ai-native-fpa.md
+02-ai-native-finance-service.md
+03-ai-cfo-os.md
+PROMPT-1-ai-native-fpa.md
+PROMPT-2-finance-service.md
+PROMPT-3-ai-cfo-os.md
+README.md
+   521 /home/user/fundsim/docs/yc-research/00-cross-cutting.md
+   537 /home/user/fundsim/docs/yc-research/01-ai-native-fpa.md
+   553 /home/user/fundsim/docs/yc-research/02-ai-native-finance-service.md
+   633 /home/user/fundsim/docs/yc-research/03-ai-cfo-os.md
+   157 /home/user/fundsim/docs/yc-research/PROMPT-1-ai-native-fpa.md
+   152 /home/user/fundsim/docs/yc-research/PROMPT-2-finance-service.md
+   139 /home/user/fundsim/docs/yc-research/PROMPT-3-ai-cfo-os.md
+    52 /home/user/fundsim/docs/yc-research/README.md
+  2744 total
